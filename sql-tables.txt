@@ -1,0 +1,131 @@
+computations so far:
+
+-> each domain raw score, add to scaled score 
+
+-> Step 1:
+
+Each question has a score field:
+0 = fail
+1 = pass
+NULL = not applicable (N/A)
+
+Stored in test_responses.
+
+Example (Cognitive domain, 5 questions):
+
+Question	Score
+Q1	1
+Q2	0
+Q3	1
+Q4	NULL
+Q5	1
+
+Ignore NULL for calculations
+
+Raw domain score = sum of applicable scores = 1 + 0 + 1 + 1 = 3
+
+Max possible for domain = number of applicable questions = 4 (for fairness)
+
+-> Step 2: Domain raw score → Scaled score
+
+Store in domain_scores.scaled_score
+
+-> Step 3: Sum scaled scores → total child score
+
+Add all scaled scores from each domain to get sum of scaled scores:
+
+Sum of scaled scores = 3 + 4 + 3 + 4 = 14
+
+Store in test_summary.sum_scaled_scores
+
+-> Step 4: Interpret using ECCD percentile/scale
+
+???
+
+
+
+-> users table (can store parents, teachers, admins)
+
+id
+name
+email
+password
+role (enum: parent, teacher, admin)
+status (active/inactive)
+created_at
+updated_at
+
+-> parent_child table (many-to-many for parents with children)
+
+id
+parent_id (FK users.id)
+child_id (FK children.id)
+
+-> teacher_child table (many-to-many)
+
+id
+teacher_id (FK users.id)
+child_id (FK children.id)
+assigned_at
+status (active/inactive)
+
+-> child table
+
+id
+name
+dob
+emergency_contact (phone number)
+gender
+enrollment_date (??? since there's created_at already)
+status (active, transferred, graduated)
+notes (ex. special needs, allergies, etc.) 
+created_at
+updated_at
+
+-> domains table (gross motor, language, cognitive…)
+
+id
+name
+description
+
+-> questions table (ECCD checklist questions)
+
+id
+domain_id (FK domains.id)        -- gross motor, language, etc.
+question_text                    -- to be linked to website text
+type (enum: static, interactive) --  
+instructions (optional text)     -- for interactive tests
+created_at
+updated_at
+
+-> tests table
+
+tests table
+
+id
+child_id (FK children.id)
+observer_id (FK users.id)  -- teacher or parent
+observer_role (enum: teacher, parent)
+month (e.g., '2026-01')
+status (enum: in_progress, completed)
+started_at
+submitted_at
+
+-> test_responses table
+
+id
+test_id (FK tests.id)
+question_id (FK questions.id)
+score (numeric) (nullable if non-applicable)
+comment (optional text)
+updated_at
+
+-> domain_scores table — stores per-domain scores
+
+id
+test_id (FK tests.id)
+domain_id (FK domains.id)
+raw_score (sum of question scores in this domain)
+scaled_score (normalized based on ECCD scale)
+created_at
+updated_at

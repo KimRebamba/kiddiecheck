@@ -43,89 +43,91 @@ Store in test_summary.sum_scaled_scores
 ???
 
 
+users
+id           BIGINT PRIMARY KEY
+name         VARCHAR(255) NOT NULL
+email        VARCHAR(255) UNIQUE NOT NULL
+password     VARCHAR(255) NOT NULL
+role         ENUM('parent', 'teacher', 'admin') NOT NULL
+status       ENUM('active', 'inactive') DEFAULT 'active'
+created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
--> users table (can store parents, teachers, admins)
+family
+id          BIGINT PRIMARY KEY
+name        VARCHAR(255) NOT NULL       -- Family last name or chosen display name
+home_address VARCHAR(255) NOT NULL
+created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-id
-name
-email
-password
-role (enum: parent, teacher, admin)
-status (active/inactive)
-created_at
-updated_at
+child
+id                BIGINT PRIMARY KEY
+family_id         BIGINT NOT NULL REFERENCES family(id)
+name              VARCHAR(255) NOT NULL
+dob               DATE NOT NULL
+emergency_contact VARCHAR(50)       -- phone number
+gender            ENUM('male', 'female', 'other') NOT NULL
+enrollment_date   DATE NOT NULL
+status            ENUM('active', 'transferred', 'graduated') DEFAULT 'active'
+tag_type 	  ENUM('allergy', 'medical', 'learning_needs', 'others')
+notes 		  TEXT
+created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
--> parent_child table (many-to-many for parents with children)
+teacher
+id         BIGINT PRIMARY KEY REFERENCES users(id)
+hire_date  DATE
+status     ENUM('active', 'inactive') DEFAULT 'active'
 
-id
-parent_id (FK users.id)
-child_id (FK children.id)
+teacher_child
+id         BIGINT PRIMARY KEY
+teacher_id BIGINT NOT NULL REFERENCES teacher(id)
+child_id   BIGINT NOT NULL REFERENCES child(id)
+role ENUM('homeroom','specialist','others') 
+assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+status     ENUM('active', 'inactive') DEFAULT 'active'
 
--> teacher_child table (many-to-many)
+domains
+id          BIGINT PRIMARY KEY
+name        VARCHAR(255) NOT NULL
+description TEXT
 
-id
-teacher_id (FK users.id)
-child_id (FK children.id)
-assigned_at
-status (active/inactive)
+questions
+id           BIGINT PRIMARY KEY
+domain_id    BIGINT NOT NULL REFERENCES domains(id)
+question_text TEXT NOT NULL
+type         ENUM('static', 'interactive') NOT NULL
+instructions TEXT                -- optional
+created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
--> child table
+tests
+id           BIGINT PRIMARY KEY
+child_id     BIGINT NOT NULL REFERENCES child(id)
+observer_id  BIGINT NOT NULL REFERENCES users(id)  -- parent/family or teacher
+test_date    DATE NOT NULL  -- format: 'YYYY-MM'
+status       ENUM('in_progress', 'completed','cancelled','terminated') DEFAULT 'in_progress'
+started_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+submitted_by VARCHAR(255) NOT NULL
+submitted_at TIMESTAMP
 
-id
-name
-dob
-emergency_contact (phone number)
-gender
-enrollment_date (??? since there's created_at already)
-status (active, transferred, graduated)
-notes (ex. special needs, allergies, etc.) 
-created_at
-updated_at
+test_responses
+id          BIGINT PRIMARY KEY
+test_id     BIGINT NOT NULL REFERENCES tests(id)
+question_id BIGINT NOT NULL REFERENCES questions(id)
+score       DECIMAL(5,2)        -- nullable if non-applicable
+comment     TEXT
+updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
--> domains table (gross motor, language, cognitive…)
+domain_scores
+id           BIGINT PRIMARY KEY
+test_id      BIGINT NOT NULL REFERENCES tests(id)
+domain_id    BIGINT NOT NULL REFERENCES domains(id)
+raw_score    DECIMAL(5,2)
+scaled_score DECIMAL(5,2)
+scaled_score_based DECIMAL(5,2)
+created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-id
-name
-description
 
--> questions table (ECCD checklist questions)
-
-id
-domain_id (FK domains.id)        -- gross motor, language, etc.
-question_text                    -- to be linked to website text
-type (enum: static, interactive) --  
-instructions (optional text)     -- for interactive tests
-created_at
-updated_at
-
--> tests table
-
-tests table
-
-id
-child_id (FK children.id)
-observer_id (FK users.id)  -- teacher or parent
-observer_role (enum: teacher, parent)
-month (e.g., '2026-01')
-status (enum: in_progress, completed)
-started_at
-submitted_at
-
--> test_responses table
-
-id
-test_id (FK tests.id)
-question_id (FK questions.id)
-score (numeric) (nullable if non-applicable)
-comment (optional text)
-updated_at
-
--> domain_scores table — stores per-domain scores
-
-id
-test_id (FK tests.id)
-domain_id (FK domains.id)
-raw_score (sum of question scores in this domain)
-scaled_score (normalized based on ECCD scale)
-created_at
-updated_at
+UNIQUE('observer_id', 'test_date', child_id')

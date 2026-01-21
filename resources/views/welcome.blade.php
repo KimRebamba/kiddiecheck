@@ -15,5 +15,8 @@
                  {{ $bit->profile_path }} | 
             </p>
         @endforeach
+
+        
+<a href="/register">Add User</a>
     </body>
 </html>

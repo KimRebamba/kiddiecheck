@@ -21,6 +21,7 @@ return new class extends Migration
             $table->date('enrollment_date');
             $table->enum('status', ['active', 'transferred', 'graduated'])->default('active');
             $table->enum('tag_type', ['allergy', 'medical', 'learning_needs', 'others'])->nullable();
+            $table->string('profile_path')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
         });

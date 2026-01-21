@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::create('tests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('child_id')->constrained('child')->cascadeOnDelete();
+            $table->foreignId('children_id')->constrained('children')->cascadeOnDelete();
             $table->foreignId('observer_id')->constrained('users')->cascadeOnDelete();
-            $table->date('test_date'); // 'YYYY-MM' format enforced in app logic
+            $table->date('test_date'); // 'YYYY-MM' format 
             $table->enum('status', ['in_progress', 'completed','cancelled','terminated'])->default('in_progress');
             $table->timestamp('started_at')->useCurrent();
             $table->string('submitted_by');
             $table->timestamp('submitted_at')->nullable();
 
-            $table->unique(['observer_id', 'test_date', 'child_id']);
+            $table->unique(['observer_id', 'test_date', 'children_id']);
         });
     }
 

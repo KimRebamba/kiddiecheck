@@ -14,8 +14,8 @@ return new class extends Migration
         
         Schema::create('teacher_child', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('teacher_id')->constrained('teacher')->cascadeOnDelete();
-            $table->foreignId('child_id')->constrained('child')->cascadeOnDelete();
+            $table->foreignId('teachers_id')->constrained('teachers')->cascadeOnDelete();
+            $table->foreignId('children_id')->constrained('children')->cascadeOnDelete();
             $table->enum('role', ['homeroom', 'specialist', 'others'])->nullable();
             $table->timestamp('assigned_at')->useCurrent();
             $table->enum('status', ['active', 'inactive'])->default('active');

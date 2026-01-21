@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('domain_scores', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('test_id')->constrained('tests')->cascadeOnDelete();
-            $table->foreignId('domain_id')->constrained('domains')->cascadeOnDelete();
+            $table->foreignId('tests_id')->constrained('tests')->cascadeOnDelete();
+            $table->foreignId('domains_id')->constrained('domains')->cascadeOnDelete();
             $table->decimal('raw_score', 5, 2)->nullable();
             $table->decimal('scaled_score', 5, 2)->nullable();
             $table->decimal('scaled_score_based', 5, 2)->nullable();

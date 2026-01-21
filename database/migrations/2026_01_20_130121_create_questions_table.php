@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('domain_id')->constrained('domains')->cascadeOnDelete();
+            $table->foreignId('domains_id')->constrained('domains')->cascadeOnDelete();
             $table->text('question_text');
             $table->enum('type', ['static', 'interactive']);
             $table->text('instructions')->nullable();

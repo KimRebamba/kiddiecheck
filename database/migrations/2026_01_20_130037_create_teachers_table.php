@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('teacher', function (Blueprint $table) {
-            $table->id(); // assumes users.id
-            $table->foreign('id')->references('id')->on('users')->cascadeOnDelete();
+       Schema::create('teachers', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('users_id')->constrained('users')->cascadeOnDelete();
             $table->date('hire_date')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->timestamps();

@@ -37,4 +37,31 @@ class Test extends Model
     {
         return $this->hasMany(TestPicture::class);
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function (Test $test) {
+            if ($test->test_date && $test->student_id) {
+                try {
+                    $student = $test->student ?? Student::find($test->student_id);
+                    if ($student && $student->dob) {
+                        $testDate = \Illuminate\Support\Carbon::parse($test->test_date);
+                        $dob = \Illuminate\Support\Carbon::parse($student->dob);
+                        $days = $dob->diffInDays($testDate);
+                        $months = $days / 30;
+                        $test->age_months = round($months, 2);
+                    }
+                } catch (\Throwable $e) {
+                    // silently ignore compute errors
+                }
+            }
+
+            if ($test->examiner_id && empty($test->examiner_name)) {
+                $examiner = User::find($test->examiner_id);
+                $test->examiner_name = $examiner?->name;
+            }
+        });
+    }
 }

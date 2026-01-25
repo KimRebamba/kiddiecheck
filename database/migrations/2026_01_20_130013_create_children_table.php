@@ -11,13 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('children', function (Blueprint $table) {
+        Schema::create('students', function (Blueprint $table) {
             $table->id();
             $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('section_id')->nullable()->constrained('sections')->nullOnDelete();
             $table->string('name');
             $table->date('dob');
             $table->string('emergency_contact', 50)->nullable();
             $table->enum('gender', ['male', 'female', 'other']);
+            $table->enum('handedness', ['right','left','both','unknown'])->default('unknown');
+            $table->boolean('is_studying')->default(false);
+            $table->string('school_name')->nullable();
             $table->date('enrollment_date');
             $table->enum('status', ['active', 'transferred', 'graduated'])->default('active');
             $table->string('profile_path')->nullable();

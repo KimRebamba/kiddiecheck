@@ -33,6 +33,24 @@
 			<li>{{ $s->name }} (role: {{ $s->pivot->role }}, since: {{ $s->pivot->assigned_at }})</li>
 		@endforeach
 	</ul>
+	<form method="POST" action="{{ route('admin.teachers.assign', ['teacher' => $teacher->id]) }}">
+		@csrf
+		<p>Assign Student:
+			<select name="student_id" required>
+				@foreach($allStudents as $stu)
+					<option value="{{ $stu->id }}">{{ $stu->name }}</option>
+				@endforeach
+			</select>
+		</p>
+		<p>Role:
+			<select name="role">
+				<option value="homeroom">Homeroom</option>
+				<option value="specialist">Specialist</option>
+				<option value="others">Others</option>
+			</select>
+		</p>
+		<p><button type="submit">Assign</button></p>
+	</form>
 	<hr>
 @endforeach
 @endsection

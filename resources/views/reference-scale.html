@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+    body { font-family: Arial, sans-serif; line-height: 1.4; padding: 20px; }
+    .table-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+    table { border-collapse: collapse; margin-bottom: 20px; font-size: 0.9em; min-width: 300px; }
+    th, td { border: 1px solid #3e6db5; padding: 6px 4px; text-align: center; }
+    th { background-color: #3e6db5; color: white; font-weight: normal; font-size: 0.8em; }
+    .table-title { background-color: white; color: #1a4a9e; font-size: 1.2em; font-weight: bold; border: none; padding-bottom: 10px; }
+    .scaled-score-header { background-color: #d81e28; }
+    .scaled-score-col { background-color: #fce4e4; font-weight: bold; color: #d81e28; }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+
+    table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 600px;
+            font-family: Arial, sans-serif;
+            border: 2px solid #3366cc;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f7ff;
+            color: #3366cc;
+            padding: 10px;
+            border: 1px solid #3366cc;
+            font-size: 0.9em;
+        }
+        td {
+            padding: 5px;
+            border-right: 1px solid #3366cc;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .standard-score {
+            color: #ff3333;
+            font-weight: bold;
+        }
+        caption {
+            color: #3366cc;
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+</style>
+</head>
+<body>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr><th colspan="8" class="table-title">Ages 3.1 - 4.0 years</th></tr>
+            <tr>
+                <th class="scaled-score-header">Scaled Score</th>
+                <th>Gross Motor</th>
+                <th>Fine Motor</th>
+                <th>Self-Help</th>
+                <th>Receptive Language</th>
+                <th>Expressive Language</th>
+                <th>Cognitive</th>
+                <th>Social Emotional</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="scaled-score-col">1</td><td>0-3</td><td>-</td><td>0-9</td><td>-</td><td>0-2</td><td>-</td><td>0-9</td></tr>
+            <tr><td class="scaled-score-col">2</td><td>4</td><td>0-3</td><td>10</td><td>-</td><td>-</td><td>-</td><td>10-11</td></tr>
+            <tr><td class="scaled-score-col">3</td><td>5</td><td>-</td><td>11</td><td>0-1</td><td>3</td><td>0</td><td>12</td></tr>
+            <tr><td class="scaled-score-col">4</td><td>-</td><td>4</td><td>12</td><td>-</td><td>4</td><td>1</td><td>13</td></tr>
+            <tr><td class="scaled-score-col">5</td><td>6</td><td>5</td><td>13-14</td><td>2</td><td>-</td><td>2-3</td><td>14</td></tr>
+            <tr><td class="scaled-score-col">6</td><td>7</td><td>-</td><td>15</td><td>-</td><td>5</td><td>4</td><td>15</td></tr>
+            <tr><td class="scaled-score-col">7</td><td>8</td><td>6</td><td>16</td><td>3</td><td>-</td><td>5</td><td>16</td></tr>
+            <tr><td class="scaled-score-col">8</td><td>9</td><td>-</td><td>17</td><td>-</td><td>6</td><td>6</td><td>17-18</td></tr>
+            <tr><td class="scaled-score-col">9</td><td>-</td><td>7</td><td>18-19</td><td>-</td><td>-</td><td>7</td><td>19</td></tr>
+            <tr><td class="scaled-score-col">10</td><td>10</td><td>8</td><td>20</td><td>4</td><td>7</td><td>8-9</td><td>20</td></tr>
+            <tr><td class="scaled-score-col">11</td><td>11</td><td>-</td><td>21</td><td>-</td><td>-</td><td>10</td><td>21</td></tr>
+            <tr><td class="scaled-score-col">12</td><td>12</td><td>9</td><td>22</td><td>5</td><td>8</td><td>11</td><td>22</td></tr>
+            <tr><td class="scaled-score-col">13</td><td>-</td><td>-</td><td>23-24</td><td>-</td><td>-</td><td>12</td><td>23</td></tr>
+            <tr><td class="scaled-score-col">14</td><td>13</td><td>10</td><td>25</td><td>-</td><td>-</td><td>13-14</td><td>24</td></tr>
+            <tr><td class="scaled-score-col">15</td><td>-</td><td>11</td><td>26</td><td>-</td><td>-</td><td>15</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">16</td><td>-</td><td>-</td><td>27</td><td>-</td><td>-</td><td>16</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">17</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>17</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">18</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>18</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">19</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>19-21</td><td>-</td></tr>
+        </tbody>
+    </table>
+
+    <table>
+        <thead>
+            <tr><th colspan="8" class="table-title">Ages 4.1 - 5.0 years</th></tr>
+            <tr>
+                <th class="scaled-score-header">Scaled Score</th>
+                <th>Gross Motor</th>
+                <th>Fine Motor</th>
+                <th>Self-Help</th>
+                <th>Receptive Language</th>
+                <th>Expressive Language</th>
+                <th>Cognitive</th>
+                <th>Social Emotional</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="scaled-score-col">1</td><td>0-5</td><td>0-3</td><td>0-15</td><td>0-1</td><td>-</td><td>0</td><td>0-13</td></tr>
+            <tr><td class="scaled-score-col">2</td><td>6</td><td>4</td><td>16</td><td>-</td><td>0-5</td><td>1</td><td>14</td></tr>
+            <tr><td class="scaled-score-col">3</td><td>-</td><td>-</td><td>17</td><td>2</td><td>-</td><td>2-3</td><td>15</td></tr>
+            <tr><td class="scaled-score-col">4</td><td>7</td><td>5</td><td>18</td><td>-</td><td>-</td><td>4</td><td>16</td></tr>
+            <tr><td class="scaled-score-col">5</td><td>8</td><td>6</td><td>19</td><td>-</td><td>6</td><td>5</td><td>17</td></tr>
+            <tr><td class="scaled-score-col">6</td><td>-</td><td>-</td><td>20</td><td>3</td><td>-</td><td>6-7</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">7</td><td>9</td><td>7</td><td>-</td><td>-</td><td>-</td><td>8</td><td>18</td></tr>
+            <tr><td class="scaled-score-col">8</td><td>10</td><td>-</td><td>21</td><td>-</td><td>7</td><td>9-10</td><td>19</td></tr>
+            <tr><td class="scaled-score-col">9</td><td>-</td><td>8</td><td>22</td><td>4</td><td>-</td><td>11</td><td>20</td></tr>
+            <tr><td class="scaled-score-col">10</td><td>11</td><td>9</td><td>23</td><td>-</td><td>-</td><td>12</td><td>21</td></tr>
+            <tr><td class="scaled-score-col">11</td><td>12</td><td>-</td><td>24</td><td>5</td><td>8</td><td>13-14</td><td>22</td></tr>
+            <tr><td class="scaled-score-col">12</td><td>-</td><td>10</td><td>25</td><td>-</td><td>-</td><td>15</td><td>23</td></tr>
+            <tr><td class="scaled-score-col">13</td><td>13</td><td>-</td><td>26</td><td>-</td><td>-</td><td>16-17</td><td>24</td></tr>
+            <tr><td class="scaled-score-col">14</td><td>-</td><td>11</td><td>27</td><td>-</td><td>-</td><td>18</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">15</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>19-20</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">16</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>21</td><td>-</td></tr>
+        </tbody>
+    </table>
+
+    <table>
+        <thead>
+            <tr><th colspan="8" class="table-title">Ages 5.1 - 5.11 years</th></tr>
+            <tr>
+                <th class="scaled-score-header">Scaled Score</th>
+                <th>Gross Motor</th>
+                <th>Fine Motor</th>
+                <th>Self-Help</th>
+                <th>Receptive Language</th>
+                <th>Expressive Language</th>
+                <th>Cognitive</th>
+                <th>Social Emotional</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td class="scaled-score-col">1</td><td>0-10</td><td>0-5</td><td>-</td><td>0-2</td><td>-</td><td>0-9</td><td>0-15</td></tr>
+            <tr><td class="scaled-score-col">2</td><td>-</td><td>-</td><td>0-19</td><td>-</td><td>-</td><td>10</td><td>16</td></tr>
+            <tr><td class="scaled-score-col">3</td><td>-</td><td>6</td><td>20</td><td>-</td><td>-</td><td>11</td><td>17</td></tr>
+            <tr><td class="scaled-score-col">4</td><td>11</td><td>-</td><td>21</td><td>3</td><td>-</td><td>12</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">5</td><td>-</td><td>7</td><td>-</td><td>-</td><td>0-7</td><td>13</td><td>18</td></tr>
+            <tr><td class="scaled-score-col">6</td><td>-</td><td>-</td><td>22</td><td>-</td><td>-</td><td>14</td><td>19</td></tr>
+            <tr><td class="scaled-score-col">7</td><td>12</td><td>8</td><td>23</td><td>-</td><td>-</td><td>15</td><td>20</td></tr>
+            <tr><td class="scaled-score-col">8</td><td>-</td><td>9</td><td>-</td><td>4</td><td>-</td><td>16</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">9</td><td>-</td><td>-</td><td>24</td><td>-</td><td>-</td><td>17</td><td>21</td></tr>
+            <tr><td class="scaled-score-col">10</td><td>-</td><td>10</td><td>25</td><td>-</td><td>-</td><td>18</td><td>22</td></tr>
+            <tr><td class="scaled-score-col">11</td><td>13</td><td>-</td><td>-</td><td>5</td><td>8</td><td>19</td><td>23</td></tr>
+            <tr><td class="scaled-score-col">12</td><td>-</td><td>11</td><td>26</td><td>-</td><td>-</td><td>20</td><td>-</td></tr>
+            <tr><td class="scaled-score-col">13</td><td>-</td><td>-</td><td>27</td><td>-</td><td>-</td><td>21</td><td>24</td></tr>
+        </tbody>
+    </table>
+
+
+<table>
+    <caption>Standard Score Equivalent of Sum of Scaled Scores Table<br>Child's Record 2</caption>
+    <thead>
+        <tr>
+            <th>Sum of Scaled Scores</th>
+            <th>Standard Scores</th>
+            <th>Sum of Scaled Scores</th>
+            <th>Standard Scores</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr><td>29</td><td class="standard-score">37</td><td>64</td><td class="standard-score">88</td></tr>
+        <tr><td>30</td><td class="standard-score">38</td><td>65</td><td class="standard-score">89</td></tr>
+        <tr><td>31</td><td class="standard-score">40</td><td>66</td><td class="standard-score">91</td></tr>
+        <tr><td>32</td><td class="standard-score">41</td><td>67</td><td class="standard-score">92</td></tr>
+        <tr><td>33</td><td class="standard-score">43</td><td>68</td><td class="standard-score">94</td></tr>
+        <tr><td>34</td><td class="standard-score">44</td><td>69</td><td class="standard-score">95</td></tr>
+        <tr><td>35</td><td class="standard-score">45</td><td>70</td><td class="standard-score">97</td></tr>
+        <tr><td>36</td><td class="standard-score">47</td><td>71</td><td class="standard-score">98</td></tr>
+        <tr><td>37</td><td class="standard-score">48</td><td>72</td><td class="standard-score">100</td></tr>
+        <tr><td>38</td><td class="standard-score">50</td><td>73</td><td class="standard-score">101</td></tr>
+        <tr><td>39</td><td class="standard-score">51</td><td>74</td><td class="standard-score">103</td></tr>
+        <tr><td>40</td><td class="standard-score">53</td><td>75</td><td class="standard-score">104</td></tr>
+        <tr><td>41</td><td class="standard-score">54</td><td>76</td><td class="standard-score">105</td></tr>
+        <tr><td>42</td><td class="standard-score">56</td><td>77</td><td class="standard-score">107</td></tr>
+        <tr><td>43</td><td class="standard-score">57</td><td>78</td><td class="standard-score">108</td></tr>
+        <tr><td>44</td><td class="standard-score">59</td><td>79</td><td class="standard-score">110</td></tr>
+        <tr><td>45</td><td class="standard-score">60</td><td>80</td><td class="standard-score">111</td></tr>
+        <tr><td>46</td><td class="standard-score">62</td><td>81</td><td class="standard-score">113</td></tr>
+        <tr><td>47</td><td class="standard-score">63</td><td>82</td><td class="standard-score">114</td></tr>
+        <tr><td>48</td><td class="standard-score">65</td><td>83</td><td class="standard-score">116</td></tr>
+        <tr><td>49</td><td class="standard-score">66</td><td>84</td><td class="standard-score">117</td></tr>
+        <tr><td>50</td><td class="standard-score">67</td><td>85</td><td class="standard-score">119</td></tr>
+        <tr><td>51</td><td class="standard-score">69</td><td>86</td><td class="standard-score">120</td></tr>
+        <tr><td>52</td><td class="standard-score">70</td><td>87</td><td class="standard-score">122</td></tr>
+        <tr><td>53</td><td class="standard-score">72</td><td>88</td><td class="standard-score">123</td></tr>
+        <tr><td>54</td><td class="standard-score">73</td><td>89</td><td class="standard-score">124</td></tr>
+        <tr><td>55</td><td class="standard-score">75</td><td>90</td><td class="standard-score">126</td></tr>
+        <tr><td>56</td><td class="standard-score">76</td><td>91</td><td class="standard-score">127</td></tr>
+        <tr><td>57</td><td class="standard-score">78</td><td>92</td><td class="standard-score">129</td></tr>
+        <tr><td>58</td><td class="standard-score">79</td><td>93</td><td class="standard-score">130</td></tr>
+        <tr><td>59</td><td class="standard-score">81</td><td>94</td><td class="standard-score">132</td></tr>
+        <tr><td>60</td><td class="standard-score">82</td><td>95</td><td class="standard-score">133</td></tr>
+        <tr><td>61</td><td class="standard-score">84</td><td>96</td><td class="standard-score">135</td></tr>
+        <tr><td>62</td><td class="standard-score">85</td><td>97</td><td class="standard-score">136</td></tr>
+        <tr><td>63</td><td class="standard-score">86</td><td>98</td><td class="standard-score">138</td></tr>
+    </tbody>
+</table>
+</div>
+</body>
+</html>

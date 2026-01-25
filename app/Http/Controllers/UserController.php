@@ -23,6 +23,14 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => $request->password
         ])){
+            $role = Auth::user()->role;
+            if ($role === 'family') {
+                return redirect()->route('family.index');
+            } elseif ($role === 'teacher') {
+                return redirect()->route('teacher.index');
+            } elseif ($role === 'admin') {
+                return redirect()->route('admin.index');
+            }
             return redirect()->route('index');
         }else{
             return 'wrong credentials';
@@ -73,6 +81,13 @@ class UserController extends Controller
         ]);
 
         Auth::login($user);
+        if ($user->role === 'family') {
+            return redirect()->route('family.index');
+        } elseif ($user->role === 'teacher') {
+            return redirect()->route('teacher.index');
+        } elseif ($user->role === 'admin') {
+            return redirect()->route('admin.index');
+        }
         return redirect()->route('index');
     }
 

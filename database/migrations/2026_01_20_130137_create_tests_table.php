@@ -13,16 +13,19 @@ return new class extends Migration
     {
         Schema::create('tests', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('child_id')->constrained('children')->cascadeOnDelete();
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->foreignId('observer_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->enum('observer_role', ['teacher', 'family']);
+            $table->unsignedBigInteger('examiner_id')->nullable();
+            $table->string('examiner_name')->nullable();
             $table->date('test_date');
+            $table->decimal('age_months', 6, 2)->nullable();
             $table->enum('status', ['pending', 'in_progress', 'completed','cancelled','terminated'])->default('pending');
             $table->timestamp('started_at')->nullable();
             $table->string('submitted_by')->nullable();
             $table->timestamp('submitted_at')->nullable();
 
-            $table->unique(['child_id', 'test_date', 'observer_role']);
+            $table->foreign('examiner_id')->references('id')->on('users')->nullOnDelete();
+            $table->unique(['student_id', 'test_date']);
         });
     }
 

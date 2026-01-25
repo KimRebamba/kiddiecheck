@@ -69,6 +69,7 @@ class AdminController extends Controller
         return view('admin.families.index', [
             'families' => Family::with(['user', 'students'])->orderBy('id', 'desc')->get(),
             'familyUsers' => User::where('role', 'family')->orderBy('name')->get(),
+            'allStudents' => \App\Models\Student::orderBy('name')->get(),
         ]);
     }
 
@@ -83,12 +84,25 @@ class AdminController extends Controller
         return redirect()->route('admin.families');
     }
 
+    public function familyAssignStudent($familyId, Request $request)
+    {
+        $family = Family::findOrFail($familyId);
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+        ]);
+        $student = \App\Models\Student::findOrFail($validated['student_id']);
+        $student->family_id = $family->id;
+        $student->save();
+        return redirect()->route('admin.families');
+    }
+
     // Teachers
     public function teachers()
     {
         return view('admin.teachers.index', [
             'teachers' => Teacher::with(['user', 'students'])->get(),
             'teacherUsers' => User::where('role', 'teacher')->orderBy('name')->get(),
+            'allStudents' => \App\Models\Student::orderBy('name')->get(),
         ]);
     }
 
@@ -103,6 +117,24 @@ class AdminController extends Controller
         DB::table('teachers')->updateOrInsert(['id' => $validated['user_id']], [
             'hire_date' => $validated['hire_date'] ?? null,
             'status' => $validated['status'],
+        ]);
+        return redirect()->route('admin.teachers');
+    }
+
+    public function teacherAssignStudent($teacherId, Request $request)
+    {
+        $teacher = Teacher::with('students')->findOrFail($teacherId);
+        $validated = $request->validate([
+            'student_id' => 'required|exists:students,id',
+            'role' => 'nullable|in:homeroom,specialist,others',
+        ]);
+        $role = $validated['role'] ?? 'homeroom';
+        $teacher->students()->syncWithoutDetaching([
+            $validated['student_id'] => [
+                'role' => $role,
+                'assigned_at' => now(),
+                'status' => 'active',
+            ]
         ]);
         return redirect()->route('admin.teachers');
     }
@@ -181,5 +213,15 @@ class AdminController extends Controller
     public function help()
     {
         return view('admin.help');
+    }
+
+    // Domains & Questions
+    public function domains()
+    {
+        $domains = Domain::with(['questions' => function($q) {
+            $q->orderBy('id');
+        }])->orderBy('name')->get();
+
+        return view('admin.domains', compact('domains'));
     }
 }

@@ -11,15 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        
-        Schema::create('teacher_child', function (Blueprint $table) {
-            $table->id();
+        Schema::create('teacher_student', function (Blueprint $table) {
             $table->foreignId('teacher_id')->constrained('teachers')->cascadeOnDelete();
-            $table->foreignId('child_id')->constrained('children')->cascadeOnDelete();
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->enum('role', ['homeroom', 'specialist', 'others'])->nullable();
             $table->timestamp('assigned_at')->useCurrent();
             $table->enum('status', ['active', 'inactive'])->default('active');
-            $table->unique(['teacher_id', 'child_id', 'role']);
+            $table->unique(['teacher_id', 'student_id', 'role']);
         });
     }
 
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('teacher_child');
+        Schema::dropIfExists('teacher_student');
     }
 };

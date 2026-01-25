@@ -9,7 +9,7 @@ class Question extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['domain_id', 'question_text', 'type', 'instructions'];
+    protected $fillable = ['domain_id', 'question_text', 'type', 'instructions', 'materials', 'procedure'];
 
     public function domain()
     {

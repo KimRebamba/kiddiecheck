@@ -121,7 +121,9 @@ class InitialDataSeeder extends Seeder
             'domain_id' => $cognitiveId,
             'question_text' => 'Can sort objects by color?',
             'type' => 'static',
-            'instructions' => null,
+            'instructions' => 'Place colored blocks; ask student to group by color.',
+            'materials' => 'blocks/crayons',
+            'procedure' => 'Demonstrate one grouping; then ask student to match like colors.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -129,7 +131,9 @@ class InitialDataSeeder extends Seeder
             'domain_id' => $cognitiveId,
             'question_text' => 'Recognizes numbers 1-10?',
             'type' => 'static',
-            'instructions' => null,
+            'instructions' => 'Show numbers 1-10; ask student to name them.',
+            'materials' => 'flashcards 1-10',
+            'procedure' => 'Present cards randomly; prompt if needed.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -137,7 +141,9 @@ class InitialDataSeeder extends Seeder
             'domain_id' => $motorId,
             'question_text' => 'Can hop on one foot?',
             'type' => 'interactive',
-            'instructions' => 'Observe child hopping 3 times',
+            'instructions' => 'Observe student hopping 3 times',
+            'materials' => 'open floor space',
+            'procedure' => 'Ask student to hop on one foot three times without support.',
             'created_at' => now(),
             'updated_at' => now(),
         ]);

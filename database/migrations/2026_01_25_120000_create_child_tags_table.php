@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('child_tags', function (Blueprint $table) {
-            $table->foreignId('child_id')->constrained('children')->cascadeOnDelete();
+        Schema::create('student_tags', function (Blueprint $table) {
+            $table->foreignId('student_id')->constrained('students')->cascadeOnDelete();
             $table->enum('tag_type', ['allergy', 'medical', 'learning_needs', 'others']);
             $table->text('notes')->nullable();
-            $table->unique(['child_id', 'tag_type']);
+            $table->unique(['student_id', 'tag_type']);
         });
     }
 
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('child_tags');
+        Schema::dropIfExists('student_tags');
     }
 };

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->text('question_text');
             $table->enum('type', ['static', 'interactive']);
             $table->text('instructions')->nullable();
+            $table->text('materials')->nullable();
+            $table->text('procedure')->nullable();
             $table->timestamps();
         });
     }

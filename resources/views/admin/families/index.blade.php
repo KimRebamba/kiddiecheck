@@ -30,6 +30,17 @@
 			<li>{{ $student->name }} ({{ $student->gender }}) - {{ $student->enrollment_date }} - {{ $student->status }}</li>
 		@endforeach
 	</ul>
+	<form method="POST" action="{{ route('admin.families.assign', ['family' => $family->id]) }}">
+		@csrf
+		<p>Assign Student to this Family:
+			<select name="student_id" required>
+				@foreach($allStudents as $stu)
+					<option value="{{ $stu->id }}">{{ $stu->name }}</option>
+				@endforeach
+			</select>
+		</p>
+		<p><button type="submit">Assign</button></p>
+	</form>
 	<hr>
 @endforeach
 @endsection

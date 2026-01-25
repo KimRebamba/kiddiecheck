@@ -12,5 +12,6 @@
   <p>Teachers: {{ $student->teachers->pluck('user.name')->join(', ') }}</p>
   <p>Tags: {{ $student->tags->pluck('tag_type')->join(', ') }}</p>
   <p>Tests: {{ $student->tests->count() }}</p>
+  <p><a href="{{ route('admin.students.record', $student->id) }}">View ECCD Record</a></p>
 @endif
 @endsection

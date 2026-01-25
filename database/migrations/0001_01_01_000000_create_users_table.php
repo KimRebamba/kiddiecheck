@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('role', ['family', 'teacher', 'admin']);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('profile_path')->nullable();
+            $table->rememberToken();
             $table->timestamps();
         });
     }

@@ -15,6 +15,7 @@
       <a href="{{ route('admin.sections') }}">Sections</a> |
       <a href="{{ route('admin.teachers') }}">Teachers</a> |
       <a href="{{ route('admin.users') }}">Users</a> |
+      <a href="{{ route('admin.domains') }}">Domains</a> |
       <a href="{{ route('admin.help') }}">Help</a>
     </nav>
     <hr>

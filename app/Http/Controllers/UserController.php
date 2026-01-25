@@ -5,16 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
-class UserController
+class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
 
-    public function showLoginForm(){
-            return view('user.login');
-    }
+        public function showLoginForm(){
+            return view('auth.login');
+        }
 
     public function login(Request $request){
 
@@ -29,7 +30,7 @@ class UserController
     }
     
     public function showRegisterForm(){
-        return view('user.register');
+        return view('auth.register');
     }
 
     public function index()
@@ -53,17 +54,26 @@ class UserController
      */
     public function store(Request $request)
     {
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role'=> $request->role,
-            'home_address' => $request->home_address,
-            'status'=> $request->status,
-            'profile_path'=> $request->profile_path
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+            'role' => 'required|in:family,teacher,admin',
+            'status' => 'nullable|in:active,inactive',
+            'profile_path' => 'nullable|string|max:255',
         ]);
 
-        return redirect()->route('login');
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => $validated['role'],
+            'status' => $validated['status'] ?? 'active',
+            'profile_path' => $validated['profile_path'] ?? null,
+        ]);
+
+        Auth::login($user);
+        return redirect()->route('index');
     }
 
     /**
@@ -96,5 +106,13 @@ class UserController
     public function destroy(string $id)
     {
         //
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login');
     }
 }

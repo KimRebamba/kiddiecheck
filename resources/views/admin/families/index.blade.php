@@ -1,0 +1,35 @@
+
+@extends('admin.layout')
+
+@section('content')
+<h1>Families</h1>
+
+<h2>Create Family</h2>
+<form method="POST" action="{{ route('admin.families.store') }}">
+	@csrf
+	<p>User:
+		<select name="user_id" required>
+			@foreach($familyUsers as $fu)
+				<option value="{{ $fu->id }}">{{ $fu->name }} ({{ $fu->email }})</option>
+			@endforeach
+		</select>
+	</p>
+	<p>Name: <input type="text" name="name" required></p>
+	<p>Home Address: <input type="text" name="home_address" required></p>
+	<p><button type="submit">Create</button></p>
+</form>
+
+<h2>All Families</h2>
+@foreach($families as $family)
+	<h3>#{{ $family->id }} {{ $family->name }}</h3>
+	<p>User: {{ optional($family->user)->name }} ({{ optional($family->user)->email }})</p>
+	<p>Home: {{ $family->home_address }}</p>
+	<p>Students:</p>
+	<ul>
+		@foreach($family->students as $student)
+			<li>{{ $student->name }} ({{ $student->gender }}) - {{ $student->enrollment_date }} - {{ $student->status }}</li>
+		@endforeach
+	</ul>
+	<hr>
+@endforeach
+@endsection

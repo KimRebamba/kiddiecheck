@@ -22,7 +22,6 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'home_address',
         'status',
         'profile_path'
     ];
@@ -47,5 +46,16 @@ class User extends Authenticatable
         return [          
             'password' => 'hashed'
         ];
+    }
+
+    // Relationships
+    public function family()
+    {
+        return $this->hasOne(Family::class);
+    }
+
+    public function teacher()
+    {
+        return $this->hasOne(Teacher::class, 'id', 'id');
     }
 }

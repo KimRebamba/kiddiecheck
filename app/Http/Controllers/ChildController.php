@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Child;
 use Illuminate\Http\Request;
 
-class ChildController extends Controller
-{
+class ChildController {
     /**
      * Display a listing of the resource.
      */

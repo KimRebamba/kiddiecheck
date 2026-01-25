@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('test_pictures', function (Blueprint $table) {
             $table->id();
-            $table->string('profile_path');
-            $table->foreignId('tests_id')
-            ->constrained('tests')
-            ->cascadeOnDelete();
-            $table->text('description')->nullable();
-            $table->timestamps();
+            $table->foreignId('test_id')->constrained('tests')->cascadeOnDelete();
+            $table->foreignId('question_id')->nullable()->constrained('questions')->nullOnDelete();
+            $table->string('file_path');
+            $table->timestamp('created_at')->useCurrent();
+            $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
         });
     }
 

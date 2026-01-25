@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('children', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('families_id')->constrained('families')->cascadeOnDelete();
+            $table->foreignId('family_id')->constrained('families')->cascadeOnDelete();
             $table->string('name');
             $table->date('dob');
             $table->string('emergency_contact', 50)->nullable();
             $table->enum('gender', ['male', 'female', 'other']);
             $table->date('enrollment_date');
             $table->enum('status', ['active', 'transferred', 'graduated'])->default('active');
-            $table->enum('tag_type', ['allergy', 'medical', 'learning_needs', 'others'])->nullable();
             $table->string('profile_path')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();

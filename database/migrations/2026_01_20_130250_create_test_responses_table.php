@@ -13,11 +13,12 @@ return new class extends Migration
     {
         Schema::create('test_responses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tests_id')->constrained('tests')->cascadeOnDelete();
-            $table->foreignId('questions_id')->constrained('questions')->cascadeOnDelete();
+            $table->foreignId('test_id')->constrained('tests')->cascadeOnDelete();
+            $table->foreignId('question_id')->constrained('questions')->cascadeOnDelete();
             $table->decimal('score', 5, 2)->nullable();
             $table->text('comment')->nullable();
             $table->timestamp('updated_at')->useCurrent()->useCurrentOnUpdate();
+            $table->unique(['test_id', 'question_id']);
         });
     }
 

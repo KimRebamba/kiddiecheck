@@ -192,11 +192,12 @@ class FamilyController extends Controller
 
     public function showQuestion($testId, $domainId, $index)
     {
+        $user = Auth::user();
         $test = Test::with(['student','observer','responses'])->findOrFail($testId);
-        // Strictness: Only allow answering when this is a family-run, in-progress test
-        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
-            session()->flash('error', 'Only in-progress family tests can be answered.');
-            return redirect()->route('family.child', $test->student_id);
+        // Strictness: Only allow answering when current user is family and owns this in-progress test
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be answered by the family who started them.');
+            return redirect()->route('index');
         }
         $domain = Domain::with('questions')->findOrFail($domainId);
         $order = Session::get("test_order_$testId");
@@ -238,10 +239,11 @@ class FamilyController extends Controller
         $validated = $request->validate([
             'answer' => 'required|in:yes,no,na',
         ]);
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
-            session()->flash('error', 'Only in-progress family tests can be answered.');
-            return redirect()->route('family.child', $test->student_id);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be answered by the family who started them.');
+            return redirect()->route('index');
         }
         $domain = Domain::findOrFail($domainId);
         $order = Session::get("test_order_$testId");
@@ -269,9 +271,10 @@ class FamilyController extends Controller
 
     public function result($testId)
     {
+        $user = Auth::user();
         $test = Test::with(['student','observer','responses.question.domain'])->findOrFail($testId);
-        // Disallow results for cancelled/terminated/incomplete/pending tests
-        if (($test->observer?->role ?? null) !== 'family') { return redirect()->route('family.index'); }
+        // Disallow results for cancelled/terminated/incomplete/pending tests and enforce ownership
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         if (in_array($test->status, ['cancelled','terminated','incomplete','pending'])) {
             session()->flash('error', 'Results are available only for completed tests.');
             return redirect()->route('family.child', $test->student_id);
@@ -355,9 +358,10 @@ class FamilyController extends Controller
 
     public function finalize($testId)
     {
+        $user = Auth::user();
         $test = Test::with(['observer','responses.question.domain'])->findOrFail($testId);
-        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
-            return redirect()->route('family.child', $test->student_id);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            return redirect()->route('index');
         }
         // Enforce completeness before allowing finalize
         $domains = Domain::with('questions')->orderBy('id')->get();
@@ -387,7 +391,11 @@ class FamilyController extends Controller
 
     public function markIncomplete($testId)
     {
-        $test = Test::findOrFail($testId);
+        $user = Auth::user();
+        $test = Test::with('observer')->findOrFail($testId);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id) {
+            return redirect()->route('index');
+        }
         $test->status = 'incomplete';
         $test->save();
         session()->flash('success', 'Test marked incomplete.');
@@ -396,7 +404,11 @@ class FamilyController extends Controller
 
     public function cancel($testId)
     {
-        $test = Test::findOrFail($testId);
+        $user = Auth::user();
+        $test = Test::with('observer')->findOrFail($testId);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id) {
+            return redirect()->route('index');
+        }
         $test->status = 'cancelled';
         $test->save();
         session()->flash('success', 'Test cancelled.');
@@ -405,7 +417,11 @@ class FamilyController extends Controller
 
     public function terminate($testId)
     {
-        $test = Test::findOrFail($testId);
+        $user = Auth::user();
+        $test = Test::with('observer')->findOrFail($testId);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id) {
+            return redirect()->route('index');
+        }
         $test->status = 'terminated';
         $test->save();
         session()->flash('success', 'Test terminated.');
@@ -414,10 +430,11 @@ class FamilyController extends Controller
 
     public function pause($testId)
     {
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
-            session()->flash('error', 'Only in-progress family tests can be paused.');
-            return redirect()->route('family.child', $test->student_id);
+        if (!$user || $user->role !== 'family' || ($test->observer?->role ?? null) !== 'family' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be paused by the family who started them.');
+            return redirect()->route('index');
         }
         // Keep status as in_progress; simply return to dashboard
         session()->flash('success', 'Progress saved. You can continue later.');

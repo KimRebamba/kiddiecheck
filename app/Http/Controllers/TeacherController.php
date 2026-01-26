@@ -91,6 +91,7 @@ class TeacherController extends Controller
             ->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id',$teacher->id); })
             ->exists();
         if ($hasInProgress) {
+            session()->flash('error', 'You already have an in-progress test for this student.');
             return redirect()->route('teacher.student', $student->id);
         }
 
@@ -99,12 +100,16 @@ class TeacherController extends Controller
             ->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id',$teacher->id); })
             ->count();
         if ($activeCount >= 3) {
+            session()->flash('error', 'Limit reached: max 3 active tests by you for this student.');
             return redirect()->route('teacher.student', $student->id);
         }
 
         // Determine current eligible six-month window anchored at enrollment
         $enroll = $student->enrollment_date ? \Illuminate\Support\Carbon::parse($student->enrollment_date) : null;
-        if (!$enroll) { return redirect()->route('teacher.student', $student->id); }
+        if (!$enroll) { 
+            session()->flash('error', 'Enrollment date missing; cannot compute eligibility window.');
+            return redirect()->route('teacher.student', $student->id); 
+        }
         $now = now();
         $months = max(0, $enroll->diffInMonths($now));
         // Window indices: 0 => 1–6, 1 => 7–13, 2 => 14–20
@@ -146,6 +151,7 @@ class TeacherController extends Controller
         $existingToday = $student->tests()->whereDate('test_date', now()->toDateString())->first();
         if ($existingToday && $existingToday->observer?->role === 'teacher' && $existingToday->observer_id === $teacher->id) {
             $firstDomain = Domain::orderBy('id')->first();
+            session()->flash('success', 'Resuming your test scheduled for today.');
             return redirect()->route('teacher.tests.question', [$existingToday->id, $firstDomain->id, 0]);
         }
 
@@ -156,11 +162,13 @@ class TeacherController extends Controller
         if ($lastActive) {
             $months = \Illuminate\Support\Carbon::parse($lastActive->test_date)->diffInMonths(now());
             if ($months < 6) {
+                session()->flash('error', 'You can start a new test 6 months after your last completed test.');
                 return redirect()->route('teacher.student', $student->id);
             }
         }
         // Only allow ad-hoc start if within the current window and no scheduled test exists (fallback)
         if (!$now->betweenIncluded($windowStart, $windowEnd)) {
+            session()->flash('error', 'Not within the current eligibility window.');
             return redirect()->route('teacher.student', $student->id);
         }
         // Find an available date within the window (prefer today)
@@ -178,7 +186,13 @@ class TeacherController extends Controller
                 if (!in_array($c, $used)) { $found = $c; break; }
                 $cursor->addDay();
             }
-            if ($found) { $candidate = $found; } else { return redirect()->route('teacher.student', $student->id); }
+            if ($found) { 
+                $candidate = $found; 
+                session()->flash('success', "Today's date is taken. Scheduled on $candidate.");
+            } else { 
+                session()->flash('error', 'No available date within the window.');
+                return redirect()->route('teacher.student', $student->id); 
+            }
         }
 
         $testId = DB::table('tests')->insertGetId([
@@ -207,8 +221,11 @@ class TeacherController extends Controller
 
     public function showQuestion($testId, $domainId, $index)
     {
+        $user = Auth::user();
         $test = Test::with('student','observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher' || $test->status !== 'in_progress') { return redirect()->route('teacher.index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            return redirect()->route('index');
+        }
         $domain = Domain::with('questions')->findOrFail($domainId);
         $order = Session::get("teacher_test_order_$testId");
         if (!$order) {
@@ -239,8 +256,11 @@ class TeacherController extends Controller
     public function submitQuestion(Request $request, $testId, $domainId, $index)
     {
         $validated = $request->validate(['answer' => 'required|in:yes,no,na']);
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher' || $test->status !== 'in_progress') { return redirect()->route('teacher.index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id || $test->status !== 'in_progress') {
+            return redirect()->route('index');
+        }
         $domain = Domain::findOrFail($domainId);
         $order = Session::get("teacher_test_order_$testId");
         $questionId = $order[$domainId][$index] ?? null;
@@ -265,8 +285,11 @@ class TeacherController extends Controller
 
     public function result($testId)
     {
+        $user = Auth::user();
         $test = Test::with(['student','observer','responses.question.domain'])->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('teacher.index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) {
+            return redirect()->route('index');
+        }
         if (in_array($test->status, ['cancelled','terminated','incomplete','pending','in_progress'])) {
             return redirect()->route('teacher.student', $test->student_id);
         }
@@ -351,8 +374,9 @@ class TeacherController extends Controller
 
     public function finalize($testId)
     {
+        $user = Auth::user();
         $test = Test::with(['observer','responses.question.domain'])->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         // Enforce completeness before allowing finalize
         $domains = Domain::with('questions')->orderBy('id')->get();
         $totalQuestions = $domains->sum(fn($d) => $d->questions->count());
@@ -382,8 +406,9 @@ class TeacherController extends Controller
 
     public function markIncomplete($testId)
     {
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         $test->status = 'incomplete';
         $test->save();
         return redirect()->route('teacher.student', $test->student_id);
@@ -391,8 +416,9 @@ class TeacherController extends Controller
 
     public function cancel($testId)
     {
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         $test->status = 'cancelled';
         $test->save();
         return redirect()->route('teacher.student', $test->student_id);
@@ -400,8 +426,9 @@ class TeacherController extends Controller
 
     public function terminate($testId)
     {
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         $test->status = 'terminated';
         $test->save();
         return redirect()->route('teacher.student', $test->student_id);
@@ -409,8 +436,9 @@ class TeacherController extends Controller
 
     public function pause($testId)
     {
+        $user = Auth::user();
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if (!$user || $user->role !== 'teacher' || $test->observer?->role !== 'teacher' || $test->observer_id !== $user->id) { return redirect()->route('index'); }
         // Keep status as in_progress; simply return to dashboard
         if ($test->status !== 'in_progress') {
             $test->status = 'in_progress';

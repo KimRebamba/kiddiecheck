@@ -24,23 +24,27 @@ Route::post('/logout',[UserController::class, 'logout'])->name('logout');
 Route::prefix('admin')->middleware('auth')->group(function () {
 	Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 	Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
+	Route::get('/users/export', [AdminController::class, 'usersExport'])->name('admin.users.export');
 	Route::post('/users', [AdminController::class, 'usersStore'])->name('admin.users.store');
 	Route::post('/users/{user}/update', [AdminController::class, 'usersUpdate'])->name('admin.users.update');
 	Route::post('/users/{user}/delete', [AdminController::class, 'usersDestroy'])->name('admin.users.delete');
 
 	Route::get('/families', [AdminController::class, 'families'])->name('admin.families');
+	Route::get('/families/export', [AdminController::class, 'familiesExport'])->name('admin.families.export');
 	Route::post('/families', [AdminController::class, 'familiesStore'])->name('admin.families.store');
 	Route::post('/families/{family}/assign-student', [AdminController::class, 'familyAssignStudent'])->name('admin.families.assign');
 	Route::post('/families/{family}/update', [AdminController::class, 'familiesUpdate'])->name('admin.families.update');
 	Route::post('/families/{family}/delete', [AdminController::class, 'familiesDestroy'])->name('admin.families.delete');
 
 	Route::get('/teachers', [AdminController::class, 'teachers'])->name('admin.teachers');
+	Route::get('/teachers/export', [AdminController::class, 'teachersExport'])->name('admin.teachers.export');
 	Route::post('/teachers', [AdminController::class, 'teachersStore'])->name('admin.teachers.store');
 	Route::post('/teachers/{teacher}/assign-student', [AdminController::class, 'teacherAssignStudent'])->name('admin.teachers.assign');
 	Route::post('/teachers/{teacher}/update', [AdminController::class, 'teachersUpdate'])->name('admin.teachers.update');
 	Route::post('/teachers/{teacher}/delete', [AdminController::class, 'teachersDestroy'])->name('admin.teachers.delete');
 
 	Route::get('/sections', [AdminController::class, 'sections'])->name('admin.sections');
+	Route::get('/sections/export', [AdminController::class, 'sectionsExport'])->name('admin.sections.export');
 	Route::post('/sections', [AdminController::class, 'sectionsStore'])->name('admin.sections.store');
 	Route::get('/sections/{section}/students', [AdminController::class, 'sectionStudents'])->name('admin.sections.students');
 	Route::post('/sections/{section}/students', [AdminController::class, 'studentsStore'])->name('admin.sections.students.store');
@@ -58,6 +62,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 		->name('admin.students.record');
 
 	Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
+	Route::get('/reports/export', [AdminController::class, 'reportsExport'])->name('admin.reports.export');
 	// Admin delete a test (hard delete)
 	Route::post('/tests/{test}/delete', function($testId){
 		$test = \App\Models\Test::findOrFail($testId);

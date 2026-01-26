@@ -23,7 +23,7 @@ class AdminController extends Controller
 {
     public function index()
     {
-        return view('admin.index', [
+        $stats = [
             'userCount' => User::count(),
             'familyCount' => Family::count(),
             'teacherCount' => Teacher::count(),
@@ -31,15 +31,69 @@ class AdminController extends Controller
             'domainCount' => Domain::count(),
             'questionCount' => Question::count(),
             'testCount' => Test::count(),
-        ]);
+        ];
+
+        $inProgressTests = Test::with(['student.family','observer'])
+            ->where('status','in_progress')->orderByDesc('test_date')->limit(10)->get();
+        $pendingTests = Test::with(['student.family'])
+            ->where('status','pending')->orderBy('test_date')->limit(10)->get();
+        $recentCompleted = Test::with(['student.family','observer'])
+            ->where('status','completed')->orderByDesc('test_date')->limit(10)->get();
+
+        $unassignedStudents = Student::with(['family','section'])
+            ->whereDoesntHave('teachers')->orderBy('id','desc')->limit(10)->get();
+        $familiesSummary = Family::withCount('students')
+            ->orderByDesc('students_count')->limit(10)->get();
+        $teachersSummary = Teacher::with(['user'])->withCount('students')
+            ->orderByDesc('students_count')->limit(10)->get();
+        $sectionsSummary = \App\Models\Section::withCount('students')
+            ->orderByDesc('students_count')->limit(10)->get();
+
+        return view('admin.index', $stats + compact(
+            'inProgressTests','pendingTests','recentCompleted',
+            'unassignedStudents','familiesSummary','teachersSummary','sectionsSummary'
+        ));
     }
 
     // Users
-    public function users()
+    public function users(Request $request)
     {
+        $query = User::query();
+        if ($request->filled('name')) { $query->where('name','like','%'.$request->string('name').'%'); }
+        if ($request->filled('email')) { $query->where('email','like','%'.$request->string('email').'%'); }
+        if ($request->filled('role')) { $query->where('role', $request->string('role')); }
+        if ($request->filled('status')) { $query->where('status', $request->string('status')); }
+        $users = $query->orderByDesc('id')->paginate(25)->withQueryString();
         return view('admin.users.index', [
-            'users' => User::orderBy('id', 'desc')->get(),
+            'users' => $users,
+            'filters' => [
+                'name' => $request->string('name'),
+                'email' => $request->string('email'),
+                'role' => $request->string('role'),
+                'status' => $request->string('status'),
+            ],
         ]);
+    }
+
+    public function usersExport(Request $request)
+    {
+        $query = User::query();
+        if ($request->filled('name')) { $query->where('name','like','%'.$request->string('name').'%'); }
+        if ($request->filled('email')) { $query->where('email','like','%'.$request->string('email').'%'); }
+        if ($request->filled('role')) { $query->where('role', $request->string('role')); }
+        if ($request->filled('status')) { $query->where('status', $request->string('status')); }
+        $rows = $query->orderByDesc('id')->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="users_export.csv"'
+        ];
+        $callback = function() use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID','Name','Email','Role','Status','Profile Path']);
+            foreach ($rows as $u) { fputcsv($out, [$u->id, $u->name, $u->email, $u->role, $u->status, $u->profile_path]); }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     public function usersStore(Request $request)
@@ -101,13 +155,69 @@ class AdminController extends Controller
     }
 
     // Families
-    public function families()
+    public function families(Request $request)
     {
+        $query = Family::with(['user'])->withCount('students');
+        if ($request->filled('name')) {
+            $query->where('name','like','%'.$request->string('name').'%');
+        }
+        if ($request->filled('user')) {
+            $needle = '%'.$request->string('user').'%';
+            $query->whereHas('user', function($q) use ($needle){ $q->where('name','like',$needle)->orWhere('email','like',$needle); });
+        }
+        if ($request->filled('has')) {
+            $has = $request->string('has');
+            if ($has === 'students') { $query->has('students'); }
+            if ($has === 'none') { $query->doesntHave('students'); }
+        }
+        $families = $query->orderByDesc('id')->paginate(25)->withQueryString();
+
         return view('admin.families.index', [
-            'families' => Family::with(['user', 'students'])->orderBy('id', 'desc')->get(),
+            'families' => $families,
             'familyUsers' => User::where('role', 'family')->orderBy('name')->get(),
             'allStudents' => \App\Models\Student::orderBy('name')->get(),
+            'filters' => [
+                'name' => $request->string('name'),
+                'user' => $request->string('user'),
+                'has' => $request->string('has'),
+            ],
         ]);
+    }
+
+    public function familiesExport(Request $request)
+    {
+        $query = Family::with(['user'])->withCount('students');
+        if ($request->filled('name')) { $query->where('name','like','%'.$request->string('name').'%'); }
+        if ($request->filled('user')) {
+            $needle = '%'.$request->string('user').'%';
+            $query->whereHas('user', function($q) use ($needle){ $q->where('name','like',$needle)->orWhere('email','like',$needle); });
+        }
+        if ($request->filled('has')) {
+            $has = $request->string('has');
+            if ($has === 'students') { $query->has('students'); }
+            if ($has === 'none') { $query->doesntHave('students'); }
+        }
+        $rows = $query->orderByDesc('id')->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="families_export.csv"'
+        ];
+        $callback = function() use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID','Family','User','Email','Home','Students']);
+            foreach ($rows as $f) {
+                fputcsv($out, [
+                    $f->id,
+                    $f->name,
+                    optional($f->user)->name,
+                    optional($f->user)->email,
+                    $f->home_address,
+                    $f->students_count,
+                ]);
+            }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     public function familiesStore(Request $request)
@@ -155,13 +265,49 @@ class AdminController extends Controller
     }
 
     // Teachers
-    public function teachers()
+    public function teachers(Request $request)
     {
+        $query = Teacher::with(['user'])->withCount('students');
+        if ($request->filled('name')) { $query->whereHas('user', function($q) use ($request){ $q->where('name','like','%'.$request->string('name').'%'); }); }
+        if ($request->filled('email')) { $query->whereHas('user', function($q) use ($request){ $q->where('email','like','%'.$request->string('email').'%'); }); }
+        if ($request->filled('status')) { $query->where('status', $request->string('status')); }
+        if ($request->filled('min')) { $query->having('students_count', '>=', (int)$request->string('min')); }
+        if ($request->filled('max')) { $query->having('students_count', '<=', (int)$request->string('max')); }
+        $teachers = $query->orderByDesc('id')->paginate(25)->withQueryString();
         return view('admin.teachers.index', [
-            'teachers' => Teacher::with(['user', 'students'])->get(),
+            'teachers' => $teachers,
             'teacherUsers' => User::where('role', 'teacher')->orderBy('name')->get(),
             'allStudents' => \App\Models\Student::orderBy('name')->get(),
+            'filters' => [
+                'name' => $request->string('name'),
+                'email' => $request->string('email'),
+                'status' => $request->string('status'),
+                'min' => $request->string('min'),
+                'max' => $request->string('max'),
+            ],
         ]);
+    }
+
+    public function teachersExport(Request $request)
+    {
+        $query = Teacher::with(['user'])->withCount('students');
+        if ($request->filled('name')) { $query->whereHas('user', function($q) use ($request){ $q->where('name','like','%'.$request->string('name').'%'); }); }
+        if ($request->filled('email')) { $query->whereHas('user', function($q) use ($request){ $q->where('email','like','%'.$request->string('email').'%'); }); }
+        if ($request->filled('status')) { $query->where('status', $request->string('status')); }
+        if ($request->filled('min')) { $query->having('students_count', '>=', (int)$request->string('min')); }
+        if ($request->filled('max')) { $query->having('students_count', '<=', (int)$request->string('max')); }
+        $rows = $query->orderByDesc('id')->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="teachers_export.csv"'
+        ];
+        $callback = function() use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID','Name','Email','Hire Date','Status','Students']);
+            foreach ($rows as $t) { fputcsv($out, [$t->id, optional($t->user)->name, optional($t->user)->email, $t->hire_date, $t->status, $t->students_count]); }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     public function teachersStore(Request $request)
@@ -219,11 +365,41 @@ class AdminController extends Controller
     }
 
     // Sections (class sections & students)
-    public function sections()
+    public function sections(Request $request)
     {
+        $query = \App\Models\Section::withCount('students');
+        if ($request->filled('name')) { $query->where('name','like','%'.$request->string('name').'%'); }
+        if ($request->filled('min')) { $query->having('students_count', '>=', (int)$request->string('min')); }
+        if ($request->filled('max')) { $query->having('students_count', '<=', (int)$request->string('max')); }
+        $sections = $query->orderByDesc('id')->paginate(25)->withQueryString();
         return view('admin.sections.index', [
-            'sections' => \App\Models\Section::withCount('students')->orderBy('id','desc')->get(),
+            'sections' => $sections,
+            'filters' => [
+                'name' => $request->string('name'),
+                'min' => $request->string('min'),
+                'max' => $request->string('max'),
+            ],
         ]);
+    }
+
+    public function sectionsExport(Request $request)
+    {
+        $query = \App\Models\Section::withCount('students');
+        if ($request->filled('name')) { $query->where('name','like','%'.$request->string('name').'%'); }
+        if ($request->filled('min')) { $query->having('students_count', '>=', (int)$request->string('min')); }
+        if ($request->filled('max')) { $query->having('students_count', '<=', (int)$request->string('max')); }
+        $rows = $query->orderByDesc('id')->get();
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="sections_export.csv"'
+        ];
+        $callback = function() use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID','Section','Description','Students']);
+            foreach ($rows as $s) { fputcsv($out, [$s->id, $s->name, $s->description, $s->students_count]); }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     public function sectionsStore(Request $request)
@@ -323,11 +499,68 @@ class AdminController extends Controller
     }
 
     // Reports (Tests & Scores)
-    public function reports()
+    public function reports(Request $request)
     {
-        $tests = Test::with(['student.family', 'observer', 'responses.question', 'scores.domain'])
-            ->orderBy('id', 'desc')->get();
-        return view('admin.reports.index', compact('tests'));
+        $query = Test::with(['student.family', 'observer', 'responses.question', 'scores.domain']);
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status'));
+        }
+        if ($request->filled('role')) {
+            $role = $request->string('role');
+            $query->whereHas('observer', function($q) use ($role){ $q->where('role', $role); });
+        }
+        if ($request->filled('student')) {
+            $needle = '%' . $request->string('student') . '%';
+            $query->whereHas('student', function($q) use ($needle){ $q->where('name','like',$needle); });
+        }
+        if ($request->filled('from')) {
+            $query->whereDate('test_date', '>=', $request->date('from'));
+        }
+        if ($request->filled('to')) {
+            $query->whereDate('test_date', '<=', $request->date('to'));
+        }
+        $tests = $query->orderBy('id', 'desc')->paginate(25)->withQueryString();
+        $filters = [
+            'status' => $request->string('status'),
+            'role' => $request->string('role'),
+            'student' => $request->string('student'),
+            'from' => $request->string('from'),
+            'to' => $request->string('to'),
+        ];
+        return view('admin.reports.index', compact('tests','filters'));
+    }
+
+    public function reportsExport(Request $request)
+    {
+        $query = Test::with(['student.family', 'observer']);
+        if ($request->filled('status')) { $query->where('status', $request->string('status')); }
+        if ($request->filled('role')) { $role = $request->string('role'); $query->whereHas('observer', function($q) use ($role){ $q->where('role',$role); }); }
+        if ($request->filled('student')) { $needle = '%' . $request->string('student') . '%'; $query->whereHas('student', function($q) use ($needle){ $q->where('name','like',$needle); }); }
+        if ($request->filled('from')) { $query->whereDate('test_date', '>=', $request->date('from')); }
+        if ($request->filled('to')) { $query->whereDate('test_date', '<=', $request->date('to')); }
+        $rows = $query->orderBy('id','desc')->get();
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="tests_export.csv"'
+        ];
+        $callback = function() use ($rows) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID','Student','Family','Observer','Role','Date','Status']);
+            foreach ($rows as $t) {
+                fputcsv($out, [
+                    $t->id,
+                    optional($t->student)->name,
+                    optional(optional($t->student)->family)->name,
+                    optional($t->observer)->name,
+                    optional($t->observer)->role,
+                    $t->test_date,
+                    $t->status,
+                ]);
+            }
+            fclose($out);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
     // Profile (Admin user)

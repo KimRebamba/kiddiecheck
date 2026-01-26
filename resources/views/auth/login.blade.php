@@ -10,6 +10,9 @@
 	</head>
 <body class="container py-5">
 	<h1 class="mb-4">Welcome back</h1>
+	@if ($errors->any())
+		<div class="alert alert-danger">{{ $errors->first() }}</div>
+	@endif
 	<form method="POST" action="{{ route('login') }}" class="form-signin">
 		@csrf
 		<div class="mb-3">
@@ -25,9 +28,6 @@
 			<label class="form-check-label" for="remember">Remember me</label>
 		</div>
 		<button class="btn btn-primary w-100" type="submit">Login</button>
-		<div class="mt-3">
-			<a class="btn btn-link" href="{{ route('register') }}">Create an account</a>
-		</div>
 	</form>
 
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

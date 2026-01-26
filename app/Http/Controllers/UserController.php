@@ -18,11 +18,15 @@ class UserController extends Controller
         }
 
     public function login(Request $request){
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'remember' => 'nullable',
+        ]);
 
-        if(Auth::attempt([
-            'email' => $request->email,
-            'password' => $request->password
-        ])){
+        $remember = (bool) $request->boolean('remember');
+        if (Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']], $remember)) {
+            $request->session()->regenerate();
             $role = Auth::user()->role;
             if ($role === 'family') {
                 return redirect()->route('family.index');
@@ -32,13 +36,12 @@ class UserController extends Controller
                 return redirect()->route('admin.index');
             }
             return redirect()->route('index');
-        }else{
-            return 'wrong credentials';
         }
+        return back()->withErrors(['Invalid email or password.'])->withInput(['email' => $validated['email']]);
     }
     
-    public function showRegisterForm(){
-        return view('auth.register');
+        public function showRegisterForm(){
+        return redirect()->route('login');
     }
 
     public function index()
@@ -62,33 +65,8 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:family,teacher,admin',
-            'status' => 'nullable|in:active,inactive',
-            'profile_path' => 'nullable|string|max:255',
-        ]);
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
-            'status' => $validated['status'] ?? 'active',
-            'profile_path' => $validated['profile_path'] ?? null,
-        ]);
-
-        Auth::login($user);
-        if ($user->role === 'family') {
-            return redirect()->route('family.index');
-        } elseif ($user->role === 'teacher') {
-            return redirect()->route('teacher.index');
-        } elseif ($user->role === 'admin') {
-            return redirect()->route('admin.index');
-        }
-        return redirect()->route('index');
+        // Registration disabled
+        return redirect()->route('login');
     }
 
     /**

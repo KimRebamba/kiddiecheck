@@ -1,0 +1,9 @@
+So here's what i want from the teacher side/folder:
+
+Mainly, i want them to see the number of children they are assigned to, the test they should take this month (only once per month) and see their student's info and all the tests they should do this month.
+
+Go to reference-scale and reference html files as a basis for how to show if a kid's performing in these test (shows progress 6 / 12 / 18 months). Also, IMPORTANT: A teacher can test a child once every 6 months and a parent can test a child for once every 6 months to. Then we will aggregate them or do your stuff. Though, parent test result is optional, teacher test is primary.
+
+When a button is pressed to take a test with child on that month, we have a sequence of one domain, will aggregate the score, please figure the calculations using the references). Then it will show the next domain. If its interactive, for now, just show them normally like the static ones. Also, let them show at random. For teachers, its a checklist.
+\You can add other concerns.
+UI should be simple, no css.  

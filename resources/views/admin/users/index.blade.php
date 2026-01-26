@@ -40,7 +40,7 @@
 <table border="1" cellpadding="6" cellspacing="0">
 	<thead>
 		<tr>
-			<th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Profile</th>
+			<th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Profile</th><th>Actions</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -52,6 +52,28 @@
 				<td>{{ $u->role }}</td>
 				<td>{{ $u->status }}</td>
 				<td>{{ $u->profile_path }}</td>
+				<td>
+					<form method="POST" action="{{ route('admin.users.update', $u->id) }}" style="display:inline-block">
+						@csrf
+						<input type="text" name="name" value="{{ $u->name }}" style="width:120px">
+						<input type="email" name="email" value="{{ $u->email }}" style="width:160px">
+						<select name="role">
+							<option value="family" @selected($u->role==='family')>Family</option>
+							<option value="teacher" @selected($u->role==='teacher')>Teacher</option>
+							<option value="admin" @selected($u->role==='admin')>Admin</option>
+						</select>
+						<select name="status">
+							<option value="active" @selected($u->status==='active')>Active</option>
+							<option value="inactive" @selected($u->status==='inactive')>Inactive</option>
+						</select>
+						<input type="text" name="profile_path" value="{{ $u->profile_path }}" placeholder="/storage/public/avatar.jpg" style="width:160px">
+						<button type="submit">Save</button>
+					</form>
+					<form method="POST" action="{{ route('admin.users.delete', $u->id) }}" style="display:inline-block" onsubmit="return confirm('Delete this user?')">
+						@csrf
+						<button type="submit">Delete</button>
+					</form>
+				</td>
 			</tr>
 		@endforeach
 	</tbody>

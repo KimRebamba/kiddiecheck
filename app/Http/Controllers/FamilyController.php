@@ -39,10 +39,18 @@ class FamilyController extends Controller
         $status = [];
         foreach ($students as $s) {
             $latest = $s->tests()->orderBy('test_date', 'desc')->first();
-            $hasThisMonth = $s->tests()->whereBetween('test_date', [now()->startOfMonth(), now()->endOfMonth()])->exists();
+            $familyHasThisMonth = $s->tests()
+                ->whereBetween('test_date', [now()->startOfMonth(), now()->endOfMonth()])
+                ->whereHas('observer', function($q){ $q->where('role','family'); })
+                ->exists();
+            $latestFamily = $s->tests()
+                ->whereHas('observer', function($q){ $q->where('role','family'); })
+                ->orderBy('test_date','desc')
+                ->first();
             $status[$s->id] = [
-                'has_test_this_month' => $hasThisMonth,
+                'family_has_test_this_month' => $familyHasThisMonth,
                 'latest' => $latest,
+                'latest_family' => $latestFamily,
             ];
         }
 
@@ -53,10 +61,11 @@ class FamilyController extends Controller
     {
         $userId = Auth::id();
         $family = Family::where('user_id', $userId)->firstOrFail();
-        $student = Student::with(['family','tests.scores.domain','tests.responses.question'])->where('family_id', $family->id)->findOrFail($studentId);
+        $student = Student::with(['family','tests' => function($q){ $q->where('status','completed'); }, 'tests.scores.domain','tests.responses','tests.observer'])
+            ->where('family_id', $family->id)->findOrFail($studentId);
 
         $domains = Domain::orderBy('name')->get();
-        $tests = $student->tests()->with(['scores','responses'])->orderBy('test_date','desc')->take(6)->get();
+        $tests = $student->tests()->with(['scores','responses','observer'])->where('status','completed')->orderBy('test_date','desc')->take(6)->get();
         $summary = EccdScoring::summarize($tests, $domains);
 
         return view('family.child', compact('student','domains','tests','summary'));
@@ -68,24 +77,98 @@ class FamilyController extends Controller
         $family = Family::where('user_id', $userId)->firstOrFail();
         $student = Student::where('family_id', $family->id)->findOrFail($studentId);
 
-        // Reuse any test already created today to avoid duplicates
-        $existingToday = $student->tests()->whereDate('test_date', now()->toDateString())->first();
-        if ($existingToday) {
-            $firstDomain = Domain::orderBy('id')->first();
-            return redirect()->route('family.tests.question', [$existingToday->id, $firstDomain->id, 0]);
+        // Prevent concurrent in-progress FAMILY tests for the same student
+        $hasInProgress = $student->tests()->where('status', 'in_progress')
+            ->whereHas('observer', function($q){ $q->where('role','family'); })
+            ->exists();
+        if ($hasInProgress) {
+            return redirect()->route('family.child', $student->id);
         }
 
-        // Otherwise, enforce one test per month for family
-        $existingThisMonth = $student->tests()->whereBetween('test_date', [now()->startOfMonth(), now()->endOfMonth()])->first();
-        if ($existingThisMonth) {
-            $firstDomain = Domain::orderBy('id')->first();
-            return redirect()->route('family.tests.question', [$existingThisMonth->id, $firstDomain->id, 0]);
+        // Enforce overall limit: max 3 non-cancelled/terminated tests
+        $activeCount = $student->tests()->whereNotIn('status', ['cancelled','terminated'])->count();
+        if ($activeCount >= 3) {
+            return redirect()->route('family.child', $student->id);
+        }
+
+        // Determine current eligible six-month window anchored at enrollment
+        $enroll = $student->enrollment_date ? \Illuminate\Support\Carbon::parse($student->enrollment_date) : null;
+        if (!$enroll) { return redirect()->route('family.child', $student->id); }
+        $now = now();
+        $months = max(0, $enroll->diffInMonths($now));
+        // Window indices: 0 => 1–6, 1 => 7–13, 2 => 14–20
+        $windowIdx = null;
+        if ($months >= 1 && $months <= 6) { $windowIdx = 0; }
+        elseif ($months >= 7 && $months <= 13) { $windowIdx = 1; }
+        elseif ($months >= 14 && $months <= 20) { $windowIdx = 2; }
+        else { return redirect()->route('family.child', $student->id); }
+
+        $starts = [
+            $enroll->copy()->addMonths(1),
+            $enroll->copy()->addMonths(7),
+            $enroll->copy()->addMonths(14),
+        ];
+        $windowStart = $starts[$windowIdx]->startOfDay();
+        $windowEnd = $windowStart->copy()->addMonths(6)->subDay();
+
+        // Reuse the scheduled pending test for this window if present
+        $scheduled = $student->tests()->where('test_date', $windowStart->toDateString())->where('status','pending')->first();
+        if ($scheduled && $now->betweenIncluded($windowStart, $windowEnd)) {
+            $scheduled->observer_id = $userId;
+            $scheduled->status = 'in_progress';
+            $scheduled->started_at = now();
+            $domains = Domain::with('questions')->orderBy('id')->get();
+            $order = [];
+            foreach ($domains as $d) {
+                $ids = $d->questions->pluck('id')->all();
+                shuffle($ids);
+                $order[$d->id] = $ids;
+            }
+            $scheduled->question_order = json_encode($order);
+            $scheduled->save();
+            Session::put("test_order_{$scheduled->id}", $order);
+            $firstDomain = $domains->first();
+            return redirect()->route('family.tests.question', [$scheduled->id, $firstDomain->id, 0]);
+        }
+
+        // Enforce 6-month interval relative to last non-cancelled FAMILY test
+        $lastActive = $student->tests()
+            ->whereNotIn('status',['cancelled','terminated'])
+            ->whereHas('observer', function($q){ $q->where('role','family'); })
+            ->orderBy('test_date','desc')
+            ->first();
+        if ($lastActive) {
+            $months = \Illuminate\Support\Carbon::parse($lastActive->test_date)->diffInMonths(now());
+            if ($months < 6) {
+                session()->flash('error', 'Family tests are limited to one every 6 months.');
+                return redirect()->route('family.child', $student->id);
+            }
+        }
+
+        // Only allow ad-hoc start if within the current window and no scheduled test exists (fallback)
+        if (!$now->betweenIncluded($windowStart, $windowEnd)) {
+            return redirect()->route('family.child', $student->id);
+        }
+        // Find an available date within the window (prefer today)
+        $used = $student->tests()->whereBetween('test_date', [$windowStart->toDateString(), $windowEnd->toDateString()])->pluck('test_date')->map(fn($d)=> (string)$d)->toArray();
+        $candidate = $now->toDateString();
+        if (!in_array($candidate, $used)) {
+            // ok
+        } else {
+            $cursor = $now->copy();
+            $found = null;
+            while ($cursor->lte($windowEnd)) {
+                $c = $cursor->toDateString();
+                if (!in_array($c, $used)) { $found = $c; break; }
+                $cursor->addDay();
+            }
+            if ($found) { $candidate = $found; } else { return redirect()->route('family.child', $student->id); }
         }
 
         $testId = DB::table('tests')->insertGetId([
             'student_id' => $student->id,
             'observer_id' => $userId,
-            'test_date' => now()->toDateString(),
+            'test_date' => $candidate,
             'status' => 'in_progress',
             'started_at' => now(),
             'submitted_by' => null,
@@ -101,6 +184,7 @@ class FamilyController extends Controller
             $order[$d->id] = $ids;
         }
         Session::put("test_order_$testId", $order);
+        DB::table('tests')->where('id', $testId)->update(['question_order' => json_encode($order)]);
 
         $firstDomain = $domains->first();
         return redirect()->route('family.tests.question', [$testId, $firstDomain->id, 0]);
@@ -108,15 +192,25 @@ class FamilyController extends Controller
 
     public function showQuestion($testId, $domainId, $index)
     {
-        $test = Test::with('student')->findOrFail($testId);
+        $test = Test::with(['student','observer','responses'])->findOrFail($testId);
+        // Strictness: Only allow answering when this is a family-run, in-progress test
+        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be answered.');
+            return redirect()->route('family.child', $test->student_id);
+        }
         $domain = Domain::with('questions')->findOrFail($domainId);
         $order = Session::get("test_order_$testId");
+        if (!$order) {
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+        }
         if (!$order || !isset($order[$domainId])) {
             // Rebuild deterministic order if missing
             $ids = $domain->questions->pluck('id')->all();
             shuffle($ids);
+            $order = is_array($order) ? $order : [];
             $order[$domainId] = $ids;
             Session::put("test_order_$testId", $order);
+            DB::table('tests')->where('id', $testId)->update(['question_order' => json_encode($order)]);
         }
         $ids = $order[$domainId];
         if (!isset($ids[$index])) {
@@ -131,7 +225,12 @@ class FamilyController extends Controller
         }
         $question = Question::findOrFail($ids[$index]);
 
-        return view('family.test_question', compact('test','domain','question','index'));
+        $allDomains = Domain::with('questions')->orderBy('id')->get();
+        $totalQuestions = $allDomains->sum(fn($d) => $d->questions->count());
+        $answeredCount = $test->responses->count();
+        $progressPct = $totalQuestions ? round(($answeredCount / max(1, $totalQuestions)) * 100) : null;
+
+        return view('family.test_question', compact('test','domain','question','index','totalQuestions','answeredCount','progressPct'));
     }
 
     public function submitQuestion(Request $request, $testId, $domainId, $index)
@@ -139,7 +238,11 @@ class FamilyController extends Controller
         $validated = $request->validate([
             'answer' => 'required|in:yes,no,na',
         ]);
-        $test = Test::findOrFail($testId);
+        $test = Test::with('observer')->findOrFail($testId);
+        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be answered.');
+            return redirect()->route('family.child', $test->student_id);
+        }
         $domain = Domain::findOrFail($domainId);
         $order = Session::get("test_order_$testId");
         $questionId = $order[$domainId][$index] ?? null;
@@ -166,9 +269,40 @@ class FamilyController extends Controller
 
     public function result($testId)
     {
-        $test = Test::with(['student','responses.question.domain'])->findOrFail($testId);
+        $test = Test::with(['student','observer','responses.question.domain'])->findOrFail($testId);
+        // Disallow results for cancelled/terminated/incomplete/pending tests
+        if (($test->observer?->role ?? null) !== 'family') { return redirect()->route('family.index'); }
+        if (in_array($test->status, ['cancelled','terminated','incomplete','pending'])) {
+            session()->flash('error', 'Results are available only for completed tests.');
+            return redirect()->route('family.child', $test->student_id);
+        }
         $domains = Domain::with('questions')->orderBy('id')->get();
 
+        // Enforce completeness: all questions must have a response (yes/no/na)
+        $totalQuestions = $domains->sum(fn($d) => $d->questions->count());
+        $answeredCount = $test->responses->count();
+        if ($answeredCount < $totalQuestions) {
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+            if (!$order) {
+                $order = [];
+                foreach ($domains as $d) {
+                    $ids = $d->questions->pluck('id')->all();
+                    shuffle($ids);
+                    $order[$d->id] = $ids;
+                }
+                \Illuminate\Support\Facades\DB::table('tests')->where('id', $test->id)->update(['question_order' => json_encode($order)]);
+            }
+            foreach ($order as $domainId => $qIds) {
+                foreach ($qIds as $idx => $qid) {
+                    $hasResp = $test->responses->firstWhere('question_id', $qid) !== null;
+                    if (!$hasResp) {
+                        return redirect()->route('family.tests.question', [$test->id, $domainId, $idx]);
+                    }
+                }
+            }
+            $firstDomain = $domains->first();
+            return redirect()->route('family.tests.question', [$test->id, $firstDomain->id, 0]);
+        }
         // Compute per-domain raw and scaled scores
         foreach ($domains as $d) {
             $qIds = $d->questions->pluck('id')->all();
@@ -177,7 +311,8 @@ class FamilyController extends Controller
             $yesCount = $applicable->filter(function($r){ return (float)$r->score === 1.0; })->count();
             $totalApplicable = max(1, $applicable->count());
             $raw = (float)$yesCount;
-            $scaled = round(($yesCount / $totalApplicable) * 100.0, 2);
+            $pct = ($yesCount / $totalApplicable) * 100.0;
+            $scaled = \App\Services\EccdScoring::percentageToScaled($pct);
             $based = (float)$totalApplicable;
 
             DB::table('domain_scores')->updateOrInsert([
@@ -195,16 +330,97 @@ class FamilyController extends Controller
         // Reload test with scores
         $test->load(['scores.domain']);
         $sumScaled = $test->scores->sum('scaled_score');
-        $standardScore = EccdScoring::deriveStandardScore((float)$sumScaled);
+        $standardScore = EccdScoring::deriveStandardScore((float)$sumScaled, $domains->count());
 
-        // Mark submitted
-        if (!$test->submitted_at) {
-            $test->submitted_by = 'family';
-            $test->submitted_at = now();
-            $test->status = 'completed';
-            $test->save();
+        // Determine 6-month window bounds anchored at enrollment
+        $enroll = $test->student->enrollment_date ? \Illuminate\Support\Carbon::parse($test->student->enrollment_date) : null;
+        $anchor = $enroll ?: \Illuminate\Support\Carbon::parse($test->student->tests()->orderBy('test_date','asc')->value('test_date') ?? $test->test_date);
+        $tDate = \Illuminate\Support\Carbon::parse($test->test_date);
+        $months = max(0, $anchor->diffInMonths($tDate));
+        $windowIdx = intdiv($months, 6);
+        $windowStart = $anchor->copy()->addMonths($windowIdx * 6)->startOfDay();
+        $windowEnd = $windowStart->copy()->addMonths(6)->subDay();
+
+        // Collect tests in the same 6-month window (completed only)
+        $windowTests = $test->student->tests()->with(['scores','observer'])
+            ->whereBetween('test_date', [$windowStart->toDateString(), $windowEnd->toDateString()])
+            ->where('status', 'completed')
+            ->get();
+
+        $aggregates = EccdScoring::aggregateByRole($windowTests, $domains);
+        $discrepancies = EccdScoring::analyzeDiscrepancies($aggregates['teacher'], $aggregates['family'], $domains);
+
+        return view('family.test_result', compact('test','domains','sumScaled','standardScore','windowStart','windowEnd','aggregates','discrepancies'));
+    }
+
+    public function finalize($testId)
+    {
+        $test = Test::with(['observer','responses.question.domain'])->findOrFail($testId);
+        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
+            return redirect()->route('family.child', $test->student_id);
         }
+        // Enforce completeness before allowing finalize
+        $domains = Domain::with('questions')->orderBy('id')->get();
+        $totalQuestions = $domains->sum(fn($d) => $d->questions->count());
+        $answeredCount = $test->responses->count();
+        if ($answeredCount < $totalQuestions) {
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+            if ($order) {
+                foreach ($order as $domainId => $qIds) {
+                    foreach ($qIds as $idx => $qid) {
+                        $hasResp = $test->responses->firstWhere('question_id', $qid) !== null;
+                        if (!$hasResp) {
+                            return redirect()->route('family.tests.question', [$test->id, $domainId, $idx]);
+                        }
+                    }
+                }
+            }
+            $firstDomain = $domains->first();
+            return redirect()->route('family.tests.question', [$test->id, $firstDomain->id, 0]);
+        }
+        $test->submitted_by = 'family';
+        $test->submitted_at = now();
+        $test->status = 'completed';
+        $test->save();
+        return redirect()->route('family.tests.result', $test->id);
+    }
 
-        return view('family.test_result', compact('test','domains','sumScaled','standardScore'));
+    public function markIncomplete($testId)
+    {
+        $test = Test::findOrFail($testId);
+        $test->status = 'incomplete';
+        $test->save();
+        session()->flash('success', 'Test marked incomplete.');
+        return redirect()->route('family.child', $test->student_id);
+    }
+
+    public function cancel($testId)
+    {
+        $test = Test::findOrFail($testId);
+        $test->status = 'cancelled';
+        $test->save();
+        session()->flash('success', 'Test cancelled.');
+        return redirect()->route('family.child', $test->student_id);
+    }
+
+    public function terminate($testId)
+    {
+        $test = Test::findOrFail($testId);
+        $test->status = 'terminated';
+        $test->save();
+        session()->flash('success', 'Test terminated.');
+        return redirect()->route('family.child', $test->student_id);
+    }
+
+    public function pause($testId)
+    {
+        $test = Test::with('observer')->findOrFail($testId);
+        if (($test->observer?->role ?? null) !== 'family' || $test->status !== 'in_progress') {
+            session()->flash('error', 'Only in-progress family tests can be paused.');
+            return redirect()->route('family.child', $test->student_id);
+        }
+        // Keep status as in_progress; simply return to dashboard
+        session()->flash('success', 'Progress saved. You can continue later.');
+        return redirect()->route('family.index');
     }
 }

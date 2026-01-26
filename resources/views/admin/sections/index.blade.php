@@ -17,6 +17,16 @@
 		<li>
 			#{{ $s->id }} {{ $s->name }} ({{ $s->students_count }} students)
 			— <a href="{{ route('admin.sections.students', $s->id) }}">View Students</a>
+			<form method="POST" action="{{ route('admin.sections.update', $s->id) }}" style="display:inline-block; margin-left:8px">
+				@csrf
+				<input type="text" name="name" value="{{ $s->name }}" style="width:140px">
+				<input type="text" name="description" value="{{ $s->description }}" style="width:220px">
+				<button type="submit">Update</button>
+			</form>
+			<form method="POST" action="{{ route('admin.sections.delete', $s->id) }}" style="display:inline-block; margin-left:6px" onsubmit="return confirm('Delete this section? It must have no students.')">
+				@csrf
+				<button type="submit">Delete</button>
+			</form>
 		</li>
 	@endforeach
 	</ul>

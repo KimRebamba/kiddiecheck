@@ -5,7 +5,11 @@
 
 @foreach($tests as $t)
 	<h3>Test #{{ $t->id }} | Student: {{ $t->student->name }} | Date: {{ $t->test_date }} | Status: {{ $t->status }}</h3>
-	<p>Observer: {{ optional($t->observer)->name }} ({{ $t->observer_role }})</p>
+	<p>Observer: {{ optional($t->observer)->name }} ({{ optional($t->observer)->role }})</p>
+	<form method="post" action="{{ route('admin.tests.delete', $t->id) }}" style="display:inline-block">
+		@csrf
+		<button class="btn btn-sm btn-outline-danger" type="submit">Delete Test</button>
+	</form>
 	<p>Responses:</p>
 	<ul>
 		@foreach($t->responses as $r)

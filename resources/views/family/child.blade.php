@@ -24,7 +24,15 @@
         <td>{{ $t->status }}</td>
         <td>{{ $sum ?? '—' }}</td>
         <td>{{ $ss ?? '—' }}</td>
-        <td><a href="{{ route('family.tests.result', $t->id) }}">View</a></td>
+        <td>
+          @if($t->status === 'in_progress' && optional($t->observer)->role === 'family')
+            <a href="{{ route('family.tests.question', [$t->id, \App\Models\Domain::orderBy('id')->first()->id, 0]) }}">Continue</a>
+          @elseif($t->status === 'completed')
+            <a href="{{ route('family.tests.result', $t->id) }}">View</a>
+          @else
+            —
+          @endif
+        </td>
       </tr>
     @endforeach
   </table>
@@ -41,9 +49,17 @@
   </tr>
   @foreach($domains as $d)
     @php
-      $last = $tests->first()?->scores->firstWhere('domain_id', $d->id)?->scaled_score;
-      $avg3 = round($tests->take(3)->map(fn($t) => optional($t->scores->firstWhere('domain_id',$d->id))->scaled_score)->filter()->avg() ?? 0, 2);
-      $avg6 = round($tests->take(6)->map(fn($t) => optional($t->scores->firstWhere('domain_id',$d->id))->scaled_score)->filter()->avg() ?? 0, 2);
+      $max = config('eccd.scaled_score_max', 19);
+      $lastV = $tests->first()?->scores->firstWhere('domain_id', $d->id)?->scaled_score;
+      $last = $lastV !== null ? ($lastV > $max ? \App\Services\EccdScoring::percentageToScaled((float)$lastV) : $lastV) : null;
+      $avg3 = round($tests->take(3)->map(function($t) use ($d, $max){
+          $v = optional($t->scores->firstWhere('domain_id',$d->id))->scaled_score;
+          return $v !== null ? ($v > $max ? \App\Services\EccdScoring::percentageToScaled((float)$v) : (float)$v) : null;
+        })->filter()->avg() ?? 0, 2);
+      $avg6 = round($tests->take(6)->map(function($t) use ($d, $max){
+          $v = optional($t->scores->firstWhere('domain_id',$d->id))->scaled_score;
+          return $v !== null ? ($v > $max ? \App\Services\EccdScoring::percentageToScaled((float)$v) : (float)$v) : null;
+        })->filter()->avg() ?? 0, 2);
     @endphp
     <tr>
       <td>{{ $d->name }}</td>

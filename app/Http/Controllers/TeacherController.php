@@ -29,13 +29,18 @@ class TeacherController extends Controller
 
         $status = [];
         foreach ($students as $s) {
-            // Last teacher-run test
-            $latestTeacherTest = $s->tests()->whereHas('observer', function($q){ $q->where('role', 'teacher'); })
-                ->orderBy('test_date','desc')->first();
-            $monthsSince = $latestTeacherTest ? \Illuminate\Support\Carbon::parse($latestTeacherTest->test_date)->diffInMonths(now()) : null;
-            $eligible = $monthsSince === null || $monthsSince >= 6;
+            // Determine active in-progress teacher test (for this teacher only)
+            $inProgress = $s->tests()->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id', $teacher->id); })
+                ->where('status','in_progress')->orderBy('test_date','desc')->first();
+            // Determine last completed teacher test for eligibility calculation (for this teacher only)
+            $latestCompleted = $s->tests()->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id', $teacher->id); })
+                ->where('status','completed')->orderBy('test_date','desc')->first();
+            $monthsSince = $latestCompleted ? \Illuminate\Support\Carbon::parse($latestCompleted->test_date)->diffInMonths(now()) : null;
+            $eligible = ($inProgress === null) && ($monthsSince === null || $monthsSince >= 6);
             $status[$s->id] = [
-                'latest_teacher' => $latestTeacherTest,
+                'latest_teacher' => $latestCompleted ?? $inProgress,
+                'latest_teacher_completed' => $latestCompleted,
+                'in_progress' => $inProgress,
                 'eligible' => $eligible,
             ];
         }
@@ -62,7 +67,12 @@ class TeacherController extends Controller
         $avg = function($collection, $months, $domainId){
             $cutoff = now()->subMonths($months);
             $sel = $collection->filter(fn($t) => \Illuminate\Support\Carbon::parse($t->test_date)->gte($cutoff));
-            return round($sel->map(fn($t) => optional($t->scores->firstWhere('domain_id',$domainId))->scaled_score)
+            return round($sel->map(function($t) use ($domainId){
+                    $v = optional($t->scores->firstWhere('domain_id',$domainId))->scaled_score;
+                    if ($v === null) return null;
+                    $max = (int) config('eccd.scaled_score_max', 19);
+                    return $v > $max ? \App\Services\EccdScoring::percentageToScaled((float)$v) : (float)$v;
+                })
                 ->filter()->avg() ?? 0, 2);
         };
 
@@ -76,31 +86,105 @@ class TeacherController extends Controller
         $teacher = Teacher::firstOrCreate(['id' => $user->id], ['hire_date' => null, 'status' => 'active']);
         $student = Student::whereHas('teachers', function($q) use ($teacher){ $q->where('teachers.id', $teacher->id); })->findOrFail($studentId);
 
-        // If a test already exists today for this student, avoid duplicate insert
-        $existingToday = $student->tests()->whereDate('test_date', now()->toDateString())->first();
-        if ($existingToday) {
-            // If it's a teacher-run test, resume it; otherwise go back to student page
-            if ($existingToday->observer?->role === 'teacher') {
-                $firstDomain = Domain::orderBy('id')->first();
-                return redirect()->route('teacher.tests.question', [$existingToday->id, $firstDomain->id, 0]);
-            }
+        // Prevent concurrent in-progress tests for THIS teacher on the same student
+        $hasInProgress = $student->tests()->where('status', 'in_progress')
+            ->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id',$teacher->id); })
+            ->exists();
+        if ($hasInProgress) {
             return redirect()->route('teacher.student', $student->id);
         }
 
-        // Enforce 6-month interval for teacher tests
-        $lastTeacher = $student->tests()->whereHas('observer', function($q){ $q->where('role','teacher'); })
+        // Enforce overall limit per teacher: max 3 non-cancelled/terminated tests by THIS teacher
+        $activeCount = $student->tests()->whereNotIn('status', ['cancelled','terminated'])
+            ->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id',$teacher->id); })
+            ->count();
+        if ($activeCount >= 3) {
+            return redirect()->route('teacher.student', $student->id);
+        }
+
+        // Determine current eligible six-month window anchored at enrollment
+        $enroll = $student->enrollment_date ? \Illuminate\Support\Carbon::parse($student->enrollment_date) : null;
+        if (!$enroll) { return redirect()->route('teacher.student', $student->id); }
+        $now = now();
+        $months = max(0, $enroll->diffInMonths($now));
+        // Window indices: 0 => 1–6, 1 => 7–13, 2 => 14–20
+        $windowIdx = null;
+        if ($months >= 1 && $months <= 6) { $windowIdx = 0; }
+        elseif ($months >= 7 && $months <= 13) { $windowIdx = 1; }
+        elseif ($months >= 14 && $months <= 20) { $windowIdx = 2; }
+        else { return redirect()->route('teacher.student', $student->id); }
+
+        $starts = [
+            $enroll->copy()->addMonths(1),
+            $enroll->copy()->addMonths(7),
+            $enroll->copy()->addMonths(14),
+        ];
+        $windowStart = $starts[$windowIdx]->startOfDay();
+        $windowEnd = $windowStart->copy()->addMonths(6)->subDay();
+
+        // Reuse the scheduled pending test for this window if present
+        $scheduled = $student->tests()->where('test_date', $windowStart->toDateString())->where('status','pending')->first();
+        if ($scheduled && $now->betweenIncluded($windowStart, $windowEnd)) {
+            $scheduled->observer_id = $user->id;
+            $scheduled->status = 'in_progress';
+            $scheduled->started_at = now();
+            $domains = Domain::with('questions')->orderBy('id')->get();
+            $order = [];
+            foreach ($domains as $d) {
+                $ids = $d->questions->pluck('id')->all();
+                shuffle($ids);
+                $order[$d->id] = $ids;
+            }
+            $scheduled->question_order = json_encode($order);
+            $scheduled->save();
+            Session::put("teacher_test_order_{$scheduled->id}", $order);
+            $firstDomain = $domains->first();
+            return redirect()->route('teacher.tests.question', [$scheduled->id, $firstDomain->id, 0]);
+        }
+
+        // If any test exists today: resume teacher test if present; else pick another date
+        $existingToday = $student->tests()->whereDate('test_date', now()->toDateString())->first();
+        if ($existingToday && $existingToday->observer?->role === 'teacher' && $existingToday->observer_id === $teacher->id) {
+            $firstDomain = Domain::orderBy('id')->first();
+            return redirect()->route('teacher.tests.question', [$existingToday->id, $firstDomain->id, 0]);
+        }
+
+        // Enforce 6-month interval relative to last non-cancelled TEACHER test
+        $lastActive = $student->tests()->whereNotIn('status',['cancelled','terminated'])
+            ->whereHas('observer', function($q) use ($teacher){ $q->where('role','teacher')->where('id',$teacher->id); })
             ->orderBy('test_date','desc')->first();
-        if ($lastTeacher) {
-            $months = \Illuminate\Support\Carbon::parse($lastTeacher->test_date)->diffInMonths(now());
+        if ($lastActive) {
+            $months = \Illuminate\Support\Carbon::parse($lastActive->test_date)->diffInMonths(now());
             if ($months < 6) {
                 return redirect()->route('teacher.student', $student->id);
             }
+        }
+        // Only allow ad-hoc start if within the current window and no scheduled test exists (fallback)
+        if (!$now->betweenIncluded($windowStart, $windowEnd)) {
+            return redirect()->route('teacher.student', $student->id);
+        }
+        // Find an available date within the window (prefer today)
+        // Respect unique (student_id, test_date): consider ALL tests for date collision within window
+        $used = $student->tests()->whereBetween('test_date', [$windowStart->toDateString(), $windowEnd->toDateString()])
+            ->pluck('test_date')->map(fn($d)=> (string)$d)->toArray();
+        $candidate = $now->toDateString();
+        if (!in_array($candidate, $used)) {
+            // ok
+        } else {
+            $cursor = $now->copy();
+            $found = null;
+            while ($cursor->lte($windowEnd)) {
+                $c = $cursor->toDateString();
+                if (!in_array($c, $used)) { $found = $c; break; }
+                $cursor->addDay();
+            }
+            if ($found) { $candidate = $found; } else { return redirect()->route('teacher.student', $student->id); }
         }
 
         $testId = DB::table('tests')->insertGetId([
             'student_id' => $student->id,
             'observer_id' => $user->id,
-            'test_date' => now()->toDateString(),
+            'test_date' => $candidate,
             'status' => 'in_progress',
             'started_at' => now(),
             'submitted_by' => null,
@@ -115,6 +199,7 @@ class TeacherController extends Controller
             $order[$d->id] = $ids;
         }
         Session::put("teacher_test_order_$testId", $order);
+        DB::table('tests')->where('id', $testId)->update(['question_order' => json_encode($order)]);
 
         $firstDomain = $domains->first();
         return redirect()->route('teacher.tests.question', [$testId, $firstDomain->id, 0]);
@@ -123,14 +208,19 @@ class TeacherController extends Controller
     public function showQuestion($testId, $domainId, $index)
     {
         $test = Test::with('student','observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if ($test->observer?->role !== 'teacher' || $test->status !== 'in_progress') { return redirect()->route('teacher.index'); }
         $domain = Domain::with('questions')->findOrFail($domainId);
         $order = Session::get("teacher_test_order_$testId");
+        if (!$order) {
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+        }
         if (!$order || !isset($order[$domainId])) {
             $ids = $domain->questions->pluck('id')->all();
             shuffle($ids);
+            $order = is_array($order) ? $order : [];
             $order[$domainId] = $ids;
             Session::put("teacher_test_order_$testId", $order);
+            DB::table('tests')->where('id', $testId)->update(['question_order' => json_encode($order)]);
         }
         $ids = $order[$domainId];
         if (!isset($ids[$index])) {
@@ -150,7 +240,7 @@ class TeacherController extends Controller
     {
         $validated = $request->validate(['answer' => 'required|in:yes,no,na']);
         $test = Test::with('observer')->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if ($test->observer?->role !== 'teacher' || $test->status !== 'in_progress') { return redirect()->route('teacher.index'); }
         $domain = Domain::findOrFail($domainId);
         $order = Session::get("teacher_test_order_$testId");
         $questionId = $order[$domainId][$index] ?? null;
@@ -176,8 +266,40 @@ class TeacherController extends Controller
     public function result($testId)
     {
         $test = Test::with(['student','observer','responses.question.domain'])->findOrFail($testId);
-        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('teacher.index'); }
+        if (in_array($test->status, ['cancelled','terminated','incomplete','pending','in_progress'])) {
+            return redirect()->route('teacher.student', $test->student_id);
+        }
         $domains = Domain::with('questions')->orderBy('id')->get();
+
+        // Enforce completeness: all questions (across domains) must have a response (yes/no/na)
+        $totalQuestions = $domains->sum(fn($d) => $d->questions->count());
+        $answeredCount = $test->responses->count(); // NA is stored as a response with score = null
+        if ($answeredCount < $totalQuestions) {
+            // Find first unanswered question using stored order, else rebuild
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+            if (!$order) {
+                $order = [];
+                foreach ($domains as $d) {
+                    $ids = $d->questions->pluck('id')->all();
+                    shuffle($ids);
+                    $order[$d->id] = $ids;
+                }
+                // Persist order for consistency
+                \Illuminate\Support\Facades\DB::table('tests')->where('id', $test->id)->update(['question_order' => json_encode($order)]);
+            }
+            foreach ($order as $domainId => $qIds) {
+                foreach ($qIds as $idx => $qid) {
+                    $hasResp = $test->responses->firstWhere('question_id', $qid) !== null;
+                    if (!$hasResp) {
+                        return redirect()->route('teacher.tests.question', [$test->id, $domainId, $idx]);
+                    }
+                }
+            }
+            // Fallback: if order mismatched, redirect to first domain/question
+            $firstDomain = $domains->first();
+            return redirect()->route('teacher.tests.question', [$test->id, $firstDomain->id, 0]);
+        }
 
         foreach ($domains as $d) {
             $qIds = $d->questions->pluck('id')->all();
@@ -186,7 +308,8 @@ class TeacherController extends Controller
             $yesCount = $applicable->filter(fn($r) => (float)$r->score === 1.0)->count();
             $totalApplicable = max(1, $applicable->count());
             $raw = (float)$yesCount;
-            $scaled = round(($yesCount / $totalApplicable) * 100.0, 2);
+            $pct = ($yesCount / $totalApplicable) * 100.0;
+            $scaled = \App\Services\EccdScoring::percentageToScaled($pct);
             $based = (float)$totalApplicable;
 
             DB::table('domain_scores')->updateOrInsert([
@@ -203,14 +326,96 @@ class TeacherController extends Controller
 
         $test->load(['scores.domain']);
         $sumScaled = $test->scores->sum('scaled_score');
-        $standardScore = EccdScoring::deriveStandardScore((float)$sumScaled);
-        if (!$test->submitted_at) {
-            $test->submitted_by = 'teacher';
-            $test->submitted_at = now();
-            $test->status = 'completed';
+        $standardScore = EccdScoring::deriveStandardScore((float)$sumScaled, $domains->count());
+
+        // Determine 6-month window bounds anchored at enrollment
+        $enroll = $test->student->enrollment_date ? \Illuminate\Support\Carbon::parse($test->student->enrollment_date) : null;
+        $anchor = $enroll ?: \Illuminate\Support\Carbon::parse($test->student->tests()->orderBy('test_date','asc')->value('test_date') ?? $test->test_date);
+        $tDate = \Illuminate\Support\Carbon::parse($test->test_date);
+        $months = max(0, $anchor->diffInMonths($tDate));
+        $windowIdx = intdiv($months, 6);
+        $windowStart = $anchor->copy()->addMonths($windowIdx * 6)->startOfDay();
+        $windowEnd = $windowStart->copy()->addMonths(6)->subDay();
+
+        // Collect tests in the same 6-month window (excluding non-completed)
+        $windowTests = $test->student->tests()->with(['scores','observer'])
+            ->whereBetween('test_date', [$windowStart->toDateString(), $windowEnd->toDateString()])
+            ->where('status', 'completed')
+            ->get();
+
+        $aggregates = EccdScoring::aggregateByRole($windowTests, $domains);
+        $discrepancies = EccdScoring::analyzeDiscrepancies($aggregates['teacher'], $aggregates['family'], $domains);
+
+        return view('teacher.test_result', compact('test','domains','sumScaled','standardScore','windowStart','windowEnd','aggregates','discrepancies'));
+    }
+
+    public function finalize($testId)
+    {
+        $test = Test::with(['observer','responses.question.domain'])->findOrFail($testId);
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        // Enforce completeness before allowing finalize
+        $domains = Domain::with('questions')->orderBy('id')->get();
+        $totalQuestions = $domains->sum(fn($d) => $d->questions->count());
+        $answeredCount = $test->responses->count();
+        if ($answeredCount < $totalQuestions) {
+            // Redirect to next unanswered question
+            $order = $test->question_order ? json_decode($test->question_order, true) : null;
+            if ($order) {
+                foreach ($order as $domainId => $qIds) {
+                    foreach ($qIds as $idx => $qid) {
+                        $hasResp = $test->responses->firstWhere('question_id', $qid) !== null;
+                        if (!$hasResp) {
+                            return redirect()->route('teacher.tests.question', [$test->id, $domainId, $idx]);
+                        }
+                    }
+                }
+            }
+            $firstDomain = $domains->first();
+            return redirect()->route('teacher.tests.question', [$test->id, $firstDomain->id, 0]);
+        }
+        $test->submitted_by = 'teacher';
+        $test->submitted_at = now();
+        $test->status = 'completed';
+        $test->save();
+        return redirect()->route('teacher.tests.result', $test->id);
+    }
+
+    public function markIncomplete($testId)
+    {
+        $test = Test::with('observer')->findOrFail($testId);
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        $test->status = 'incomplete';
+        $test->save();
+        return redirect()->route('teacher.student', $test->student_id);
+    }
+
+    public function cancel($testId)
+    {
+        $test = Test::with('observer')->findOrFail($testId);
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        $test->status = 'cancelled';
+        $test->save();
+        return redirect()->route('teacher.student', $test->student_id);
+    }
+
+    public function terminate($testId)
+    {
+        $test = Test::with('observer')->findOrFail($testId);
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        $test->status = 'terminated';
+        $test->save();
+        return redirect()->route('teacher.student', $test->student_id);
+    }
+
+    public function pause($testId)
+    {
+        $test = Test::with('observer')->findOrFail($testId);
+        if ($test->observer?->role !== 'teacher') { return redirect()->route('index'); }
+        // Keep status as in_progress; simply return to dashboard
+        if ($test->status !== 'in_progress') {
+            $test->status = 'in_progress';
             $test->save();
         }
-
-        return view('teacher.test_result', compact('test','domains','sumScaled','standardScore'));
+        return redirect()->route('teacher.index');
     }
 }

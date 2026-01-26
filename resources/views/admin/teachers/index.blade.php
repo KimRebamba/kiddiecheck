@@ -27,6 +27,19 @@
 @foreach($teachers as $teacher)
 	<h3>{{ optional($teacher->user)->name }} ({{ optional($teacher->user)->email }})</h3>
 	<p>Hire Date: {{ $teacher->hire_date }} | Status: {{ $teacher->status }}</p>
+	<form method="POST" action="{{ route('admin.teachers.update', $teacher->id) }}" style="margin-bottom:8px">
+		@csrf
+		<input type="date" name="hire_date" value="{{ $teacher->hire_date }}">
+		<select name="status">
+			<option value="active" @selected($teacher->status==='active')>Active</option>
+			<option value="inactive" @selected($teacher->status==='inactive')>Inactive</option>
+		</select>
+		<button type="submit">Update</button>
+	</form>
+	<form method="POST" action="{{ route('admin.teachers.delete', $teacher->id) }}" onsubmit="return confirm('Delete this teacher profile?')" style="margin-bottom:12px">
+		@csrf
+		<button type="submit">Delete</button>
+	</form>
 	<p>Assigned Students:</p>
 	<ul>
 		@foreach($teacher->students as $s)

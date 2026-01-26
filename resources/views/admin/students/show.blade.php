@@ -13,5 +13,9 @@
   <p>Tags: {{ $student->tags->pluck('tag_type')->join(', ') }}</p>
   <p>Tests: {{ $student->tests->count() }}</p>
   <p><a href="{{ route('admin.students.record', $student->id) }}">View ECCD Record</a></p>
+  <form method="POST" action="{{ route('admin.students.delete', $student->id) }}" onsubmit="return confirm('Delete this student? This will be blocked if tests exist.')">
+    @csrf
+    <button type="submit">Delete Student</button>
+  </form>
 @endif
 @endsection

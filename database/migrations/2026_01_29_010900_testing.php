@@ -86,7 +86,7 @@ Schema::create('tests', function (Blueprint $table) {
           ->references('user_id')->on('users')->onDelete('cascade'); // teacher or family user
     $table->date('test_date');
     $table->text('notes')->nullable();
-    $table->enum('status', ['canceled', 'in_progress', 'completed', 'terminated'])->default('in_progress');
+    $table->enum('status', ['canceled', 'in_progress', 'completed', 'terminated', 'finalized'])->default('in_progress');
     $table->timestamps();
 });
 
@@ -130,7 +130,7 @@ Schema::create('test_responses', function (Blueprint $table) {
     $table->boolean('is_assumed')->default(false);  
 // true = filled by basal/ceiling logic
 // false = actually answered
-    $table->enum('response', ['yes', 'no', 'n/a']);
+    $table->enum('response', ['yes', 'no']);
     $table->primary(['test_id', 'question_id']);
 });
 
@@ -155,7 +155,6 @@ Schema::create('domain_scaled_scores', function (Blueprint $table) {
     $table->unsignedTinyInteger('raw_min');
     $table->unsignedTinyInteger('raw_max');
       $table->unsignedTinyInteger('scaled_score');
-      // Short explicit name to avoid MySQL's 64-char identifier limit
       $table->unique(
             ['scale_version_id', 'domain_id', 'age_min_months', 'raw_min'],
             'domain_scaled_scores_lookup_unique'

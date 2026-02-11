@@ -56,7 +56,7 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 
 	Route::get('/students/{student}', function($studentId){
 		$student = App\Models\Student::with(['family','teachers.user','section','tags','assessmentPeriods','tests.responses','tests.scores'])->findOrFail($studentId);
-		$longitudinal = App\Services\AssessmentLongitudinal::summarize($student);
+		
 		return view('admin.students.show', compact('student','longitudinal'));
 	})->name('admin.students.show');
 

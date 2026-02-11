@@ -26,7 +26,7 @@ Rule:
 •	The draft is auto-terminated if Teacher A is no longer assigned.
 •	Rationale: Only currently assigned teachers may submit; drafts tied to removed teachers are invalid.
 ________________________________________
-2. Eligibility window + grace period expires mid-assessment
+2. Eligibility window
 Scenario: Teacher or family is in the middle of an assessment; window + 7-day grace period expires.
 Rule:
 •	The assessment is auto-terminated.

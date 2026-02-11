@@ -28,6 +28,7 @@ class UserController extends Controller
         if (Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']], $remember)) {
             $request->session()->regenerate();
             $role = Auth::user()->role;
+            
             if ($role === 'family') {
                 return redirect()->route('family.index');
             } elseif ($role === 'teacher') {

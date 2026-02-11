@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('teacher.layout')
 
 @section('content')
 <div class="d-flex align-items-center mb-3">
@@ -71,6 +71,7 @@
               <tr>
                 <th>Child</th>
                 <th>Latest Teacher Test</th>
+                <th>Longitudinal</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -85,6 +86,24 @@
                     {{ $latest->test_date }} ({{ $latest->status }})
                   @else
                     <span class="text-muted">none</span>
+                  @endif
+                </td>
+                <td class="small">
+                  @php $L = $longitudinals[$s->id] ?? null; @endphp
+                  @if($L && ($L[1] ?? null))
+                    6m: {{ $L[1]['standardScore'] }}
+                  @else
+                    6m: No data
+                  @endif
+                  | @if($L && ($L[2] ?? null))
+                    12m: {{ $L[2]['standardScore'] }}
+                  @else
+                    12m: No data
+                  @endif
+                  | @if($L && ($L[3] ?? null))
+                    18m: {{ $L[3]['standardScore'] }}
+                  @else
+                    18m: No data
                   @endif
                 </td>
                 <td>

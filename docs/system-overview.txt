@@ -180,3 +180,12 @@ Nice Touches
 - Demo seeder scenarios enable realistic development/testing.
 - Composer/NPM script integration streamlines dev workflow.
 - Role-based dashboards and separation of concerns across controllers/views.
+
+Addendum (2026-01-27) — Assessment Periods & States
+- Introduced `assessment_periods` table linked to `students` to explicitly model three 6‑month windows per enrollment plus a 7‑day teacher grace (configurable in `config/eccd.php`).
+- Fields: `index (1..3)`, `starts_at`, `ends_at`, `teacher_grace_end`, `status (scheduled|active|closed)`; unique per student+index.
+- `Student` now auto-generates three periods on creation based on `enrollment_date`.
+- `tests` link to a period via `assessment_period_id`; multiple teacher submissions per period are allowed; family submission is optional and aggregated/displayed separately.
+- Expanded `tests.status` to support workflow: `draft`, `paused`, `finalized`, `archived`, `terminated` (legacy values `pending`, `in_progress`, `completed`, `cancelled` remain for compatibility).
+- Visibility rules: non-admin roles see only `finalized|completed` tests; admin views exclude `archived` from active flows.
+- Planned: scheduler jobs to auto-terminate drafts/in-progress tests when the window + grace expires; reconcile removed teacher assignments by terminating their drafts.

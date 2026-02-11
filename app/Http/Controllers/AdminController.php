@@ -18,6 +18,7 @@ use App\Models\TestResponse;
 use App\Models\DomainScore;
 use App\Models\StudentTag;
 use App\Models\TestPicture;
+use App\Services\EccdScoring;
 
 class AdminController extends Controller
 {
@@ -33,13 +34,59 @@ class AdminController extends Controller
             'testCount' => Test::count(),
         ];
 
+        // Test status metrics
+        $completedCount = Test::finalized()->count();
+        $inProgressCount = Test::where('status','in_progress')->count();
+        $pendingCount = Test::where('status','pending')->count();
+        $cancelledCount = Test::where('status','cancelled')->count();
+        $terminatedCount = Test::where('status','terminated')->count();
+
+        // Recent lists for tables (still used below)
         $inProgressTests = Test::with(['student.family','observer'])
             ->where('status','in_progress')->orderByDesc('test_date')->limit(10)->get();
         $pendingTests = Test::with(['student.family'])
             ->where('status','pending')->orderBy('test_date')->limit(10)->get();
         $recentCompleted = Test::with(['student.family','observer'])
-            ->where('status','completed')->orderByDesc('test_date')->limit(10)->get();
+            ->finalized()->orderByDesc('test_date')->limit(10)->get();
 
+        // Eligibility metrics: students currently eligible for teacher/family tests
+        $now = now();
+        $students = Student::with(['teachers','assessmentPeriods','tests.observer'])->get();
+        $eligibleTeacherCount = 0;
+        $eligibleFamilyCount = 0;
+        foreach ($students as $s) {
+            $hasWindow = (bool) $s->assessmentPeriods->first(function($p) use ($now){ return $now->between($p->starts_at, $p->ends_at); });
+            if (!$hasWindow) { continue; }
+
+            // Teacher eligibility: no in-progress teacher test and 6-month rule since last non-cancelled/terminated teacher test by any assigned teacher
+            $hasTeacherInProgress = (bool) $s->tests->first(function($t){ return $t->status === 'in_progress' && optional($t->observer)->role === 'teacher'; });
+            if (!$hasTeacherInProgress && $s->teachers->isNotEmpty()) {
+                $teacherEligible = false;
+                foreach ($s->teachers as $tchr) {
+                    if (($tchr->pivot?->status ?? 'active') !== 'active') { continue; }
+                    $lastActive = $s->tests->filter(function($t) use ($tchr){
+                        return optional($t->observer)->role === 'teacher' && $t->observer_id === $tchr->id && !in_array($t->status, ['cancelled','terminated']);
+                    })->sortByDesc('test_date')->first();
+                    $months = $lastActive ? \Illuminate\Support\Carbon::parse($lastActive->test_date)->diffInMonths($now) : null;
+                    if ($months === null || $months >= 6) { $teacherEligible = true; break; }
+                }
+                if ($teacherEligible) { $eligibleTeacherCount++; }
+            }
+
+            // Family eligibility: student has a family, no in-progress family test, 6-month rule since last non-cancelled/terminated family test
+            if ($s->family) {
+                $hasFamilyInProgress = (bool) $s->tests->first(function($t){ return $t->status === 'in_progress' && optional($t->observer)->role === 'family'; });
+                if (!$hasFamilyInProgress) {
+                    $lastFamilyActive = $s->tests->filter(function($t){
+                        return optional($t->observer)->role === 'family' && !in_array($t->status, ['cancelled','terminated']);
+                    })->sortByDesc('test_date')->first();
+                    $monthsFam = $lastFamilyActive ? \Illuminate\Support\Carbon::parse($lastFamilyActive->test_date)->diffInMonths($now) : null;
+                    if ($monthsFam === null || $monthsFam >= 6) { $eligibleFamilyCount++; }
+                }
+            }
+        }
+
+        // Summaries
         $unassignedStudents = Student::with(['family','section'])
             ->whereDoesntHave('teachers')->orderBy('id','desc')->limit(10)->get();
         $familiesSummary = Family::withCount('students')
@@ -49,9 +96,113 @@ class AdminController extends Controller
         $sectionsSummary = \App\Models\Section::withCount('students')
             ->orderByDesc('students_count')->limit(10)->get();
 
+        $today = $now->format('F j, Y');
+        $greeting = 'Hello, '.(Auth::user()?->name ?? 'Admin');
+
+        // Dashboard tables
+        // Exclude drafts/pending from recent activities to avoid showing newly enrolled students with no active tests
+        $testsTable = Test::with(['student','assessmentPeriod','observer','responses'])
+            ->whereNotIn('status', ['draft','pending'])
+            ->orderByDesc('test_date')
+            ->paginate(5, ['*'], 'tests_page')
+            ->through(function(Test $t) {
+                $order = $t->question_order ? json_decode($t->question_order, true) : null;
+                $qTotal = 0;
+                if (is_array($order)) {
+                    foreach ($order as $domainId => $qIds) { $qTotal += is_array($qIds) ? count($qIds) : 0; }
+                }
+                if ($qTotal <= 0) {
+                    $qTotal = (int) \App\Models\Domain::withCount('questions')->get()->sum('questions_count');
+                }
+                $answered = $t->responses->filter(fn($r)=> $r->score !== null)->count();
+                $progress = $qTotal > 0 ? round(($answered / max(1, $qTotal)) * 100) : 0;
+                $examinerRole = null;
+                if ($t->examiner_id) {
+                    $examinerRole = optional(\App\Models\User::find($t->examiner_id))->role;
+                }
+                if (!$examinerRole) { $examinerRole = optional($t->observer)->role; }
+                $dateFmt = $t->test_date ? \Illuminate\Support\Carbon::parse($t->test_date)->format('F j, Y') : null;
+                $periodStr = null;
+                if ($t->assessmentPeriod) {
+                    $start = $t->assessmentPeriod->starts_at ? \Illuminate\Support\Carbon::parse($t->assessmentPeriod->starts_at)->format('F j, Y') : null;
+                    $end = $t->assessmentPeriod->ends_at ? \Illuminate\Support\Carbon::parse($t->assessmentPeriod->ends_at)->format('F j, Y') : null;
+                    $periodStr = ($start && $end) ? ($start.' → '.$end) : null;
+                }
+                return [
+                    'id' => $t->id,
+                    'student' => $t->student?->name,
+                    'date' => $t->test_date,
+                    'date_fmt' => $dateFmt,
+                    'period_str' => $periodStr,
+                    'examiner_role' => $examinerRole,
+                    'progress' => $progress,
+                    'status' => $t->status,
+                ];
+            })->withQueryString();
+
+        $studentsTable = Student::with(['section','tests','assessmentPeriods'])
+            ->orderByDesc('id')
+            ->paginate(8, ['*'], 'students_page')
+            ->through(function(Student $s){
+                $lastTest = $s->tests->sortByDesc('test_date')->first();
+                $lastFmt = $lastTest?->test_date ? \Illuminate\Support\Carbon::parse($lastTest->test_date)->format('F j, Y') : null;
+                $statuses = ['in_progress','pending','paused'];
+                $testsLeft = $s->assessmentPeriods->filter(function($p) use ($s, $statuses){
+                    return $s->tests->first(function($t) use ($p, $statuses){
+                        return $t->assessment_period_id === $p->id && in_array($t->status, $statuses);
+                    });
+                })->count();
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'section' => optional($s->section)->name,
+                    'last_test' => $lastTest?->test_date,
+                    'last_test_fmt' => $lastFmt,
+                    'tests_left' => $testsLeft,
+                ];
+            })->withQueryString();
+
+        $teachersTable = Teacher::with(['user','students'])
+            ->orderByDesc('id')
+            ->paginate(5, ['*'], 'teachers_page')
+            ->through(function(Teacher $t){
+                $assigned = $t->students->count();
+                $testsDone = Test::whereHas('observer', function($q) use ($t){ $q->where('role','teacher')->where('id',$t->id); })
+                    ->finalized()->count();
+                return [
+                    'id' => $t->id,
+                    'teacher_name' => $t->user?->name ?? ('Teacher #'.$t->id),
+                    'user_name' => $t->user?->name,
+                    'assigned_students' => $assigned,
+                    'tests_done' => $testsDone,
+                ];
+            })->withQueryString();
+
+        $familiesTable = Family::withCount('students')
+            ->orderByDesc('id')
+            ->paginate(5, ['*'], 'families_page')
+            ->through(function(Family $f){
+                $last = Test::whereHas('student', function($q) use ($f){ $q->where('family_id', $f->id); })
+                    ->whereHas('observer', function($q){ $q->where('role','family'); })
+                    ->finalized()->orderByDesc('test_date')->value('test_date');
+                $lastFmt = $last ? \Illuminate\Support\Carbon::parse($last)->format('F j, Y') : null;
+                return [
+                    'id' => $f->id,
+                    'name' => $f->name,
+                    'children' => $f->students_count,
+                    'last_test' => $last,
+                    'last_test_fmt' => $lastFmt,
+                ];
+            })->withQueryString();
+
+        $usersTable = User::orderByDesc('id')->paginate(7, ['*'], 'users_page')->withQueryString();
+
         return view('admin.index', $stats + compact(
+            'completedCount','inProgressCount','pendingCount','cancelledCount','terminatedCount',
+            'eligibleTeacherCount','eligibleFamilyCount','today','greeting',
             'inProgressTests','pendingTests','recentCompleted',
-            'unassignedStudents','familiesSummary','teachersSummary','sectionsSummary'
+            'unassignedStudents','familiesSummary','teachersSummary','sectionsSummary',
+            'testsTable','studentsTable','teachersTable','familiesTable','usersTable'
         ));
     }
 
@@ -595,5 +746,43 @@ class AdminController extends Controller
         }])->orderBy('name')->get();
 
         return view('admin.domains', compact('domains'));
+    }
+
+    // Test result (read-only) for Admin
+    public function testResult($testId)
+    {
+        $test = Test::with(['student','observer','responses.question.domain','scores.domain','student.assessmentPeriods'])->findOrFail($testId);
+        if (!in_array($test->status, ['finalized','completed'])) {
+            return redirect()->route('admin.reports')->withErrors(['Result is available only for completed tests.']);
+        }
+        $domains = Domain::with('questions')->orderBy('id')->get();
+        // Ensure domain_scores exist; if missing, derive without mutating state
+        $sumScaled = $test->scores->sum('scaled_score');
+        if ($sumScaled <= 0) {
+            // Derive transient scores from responses
+            $sumScaled = 0.0;
+            foreach ($domains as $d) {
+                $qIds = $d->questions->pluck('id')->all();
+                $responses = $test->responses->whereIn('question_id', $qIds);
+                $app = $responses->filter(fn($r) => $r->score !== null);
+                $yes = $app->filter(fn($r) => (float)$r->score === 1.0)->count();
+                $tot = max(1, $app->count());
+                $pct = ($yes / $tot) * 100.0;
+                $sumScaled += (float) EccdScoring::percentageToScaled($pct);
+            }
+        }
+        $standardScore = EccdScoring::deriveStandardScore((float)$sumScaled, $domains->count());
+
+        // Window aggregates within same period
+        $windowTests = $test->student->tests()->with(['scores','observer'])
+            ->where('assessment_period_id', $test->assessment_period_id)
+            ->finalized()->get();
+        $aggregates = EccdScoring::aggregateByRole($windowTests, $domains);
+        $discrepancies = EccdScoring::analyzeDiscrepancies($aggregates['teacher'], $aggregates['family'], $domains);
+        $familyOnly = $windowTests->filter(fn($t) => $t->observer?->role === 'family')->isNotEmpty()
+            && $windowTests->filter(fn($t) => $t->observer?->role === 'teacher')->isEmpty();
+        $allNA = method_exists($test, 'isAllNA') ? $test->isAllNA() : false;
+
+        return view('admin.test_result', compact('test','domains','sumScaled','standardScore','aggregates','discrepancies','familyOnly','allNA'));
     }
 }

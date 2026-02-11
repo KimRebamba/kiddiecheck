@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('family.layout')
 
 @section('content')
 <h1>{{ $student->name }}</h1>

@@ -15,7 +15,7 @@
 				<label class="form-label">Status</label>
 				<select name="status" class="form-select form-select-sm">
 					<option value="">All</option>
-					@foreach(['pending','in_progress','completed','incomplete','cancelled','terminated'] as $st)
+					@foreach(['draft','pending','in_progress','paused','finalized','completed','cancelled','terminated','archived'] as $st)
 						<option value="{{ $st }}" {{ ($filters['status'] ?? '') === $st ? 'selected' : '' }}>{{ ucfirst(str_replace('_',' ', $st)) }}</option>
 					@endforeach
 				</select>
@@ -56,7 +56,7 @@
 	<div class="card-body p-0">
 		<div class="table-responsive">
 			<table class="table table-sm table-hover mb-0">
-				<thead>
+								<thead>
 					<tr>
 						<th>ID</th>
 						<th>Student</th>
@@ -64,6 +64,7 @@
 						<th>Observer</th>
 						<th>Role</th>
 						<th>Date</th>
+												<th>Std Score</th>
 						<th>Status</th>
 						<th>Actions</th>
 					</tr>
@@ -77,14 +78,33 @@
 						<td>{{ optional($t->observer)->name }}</td>
 						<td>{{ optional($t->observer)->role }}</td>
 						<td>{{ $t->test_date }}</td>
-						<td><span class="badge bg-{{ $t->status === 'completed' ? 'success' : ($t->status === 'in_progress' ? 'warning' : 'secondary') }}">{{ ucfirst(str_replace('_',' ', $t->status)) }}</span></td>
+												<td>
+													@php $sum = $t->scores ? $t->scores->sum('scaled_score') : null; @endphp
+													@if($sum && in_array($t->status,['finalized','completed']))
+														{{ \App\Services\EccdScoring::deriveStandardScore((float)$sum, \App\Models\Domain::count()) }}
+													@else
+														<span class="text-muted">—</span>
+													@endif
+												</td>
+												<td>
+													<span class="badge bg-{{ in_array($t->status,['finalized','completed']) ? 'success' : ($t->status==='in_progress' ? 'warning' : ($t->status==='archived' ? 'secondary' : ($t->status==='terminated' ? 'danger' : 'secondary'))) }}">{{ ucfirst(str_replace('_',' ', $t->status)) }}</span>
+													@if($t->termination_reason)
+														<div class="small text-muted">{{ $t->termination_reason }}</div>
+													@endif
+												</td>
 						<td class="d-flex gap-2">
 							@if($t->status === 'in_progress')
 								<span class="text-muted">In progress</span>
 							@endif
-							@if($t->status === 'completed')
-								<a class="btn btn-sm btn-outline-primary" href="{{ optional($t->observer)->role === 'teacher' ? route('teacher.tests.result', $t->id) : route('family.tests.result', $t->id) }}">View Result</a>
-							@endif
+														@if(in_array($t->status,['finalized','completed']))
+															<a class="btn btn-sm btn-outline-primary" href="{{ route('admin.tests.result', $t->id) }}">View Result</a>
+														@endif
+														@if(in_array($t->status,['finalized','completed','cancelled']))
+															<form method="post" action="{{ route('admin.tests.archive', $t->id) }}">
+																@csrf
+																<button class="btn btn-sm btn-outline-secondary" type="submit">Archive</button>
+															</form>
+														@endif
 							<form method="post" action="{{ route('admin.tests.delete', $t->id) }}" onsubmit="return confirm('Delete test #{{ $t->id }}? This cannot be undone.')">
 								@csrf
 								<button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>

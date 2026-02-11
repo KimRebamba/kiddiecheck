@@ -59,4 +59,20 @@ return [
         // Flag overall if absolute difference in derived standard score >= threshold
         'standard_delta_threshold' => 10, // standard score points (70–160)
     ],
+
+    // Assessment period configuration
+    'period' => [
+        // Months per assessment window
+        'months' => 6,
+        // Grace period in days for teachers beyond window end
+        'teacher_grace_days' => 7,
+    ],
+
+    // Assessment period scheduling settings
+    'period' => [
+        // Months per assessment window
+        'months' => 6,
+        // Grace period (days) after window end for teachers only
+        'teacher_grace_days' => 7,
+    ],
 ];

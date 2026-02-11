@@ -14,6 +14,8 @@ class Teacher extends Model
     ];
 
     public $timestamps = false;
+    public $incrementing = false;
+    protected $keyType = 'int';
 
     public function user()
     {

@@ -1,10 +1,10 @@
-@extends('layouts.app')
+@extends('family.layout')
 
 @section('content')
   <div class="row mb-3">
     <div class="col">
       <h2 class="mb-1">Results for {{ $test->student->name }}</h2>
-      <div class="text-muted">Date: {{ $test->test_date }} • Completed</div>
+      <div class="text-muted">Date: {{ $test->test_date }} • {{ in_array($test->status,['finalized','completed']) ? 'Completed' : ucfirst($test->status) }}</div>
       <div class="mt-2">Observer: {{ optional($test->observer)->name }} ({{ optional($test->observer)->role }})</div>
     </div>
   </div>
@@ -52,6 +52,16 @@
           @php $combStd = $aggregates['combined']['standardScore'] ?? null; $combCat = $combStd ? \App\Services\EccdScoring::classifyStandard((int)$combStd) : null; @endphp
           <p class="mb-1">Combined Standard Score: <strong>{{ $combStd ?? '—' }}</strong></p>
           <p class="mb-0">Interpretation: <strong>{{ $combCat ?? 'Not available' }}</strong></p>
+          @if($familyOnly)
+            <div class="alert alert-info mt-2" role="alert">
+              Teacher assessments not submitted for this period.
+            </div>
+          @endif
+          @if($allNA)
+            <div class="alert alert-warning mt-2" role="alert">
+              Completed – All N/A. Interpretation is limited due to no applicable items.
+            </div>
+          @endif
         </div>
       </div>
     </div>

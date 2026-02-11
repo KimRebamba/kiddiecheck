@@ -1,0 +1,70 @@
+We plan to build a system for the ECCD checklist that supports multiple teachers and an optional family account, with assessments conducted once every six months per student. Each student enrollment consists of three assessment periods scheduled six months apart. The checklist is composed of domain-based questions, and assessments may be paused, cancelled, continued, finalized, or archived as needed. If an assessment remains incomplete beyond the assessment eligibility window plus a seven-day grace period at the end of the window (applicable to teachers only), it is automatically marked as terminated.
+The system supports two types of questions: static and interactive. Static questions are answered using Yes, No, or N/A, while interactive questions are discussion-based and intended for qualitative input. The platform defines three user roles: Admin, Teacher, and Family.
+Each assessment period has a strictly defined six-month eligibility window, during which assigned teachers and the linked family account may independently submit an assessment for the student. Upon enrollment, three assessment periods are automatically generated, each separated by six months, and one finalized assessment is expected per assessment window.
+Family participation is optional; however, when submitted, family responses are included as a complementary data source in the assessment results. Individual teacher submissions are stored separately and aggregated per assessment period, while family results are displayed alongside teacher outcomes to support comparative interpretation. Only assessments marked as completed are visible across all system roles. The system supports assessments from one or multiple teachers, and valid interpretations can still be generated even if the family account does not submit a response. The term “family” refers to a single family account associated with a student, not multiple family members.
+The system also provides longitudinal progress tracking at six-month intervals. After the initial six-month assessment, results are displayed for that period. After twelve months, the six- and twelve-month completed assessments are averaged to generate an updated interpretation. After eighteen months, completed assessments from the six-, twelve-, and eighteen-month periods are averaged to produce a final interpretation. Longitudinal interpretations are computed using only completed assessment periods; missing or terminated periods are excluded from calculations and explicitly flagged as no data.
+Several family account edge cases are supported. If a family submits an assessment while no teachers finalize theirs, the assessment remains valid, is marked as family-only, and is excluded from teacher aggregation. If teachers submit assessments but the family does not, this is treated as a normal case with no penalty. If a family account changes mid-cycle, assessment periods remain tied to the student; the new family account may view past completed assessments and participate in future eligible periods. Students may also exist without a linked family account, as family linkage is not system-enforced.
+Assessments follow a defined state workflow: Draft, Paused, Finalized, Archived, and Terminated. Draft assessments may be paused by teachers or family users, resumed later, or cancelled by teachers or administrators. Finalized assessments are locked by default and cannot be reopened by admins. Terminated assessments are system-generated due to missed deadlines, are read-only, and are excluded from aggregation. Archived assessments are manually archived by administrators; their data is preserved for audit and history purposes but excluded from the active assessment flow. Family users may pause, continue, and finalize assessments but cannot archive or reopen finalized assessments, while administrators retain full control over all assessment states. Archived and terminated assessments are distinct: terminated assessments are incomplete, system-generated due to missed deadlines, read-only, and excluded from aggregation; archived assessments are manually archived, previously completed or cancelled, preserved for historical reference, and excluded from active assessment views.
+Assessments may be finalized only if all domains are completed; incomplete domains render the test incomplete. When multiple teachers assess a student, their results are aggregated numerically, but significant discrepancies between teachers or between teacher and family assessments are explicitly surfaced in the interpretation rather than hidden by averaging.
+If a student is unenrolled or transferred before completing all three assessment periods, any completed assessments remain in the system for audit and reporting. Incomplete or future assessments are automatically terminated and flagged as “Student unenrolled / transferred.” Longitudinal interpretations use only completed periods, with missing periods excluded and clearly indicated. A student who re-enrolls starts a new assessment cycle, while past results remain for reference.
+Family-only assessment scenario
+When a family-only assessment occurs (no teacher submissions):
+1.	Display
+o	Family responses are always shown in full.
+o	Teacher data is not available, and a disclaimer is displayed:
+“Teacher assessments not submitted for this period.”
+2.	Interpretation
+o	The interpretation is limited to the family input only.
+o	No aggregated teacher score is computed.
+o	The system indicates that the assessment is family-only to distinguish it from periods where both teacher and family assessments exist.
+When a student completes a test, then unenrolls, and later re-enrolls, completed tests from the previous enrollment remain in the system for audit and reference. The new enrollment begins a fresh assessment cycle with its own set of three assessment periods. Historical tests are preserved but are not included in new cycle longitudinal interpretations.
+
+1. Teacher assignment changes mid-assessment
+Scenario: Teacher A starts a draft; admin removes Teacher A from student assignment.
+Rule:
+•	Teacher A cannot continue or finalize the assessment.
+•	The draft is auto-terminated if Teacher A is no longer assigned.
+•	Rationale: Only currently assigned teachers may submit; drafts tied to removed teachers are invalid.
+________________________________________
+2. Eligibility window + grace period expires mid-assessment
+Scenario: Teacher or family is in the middle of an assessment; window + 7-day grace period expires.
+Rule:
+•	The assessment is auto-terminated.
+•	Partial data is preserved as a read-only draft, but it cannot be finalized or aggregated.
+•	Rationale: Strict window ensures longitudinal consistency. Family has the same behavior—grace period applies to teachers only, but window still applies to families.
+________________________________________
+3. Family account changes during active assessment
+Scenario: Old family has a draft; admin links a new family account.
+Rule:
+•	The old family’s draft remains tied to the old account.
+•	The new family account cannot see or continue the old draft.
+•	The new family account participates in future eligible periods only.
+________________________________________
+4. All domains marked N/A by all teachers
+Scenario: Non-verbal student; language questions all marked N/A.
+Rule:
+•	Assessment is technically complete but flagged for review.
+•	System shows “Completed – All N/A” or similar note.
+•	Interpretation should note limited scoring due to all N/A responses.
+________________________________________
+5. Zero assessments finalized in a period (all terminated)
+Scenario: No teachers or family submit within the window.
+Rule:
+•	Display the period as “No data available”.
+•	Optionally add a note:
+“No assessments were completed within the eligibility window.”
+________________________________________
+6. Teacher drafts visibility
+Scenario: Teacher A has a draft; Teacher B assigned to same student.
+Rule:
+•	Drafts are private.
+•	Teacher B cannot see Teacher A’s draft until it is finalized.
+•	Rationale: Protects teacher observations and prevents bias.
+________________________________________
+7. Admin viewing future periods
+Scenario: Student enrolled Jan 2025; currently in Period 1 (Jan–Jul 2025).
+Rule:
+•	Admin can view future periods as scheduled shells (Periods 2 and 3).
+•	Future periods show as “Scheduled – Not yet active”.
+•	Rationale: Supports planning, scheduling, and system oversight without allowing premature submissions.
+

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('teacher.layout')
 
 @section('content')
 <div class="d-flex align-items-center mb-3">

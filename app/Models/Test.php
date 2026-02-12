@@ -9,38 +9,47 @@ class Test extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['student_id', 'assessment_period_id', 'observer_id', 'test_date', 'status', 'started_at', 'submitted_by', 'submitted_at'];
+    protected $table = 'tests';
+    protected $primaryKey = 'test_id';
+    public $timestamps = true;
 
-    public $timestamps = false;
+    protected $fillable = [
+        'period_id', 'student_id', 'examiner_id', 'test_date', 'notes', 'status'
+    ];
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'student_id', 'student_id');
     }
 
     public function assessmentPeriod()
     {
-        return $this->belongsTo(AssessmentPeriod::class);
+        return $this->belongsTo(AssessmentPeriod::class, 'period_id', 'period_id');
     }
 
     public function observer()
     {
-        return $this->belongsTo(User::class, 'observer_id');
+        return $this->belongsTo(User::class, 'examiner_id', 'user_id');
     }
 
     public function responses()
     {
-        return $this->hasMany(TestResponse::class);
+        return $this->hasMany(TestResponse::class, 'test_id', 'test_id');
     }
 
-    public function scores()
+    public function domainScores()
     {
-        return $this->hasMany(DomainScore::class);
+        return $this->hasMany(DomainScore::class, 'test_id', 'test_id');
+    }
+
+    public function standardScore()
+    {
+        return $this->hasOne(DomainScore::class, 'test_id', 'test_id');
     }
 
     public function pictures()
     {
-        return $this->hasMany(TestPicture::class);
+        return $this->belongsToMany(TestPicture::class, 'test_picture', 'test_id', 'picture_id');
     }
 
     // Scopes/helpers

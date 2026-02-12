@@ -110,6 +110,15 @@ Route::prefix('family')->middleware('auth')->group(function () {
 // Teacher routes (simple, no CSS UI)
 Route::prefix('teacher')->middleware('auth')->group(function () {
 	Route::get('/', [\App\Http\Controllers\TeacherController::class, 'index'])->name('teacher.index');
+	Route::get('/family', [\App\Http\Controllers\TeacherController::class, 'family'])->name('teacher.family');
+	Route::get('/family/{family}', [\App\Http\Controllers\TeacherController::class, 'familyShow'])->name('teacher.family.show');
+	Route::get('/sections', [\App\Http\Controllers\TeacherController::class, 'sections'])->name('teacher.sections');
+	Route::get('/sections/{section}', [\App\Http\Controllers\TeacherController::class, 'sectionsShow'])->name('teacher.sections.show');
+	Route::get('/reports', [\App\Http\Controllers\TeacherController::class, 'reports'])->name('teacher.reports');
+	Route::get('/reports/{student}/{period}', [\App\Http\Controllers\TeacherController::class, 'reportShow'])->name('teacher.reports.show');
+	Route::get('/reports/{student}/{period}/{test}', [\App\Http\Controllers\TeacherController::class, 'reportDetail'])->name('teacher.reports.detail');
+	Route::get('/help', [\App\Http\Controllers\TeacherController::class, 'help'])->name('teacher.help');
+	Route::get('/profile', [\App\Http\Controllers\TeacherController::class, 'profile'])->name('teacher.profile');
 	Route::get('/students/{student}', [\App\Http\Controllers\TeacherController::class, 'student'])->name('teacher.student');
 	Route::post('/tests/start/{student}', [\App\Http\Controllers\TeacherController::class, 'startTest'])->name('teacher.tests.start');
 	Route::get('/tests/{test}/domain/{domain}/question/{index}', [\App\Http\Controllers\TeacherController::class, 'showQuestion'])->name('teacher.tests.question');

@@ -12,13 +12,17 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $primaryKey = 'user_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'username',
         'email',
         'password',
         'role',
@@ -51,11 +55,11 @@ class User extends Authenticatable
     // Relationships
     public function family()
     {
-        return $this->hasOne(Family::class);
+        return $this->hasOne(Family::class, 'user_id', 'user_id');
     }
 
     public function teacher()
     {
-        return $this->hasOne(Teacher::class, 'id', 'id');
+        return $this->hasOne(Teacher::class, 'user_id', 'user_id');
     }
 }

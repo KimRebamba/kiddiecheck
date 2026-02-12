@@ -9,10 +9,12 @@ class Student extends Model
 {
     use HasFactory;
 
+    protected $table = 'students';
+    protected $primaryKey = 'student_id';
+    public $incrementing = true;
+
     protected $fillable = [
-        'family_id', 'section_id', 'name', 'dob', 'emergency_contact', 'gender',
-        'handedness', 'is_studying', 'school_name',
-        'enrollment_date', 'status', 'profile_path', 'notes'
+        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path'
     ];
 
     public function family()
@@ -27,7 +29,7 @@ class Student extends Model
 
     public function teachers()
     {
-        return $this->belongsToMany(Teacher::class, 'teacher_student', 'student_id', 'teacher_id')
+        return $this->belongsToMany(Teacher::class, 'student_teacher', 'student_id', 'teacher_id')
             ->withPivot(['role', 'assigned_at', 'status']);
     }
 

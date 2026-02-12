@@ -229,6 +229,37 @@ class DemoSeeder extends Seeder
         ]);
     }
 
+    protected function sections_add(): void
+    {
+        $now = now();
+
+        DB::table('sections')->insert([
+            [
+                'name' => 'Preschool A',
+                'description' => 'Ages 3-4 years',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Preschool B',
+                'description' => 'Ages 4-5 years',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Kindergarten',
+                'description' => 'Ages 5-6 years',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+
+        // Assign students to sections
+        DB::table('students')->where('student_id', 1)->update(['section_id' => 1]);
+        DB::table('students')->where('student_id', 2)->update(['section_id' => 2]);
+        DB::table('students')->where('student_id', 3)->update(['section_id' => 3]);
+    }
+
     protected function assessmentPeriods_add(): void
     {
         $now = now();
@@ -818,6 +849,7 @@ class DemoSeeder extends Seeder
             $this->teachers_add();
             $this->families_add();
             $this->students_add();
+            $this->sections_add();
             $this->studentTeacher_add();
             $this->assessmentPeriods_add();
             $this->tests_add();

@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Database\Seeders\EccdSeeder;
 use Database\Seeders\Eccd2004Seeder;
 use Illuminate\Database\Seeder;
+use Database\Seeders\DemoSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             EccdQuestionsSeeder::class,
             Eccd2004Seeder::class,
+            DemoSeeder::class,
         ]);
     }
 }

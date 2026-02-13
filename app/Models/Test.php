@@ -25,7 +25,7 @@ class Test extends Model
         return $this->belongsTo(Student::class, 'student_id', 'student_id');
     }
 
-    public function examiner()
+    public function assessmentPeriod()
     {
         return $this->belongsTo(AssessmentPeriod::class, 'period_id', 'period_id');
     }

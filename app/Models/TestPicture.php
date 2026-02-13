@@ -10,9 +10,20 @@ class TestPicture extends Model
 
     public $incrementing = false;
 
+    protected $table = 'test_picture';
+    protected $primaryKey = null;
+    public $incrementing = false;
     public $timestamps = false;
 
-    protected $primaryKey = null;
+    protected $fillable = ['test_id', 'picture_id'];
 
-    protected $guarded = [];
+    public function test()
+    {
+        return $this->belongsTo(Test::class, 'test_id', 'test_id');
+    }
+
+    public function picture()
+    {
+        return $this->belongsTo(\App\Models\DocumentationPicture::class, 'picture_id', 'picture_id');
+    }
 }

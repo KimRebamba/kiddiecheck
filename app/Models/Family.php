@@ -9,15 +9,9 @@ class Family extends Model
 {
     use HasFactory;
 
-    protected $table = 'families';
-
-    protected $primaryKey = 'user_id';
-
-    public $incrementing = false;
-
-    protected $keyType = 'int';
-
-    protected $guarded = [];
+        protected $primaryKey = 'user_id';
+        protected $keyType = 'int';
+        public $incrementing = false;
 
     public function user()
     {
@@ -26,6 +20,7 @@ class Family extends Model
 
     public function students()
     {
+        return $this->hasMany(Student::class, 'family_id', 'user_id');
         return $this->hasMany(Student::class, 'family_id', 'user_id');
     }
 }

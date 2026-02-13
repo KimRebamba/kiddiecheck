@@ -10,11 +10,12 @@ class TestResponse extends Model
 
     public $incrementing = false;
 
+    protected $table = 'test_responses';
+    protected $primaryKey = null;
+    public $incrementing = false;
     public $timestamps = false;
 
-    protected $primaryKey = null;
-
-    protected $guarded = [];
+    protected $fillable = ['test_id', 'question_id', 'is_assumed', 'response'];
 
     public function test()
     {

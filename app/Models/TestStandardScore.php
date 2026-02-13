@@ -10,16 +10,14 @@ class TestStandardScore extends Model
     use HasFactory;
 
     protected $table = 'test_standard_scores';
+    protected $primaryKey = 'id';
+    protected $keyType = 'int';
+    public $incrementing = true;
 
-    protected $guarded = [];
+    protected $fillable = ['test_id', 'scale_version_id', 'sum_scaled_scores', 'standard_score', 'interpretation'];
 
     public function test()
     {
         return $this->belongsTo(Test::class, 'test_id', 'test_id');
-    }
-
-    public function scaleVersion()
-    {
-        return $this->belongsTo(ScaleVersion::class, 'scale_version_id', 'scale_version_id');
     }
 }

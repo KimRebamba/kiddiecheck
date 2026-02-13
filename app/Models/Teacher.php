@@ -9,23 +9,23 @@ class Teacher extends Model
 {
     use HasFactory;
 
-    protected $table = 'teachers';
+        protected $primaryKey = 'user_id';
+        protected $keyType = 'int';
+        public $incrementing = false;
+        public $timestamps = false;
 
-    protected $primaryKey = 'user_id';
+        protected $fillable = [
+            'user_id', 'hire_date', 'status'
+        ];
 
-    public $incrementing = false;
+        public function user()
+        {
+            return $this->belongsTo(User::class, 'user_id');
+        }
 
-    protected $keyType = 'int';
-
-    protected $guarded = [];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
+        public function students()
+        {
+            return $this->belongsToMany(Student::class, 'student_teacher', 'teacher_id', 'student_id', 'user_id', 'student_id')
+                ->withPivot(['role', 'assigned_at', 'status']);
+        }
     }
-
-    public function students()
-    {
-        return $this->belongsToMany(Student::class, 'student_teacher', 'teacher_id', 'student_id');
-    }
-}

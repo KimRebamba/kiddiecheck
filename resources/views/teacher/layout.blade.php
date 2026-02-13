@@ -39,16 +39,16 @@
   <header class="teacher-header">
     <a class="{{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}"><img class="teacher-logo" src="{{ asset('teacher-logo.svg') }}" alt="Kiddie Teacher"></a>
     <a class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Home</a>
-    <a class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Family</a>
-    <a class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Report</a>
-    <a class="pill {{ request()->routeIs('teacher.sections') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Section</a>
-    <a class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Help</a>
+    <a class="pill {{ request()->routeIs('teacher.family*') ? 'active' : '' }}" href="{{ route('teacher.family') }}">Family</a>
+    <a class="pill {{ request()->routeIs('teacher.reports*') ? 'active' : '' }}" href="{{ route('teacher.reports') }}">Report</a>
+    <a class="pill {{ request()->routeIs('teacher.sections*') ? 'active' : '' }}" href="{{ route('teacher.sections') }}">Section</a>
+    <a class="pill {{ request()->routeIs('teacher.help') ? 'active' : '' }}" href="{{ route('teacher.help') }}">Help</a>
     <div class="spacer"></div>
     @php($initial = strtoupper(substr(optional(Auth::user())->name ?? 'U', 0, 1)))
     <div class="profile" id="teacherProfileMenu">
       <button type="button" class="avatar" aria-haspopup="true" aria-expanded="false" title="Profile">{{ $initial }}</button>
       <div class="menu" role="menu" aria-labelledby="teacherProfileMenu">
-        <a href="{{ route('teacher.index') }}" class="menu-item" role="menuitem">Profile Settings</a>
+        <a href="{{ route('teacher.profile') }}" class="menu-item" role="menuitem">Profile Settings</a>
         <form method="POST" action="{{ route('logout') }}" style="margin:0" role="none">
           @csrf
           <button type="submit" class="menu-item" role="menuitem">Logout</button>

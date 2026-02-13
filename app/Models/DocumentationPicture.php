@@ -10,13 +10,14 @@ class DocumentationPicture extends Model
     use HasFactory;
 
     protected $table = 'documentation_pictures';
-
     protected $primaryKey = 'picture_id';
+    protected $keyType = 'int';
+    public $incrementing = true;
 
-    protected $guarded = [];
+    protected $fillable = ['file_path'];
 
     public function tests()
     {
-        return $this->belongsToMany(Test::class, 'test_picture', 'picture_id', 'test_id');
+        return $this->hasMany(TestPicture::class, 'picture_id', 'picture_id');
     }
 }

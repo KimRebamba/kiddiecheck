@@ -12,7 +12,8 @@ class StudentTag extends Model
 
     public $timestamps = false;
 
-    protected $primaryKey = null;
-
-    protected $guarded = [];
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'student_id', 'student_id');
+    }
 }

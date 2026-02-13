@@ -73,7 +73,7 @@ class Student extends Model
                     ]);
                 }
             } catch (\Throwable $e) {
-                // Silently ignore generation errors to avoid blocking creation
+                \Log::warning('Failed to auto-generate assessment periods for student ' . $student->student_id . ': ' . $e->getMessage());
             }
         });
     }

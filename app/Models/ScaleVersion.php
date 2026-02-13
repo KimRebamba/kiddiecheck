@@ -22,7 +22,7 @@ class ScaleVersion extends Model
 
     public function domainScaledScores()
     {
-        return $this->hasMany(DomainScore::class, 'scale_version_id', 'scale_version_id');
+        return $this->hasMany(TestDomainScaledScore::class, 'scale_version_id', 'scale_version_id');
     }
 
     public function standardScoreScales()

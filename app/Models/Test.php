@@ -14,7 +14,7 @@ class Test extends Model
     public $incrementing = true;
     public $timestamps = true;
 
-    protected $fillable = ['period_id', 'student_id', 'examiner_id', 'test_date', 'notes', 'status'];
+    protected $fillable = ['period_id', 'student_id', 'examiner_id', 'test_date', 'notes', 'status', 'age_months'];
 
     protected $casts = [
         'test_date' => 'date',
@@ -42,7 +42,7 @@ class Test extends Model
 
     public function domainScores()
     {
-        return $this->hasMany(DomainScore::class, 'test_id', 'test_id');
+        return $this->hasMany(TestDomainScaledScore::class, 'test_id', 'test_id');
     }
 
     public function standardScore()
@@ -65,7 +65,7 @@ class Test extends Model
         $domainCount = \App\Models\Domain::count();
         if ($domainCount <= 0) { return false; }
         $completed = 0;
-        foreach ($this->scores as $s) {
+        foreach ($this->scaledScores as $s) {
             if ($s->scaled_score !== null) { $completed++; }
         }
         return $completed >= $domainCount;
@@ -73,7 +73,7 @@ class Test extends Model
 
     public function isAllNA(): bool
     {
-        $domains = $this->scores;
+        $domains = $this->scaledScores;
         if ($domains->isEmpty()) { return false; }
         foreach ($domains as $s) {
             $based = $s->scaled_score_based;
@@ -91,7 +91,10 @@ class Test extends Model
         static::saving(function (Test $test) {
             if ($test->test_date && $test->student_id) {
                 try {
-                    $student = $test->student ?? Student::find($test->student_id);
+                    $student = $test->student;
+                    if (!$student) {
+                        $student = \App\Models\Student::find($test->student_id);
+                    }
                     if ($student && $student->dob) {
                         $testDate = \Illuminate\Support\Carbon::parse($test->test_date);
                         $dob = \Illuminate\Support\Carbon::parse($student->dob);
@@ -100,7 +103,7 @@ class Test extends Model
                         $test->age_months = round($months, 2);
                     }
                 } catch (\Throwable $e) {
-                    // silently ignore compute errors
+                    \Log::warning('Failed to compute age months for test ' . $test->test_id . ': ' . $e->getMessage());
                 }
             }
         });

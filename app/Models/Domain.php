@@ -22,5 +22,5 @@ class Domain extends Model
 
         public function scores()
         {
-            return $this->hasMany(DomainScore::class, 'domain_id', 'domain_id');        }
+            return $this->hasMany(TestDomainScaledScore::class, 'domain_id', 'domain_id');        }
     }

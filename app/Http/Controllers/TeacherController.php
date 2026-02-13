@@ -23,9 +23,6 @@ class TeacherController extends Controller
 {
     public function index()
     {
-<<<<<<< HEAD
-        return view('teacher.index');
-=======
         $teacher = Auth::user();
         $teacherId = $teacher->id ?? $teacher->user_id;
         
@@ -516,6 +513,5 @@ class TeacherController extends Controller
             ->where('tests.status', 'finalized')
             ->orderBy('tests.updated_at', 'desc')
             ->value('test_standard_scores.standard_score');
->>>>>>> 4e80c26 (Teacher dashboard and related features)
     }
 }

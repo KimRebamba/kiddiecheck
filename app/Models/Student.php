@@ -52,7 +52,7 @@ class Student extends Model
         return $this->hasMany(AssessmentPeriod::class, 'student_id', 'student_id');
     }
 
-    public function tests()
+    protected static function boot()
     {
         parent::boot();
 

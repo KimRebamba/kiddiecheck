@@ -55,18 +55,9 @@ class Test extends Model
         return $this->hasMany(TestPicture::class, 'test_id', 'test_id');
     }
 
-    public function domainScores()
+    public function scaledScores()
     {
         return $this->hasMany(TestDomainScaledScore::class, 'test_id', 'test_id');
-    }
-
-    public function standardScore()
-    {
-        if ($role === 'admin') {
-            return $query->whereNotIn('status', ['archived']);
-        }
-        // Teachers & families only see finalized/completed tests globally
-        return $query->whereIn('status', ['finalized', 'completed']);
     }
 
     public function isDomainsComplete(): bool

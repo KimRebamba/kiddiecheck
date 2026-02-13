@@ -7,10 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class TestResponse extends Model
 {
     protected $table = 'test_responses';
-
-    public $incrementing = false;
-
-    protected $table = 'test_responses';
     protected $primaryKey = null;
     public $incrementing = false;
     public $timestamps = false;

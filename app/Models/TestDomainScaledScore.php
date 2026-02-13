@@ -2,16 +2,22 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DomainScore extends Model
+class TestDomainScaledScore extends Model
 {
-    use HasFactory;
+    protected $table = 'test_domain_scaled_scores';
 
-    protected $table = 'domain_scaled_scores';
+    public $incrementing = false;
+
+    protected $primaryKey = null;
 
     protected $guarded = [];
+
+    public function test()
+    {
+        return $this->belongsTo(Test::class, 'test_id', 'test_id');
+    }
 
     public function domain()
     {

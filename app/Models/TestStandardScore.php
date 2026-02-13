@@ -5,17 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class DomainScore extends Model
+class TestStandardScore extends Model
 {
     use HasFactory;
 
-    protected $table = 'domain_scaled_scores';
+    protected $table = 'test_standard_scores';
 
     protected $guarded = [];
 
-    public function domain()
+    public function test()
     {
-        return $this->belongsTo(Domain::class, 'domain_id', 'domain_id');
+        return $this->belongsTo(Test::class, 'test_id', 'test_id');
     }
 
     public function scaleVersion()

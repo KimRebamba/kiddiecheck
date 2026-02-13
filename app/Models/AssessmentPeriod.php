@@ -4,37 +4,29 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Carbon;
 
 class AssessmentPeriod extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'student_id', 'index', 'starts_at', 'ends_at', 'teacher_grace_end', 'status'
-    ];
+    protected $table = 'assessment_periods';
 
-    public $timestamps = false;
+    protected $primaryKey = 'period_id';
+
+    protected $guarded = [];
 
     public function student()
     {
-        return $this->belongsTo(Student::class);
+        return $this->belongsTo(Student::class, 'student_id', 'student_id');
     }
 
     public function tests()
     {
-        return $this->hasMany(Test::class);
+        return $this->hasMany(Test::class, 'period_id', 'period_id');
     }
 
-    public function isActive(): bool
+    public function summary()
     {
-        $now = Carbon::now();
-        return $now->between($this->starts_at, $this->ends_at);
-    }
-
-    public function isClosed(): bool
-    {
-        $now = Carbon::now();
-        return $now->greaterThan($this->ends_at);
+        return $this->hasOne(PeriodSummaryScore::class, 'period_id', 'period_id');
     }
 }

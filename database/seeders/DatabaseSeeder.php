@@ -19,9 +19,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            // Seed scale version and related lookup tables first
-            Eccd2004Seeder::class,
-            // Then seed the ECCD checklist questions that depend on the scale version
+            Eccd2004Seeder::class,        
             EccdQuestionsSeeder::class,
             DemoSeeder::class,
         ]);

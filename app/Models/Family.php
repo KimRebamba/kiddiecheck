@@ -9,17 +9,23 @@ class Family extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'user_id', 'name', 'home_address'
-    ];
+    protected $table = 'families';
+
+    protected $primaryKey = 'user_id';
+
+    public $incrementing = false;
+
+    protected $keyType = 'int';
+
+    protected $guarded = [];
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     public function students()
     {
-        return $this->hasMany(Student::class);
+        return $this->hasMany(Student::class, 'family_id', 'user_id');
     }
 }

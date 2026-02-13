@@ -9,6 +9,16 @@ class EccdQuestionsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Attach all ECCD checklist questions to the ECCD 2004 scale version
+        $scaleVersionId = DB::table('scale_versions')
+            ->where('name', 'ECCD 2004')
+            ->value('scale_version_id');
+
+        if (!$scaleVersionId) {
+            // Scale version must be seeded first (by Eccd2004Seeder)
+            return;
+        }
+
         $domains = [
             [
                 'name' => 'Gross Motor',
@@ -180,6 +190,7 @@ class EccdQuestionsSeeder extends Seeder
             foreach ($domain['items'] as $item) {
                 $exists = DB::table('questions')
                     ->where('domain_id', $domainId)
+                    ->where('scale_version_id', $scaleVersionId)
                     ->where('text', $item['text'])
                     ->exists();
 
@@ -189,6 +200,7 @@ class EccdQuestionsSeeder extends Seeder
 
                 DB::table('questions')->insert([
                     'domain_id' => $domainId,
+                    'scale_version_id' => $scaleVersionId,
                     'text' => $item['text'],
                     'question_type' => $item['type'],
                     'order' => $item['order'],

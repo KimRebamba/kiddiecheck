@@ -105,21 +105,32 @@ Schema::create('test_picture', function (Blueprint $table) {
 });
 
 Schema::create('domains', function (Blueprint $table) {
-    $table->id('domain_id');
-    $table->string('name');                                        // "Cognitive", "Language", "Motor", etc.
-    $table->timestamps();
+      $table->id('domain_id');
+      $table->string('name');                                        // "Cognitive", "Language", "Motor", etc.
+      $table->timestamps();
+});
+
+// Scale versions so that different checklists can define their own questions
+Schema::create('scale_versions', function (Blueprint $table) {
+      $table->id('scale_version_id');
+      $table->string('name');                                        // e.g. "ECCD 2004"
+      $table->string('description')->nullable();
+      $table->timestamps();
 });
 
 Schema::create('questions', function (Blueprint $table) {
-    $table->id('question_id');
-    $table->foreignId('domain_id')
-          ->references('domain_id')->on('domains')->onDelete('cascade');
-    $table->string('text');
-    $table->enum('question_type', ['static', 'interactive']);
-    $table->unsignedTinyInteger('order'); 
-    $table->string('display_text')->nullable(); // plain language version for family examiners
-                                                // null = use text (for teacher examiners)
-    $table->timestamps();
+      $table->id('question_id');
+      $table->foreignId('domain_id')
+              ->references('domain_id')->on('domains')->onDelete('cascade');
+      $table->foreignId('scale_version_id')
+              ->nullable()
+              ->references('scale_version_id')->on('scale_versions');
+      $table->string('text');
+      $table->enum('question_type', ['static', 'interactive']);
+      $table->unsignedTinyInteger('order'); 
+      $table->string('display_text')->nullable(); // plain language version for family examiners
+                                                                        // null = use text (for teacher examiners)
+      $table->timestamps();
 });
 
 Schema::create('test_responses', function (Blueprint $table) {
@@ -135,13 +146,6 @@ Schema::create('test_responses', function (Blueprint $table) {
 });
 
 // ─── Scale Lookup Tables ──────────────────────────────────────────────────────
-
-Schema::create('scale_versions', function (Blueprint $table) {
-    $table->id('scale_version_id');
-    $table->string('name');                                        // e.g. "PDMS-2 2024"
-    $table->string('description')->nullable();
-    $table->timestamps();
-});
 
 // Step 3 lookup: raw → scaled per domain + age range
 Schema::create('domain_scaled_scores', function (Blueprint $table) {

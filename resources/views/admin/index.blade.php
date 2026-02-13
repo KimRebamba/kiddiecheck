@@ -1,7 +1,6 @@
-@extends('admin.layout')
 
-@section('content')
-<style>
+
+{{-- <style>
   .dash-wrap { padding: 14px; }
   .dash-top { margin-bottom: 50px; text-align: center; }
   .dash-top .hello { font-weight:400; font-size:18px; color:#cfc9f0; }
@@ -129,13 +128,11 @@ tr{
 .john{
   margin-top: 20px;
 }
-</style>
+</style> --}}
 
-<div class="dash-wrap">
-  <div class="dash-top">
-    <div class="hello">Hello, Admin! Today is …</div>
-    <div class="date">{{ $today }}</div>
-  </div>
+<p>Hello today is {{ now() }}</p>
+<a href="{{ route('admin.eccd') }}">eccd</a>
 
- 
-@endsection
+
+
+

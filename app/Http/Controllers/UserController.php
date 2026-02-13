@@ -26,7 +26,8 @@ class UserController extends Controller
 
         $remember = (bool) $request->boolean('remember');
         if (Auth::attempt(['email' => $validated['email'], 'password' => $validated['password']], $remember)) {
-            $request->session()->regenerate();
+            
+        $request->session()->regenerate();
             $role = Auth::user()->role;
             
             if ($role === 'family') {
@@ -36,6 +37,7 @@ class UserController extends Controller
             } elseif ($role === 'admin') {
                 return redirect()->route('admin.index');
             }
+            
             return redirect()->route('index');
         }
         return back()->withErrors(['Invalid email or password.'])->withInput(['email' => $validated['email']]);
@@ -47,10 +49,12 @@ class UserController extends Controller
 
     public function index()
     {
-        $data = User::all();      
-        return view('welcome', [
-            'data' => $data,
-        ]);
+    $user = Auth::user();
+	if (!$user) { return redirect()->route('login'); }
+	if ($user->role === 'admin') { return redirect()->route('admin.index'); }
+	if ($user->role === 'teacher') { return redirect()->route('teacher.index'); }
+	if ($user->role === 'family') { return redirect()->route('family.index'); }
+	return redirect()->route('login');
     }
 
     /**

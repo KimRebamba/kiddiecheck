@@ -102,7 +102,7 @@
   </style>
 </head>
 <body>
-  <header class="admin-header">
+  {{-- <header class="admin-header">
     <a class="{{ request()->routeIs('admin.index') ? 'active' : '' }}" href="{{ route('admin.index') }}"><img class="admin-logo" src="{{ asset('admin-logo.svg') }}" alt="Kiddie Admin"></a>
     <a class="pill {{ request()->routeIs('admin.index') ? 'active' : '' }}" href="{{ route('admin.index') }}">Dashboard</a>
     
@@ -125,9 +125,9 @@
         </form>
       </div>
     </div>
-  </header>
+  </header> --}}
 
-  <main class="main">
+  {{-- <main class="main">
     @if(session('success'))
       <div class="card" role="alert">{{ session('success') }}</div>
     @endif
@@ -153,6 +153,6 @@
         if(e.key === 'Escape') profile.classList.remove('open');
       });
     })();
-  </script>
+  </script> --}}
 </body>
 </html>

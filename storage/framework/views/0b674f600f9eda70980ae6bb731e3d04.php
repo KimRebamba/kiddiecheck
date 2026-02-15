@@ -1,0 +1,1 @@
+Welcome to index<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\index.blade.php ENDPATH**/ ?>

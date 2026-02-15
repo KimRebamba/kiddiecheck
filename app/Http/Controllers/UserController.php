@@ -31,7 +31,7 @@ class UserController extends Controller
             $role = Auth::user()->role;
             
             if ($role === 'family') {
-                return redirect()->route('family.index');
+              return redirect()->route('family.index'); 
             } elseif ($role === 'teacher') {
                 return redirect()->route('teacher.index');
             } elseif ($role === 'admin') {

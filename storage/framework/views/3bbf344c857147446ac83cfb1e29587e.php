@@ -80,4 +80,8 @@ $type = match ($method) {
 <?php $component = $__componentOriginal0bc865510ef3ecddbe48edc4e8cc9ddb; ?>
 <?php unset($__componentOriginal0bc865510ef3ecddbe48edc4e8cc9ddb); ?>
 <?php endif; ?>
+<<<<<<<< Updated upstream:storage/framework/views/3bbf344c857147446ac83cfb1e29587e.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\http-method.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\http-method.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/7faac87fd4df7a7a2fae693015b759cb.php

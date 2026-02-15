@@ -58,4 +58,8 @@
 <?php unset($__componentOriginal2a45ee13943eadc15ee63d255f492356); ?>
 <?php endif; ?>
 </div>
+<<<<<<<< Updated upstream:storage/framework/views/91c8688b2d188ba03b97220d9fb31c53.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/laravel-ascii-spotlight.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/laravel-ascii-spotlight.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/ab1803ea2edd4e8cc8d2a6a5a458545d.php

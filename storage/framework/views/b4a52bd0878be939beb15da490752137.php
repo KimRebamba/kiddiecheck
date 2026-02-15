@@ -69,7 +69,11 @@
 <?php $__env->stopSection(); ?>
 
 <<<<<<<< Updated upstream:storage/framework/views/b4a52bd0878be939beb15da490752137.php
+<<<<<<<< Updated upstream:storage/framework/views/b4a52bd0878be939beb15da490752137.php
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\teacher\test_question.blade.php ENDPATH**/ ?>
+========
+<?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\test_question.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/7f06d3918ea619f30ccf8e60dca1bb3f.php
 ========
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\test_question.blade.php ENDPATH**/ ?>
 >>>>>>>> Stashed changes:storage/framework/views/7f06d3918ea619f30ccf8e60dca1bb3f.php

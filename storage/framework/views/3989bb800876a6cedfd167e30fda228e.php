@@ -145,7 +145,11 @@
 <?php $__env->stopSection(); ?>
 
 <<<<<<<< Updated upstream:storage/framework/views/3989bb800876a6cedfd167e30fda228e.php
+<<<<<<<< Updated upstream:storage/framework/views/3989bb800876a6cedfd167e30fda228e.php
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\teacher\profile.blade.php ENDPATH**/ ?>
+========
+<?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\profile.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/6707142c39631972c802a04b293114fe.php
 ========
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\profile.blade.php ENDPATH**/ ?>
 >>>>>>>> Stashed changes:storage/framework/views/6707142c39631972c802a04b293114fe.php

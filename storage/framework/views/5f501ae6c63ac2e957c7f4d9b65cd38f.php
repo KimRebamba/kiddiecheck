@@ -32,4 +32,8 @@
         </div>
     </body>
 </html>
+<<<<<<<< Updated upstream:storage/framework/views/5f501ae6c63ac2e957c7f4d9b65cd38f.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\views\minimal.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Exceptions\views\minimal.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/7518c21f8f5e68eefcbd28b4cb58e448.php

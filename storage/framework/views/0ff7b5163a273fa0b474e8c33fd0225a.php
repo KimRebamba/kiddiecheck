@@ -371,4 +371,8 @@ unset($__defined_vars, $__key, $__value); ?>
         </button>
     </div>
 </div>
+<<<<<<<< Updated upstream:storage/framework/views/0ff7b5163a273fa0b474e8c33fd0225a.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\query.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\query.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/1290f96a51f41e096f46987d5f65799a.php

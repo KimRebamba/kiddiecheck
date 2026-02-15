@@ -8,4 +8,8 @@
     </clipPath>
   </defs>
 </svg>
+<<<<<<<< Updated upstream:storage/framework/views/59da2bb9df586312285d1ccf80bbe556.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\icons\copy.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\icons\copy.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/a956584dbba71fae9054f5501b75ecb7.php

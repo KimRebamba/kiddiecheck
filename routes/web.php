@@ -17,6 +17,7 @@ Route::post('/logout',[UserController::class, 'logout'])->name('logout');
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	Route::get('/', [AdminController::class, 'index'])->name('admin.index');
 	Route::get('/eccd', [AdminController::class, 'eccd'])->name('admin.eccd');
 	Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
@@ -61,6 +62,10 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 Route::prefix('teacher')->middleware('auth')->group(function () {
 	Route::get('/', [TeacherController::class, 'index'])->name('teacher.index');
 	Route::get('/eccd', [TeacherController::class, 'eccd'])->name('teacher.eccd');
+=======
+    Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+    Route::get('/eccd', [AdminController::class, 'eccd'])->name('admin.eccd');
+>>>>>>> Stashed changes
 =======
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
     Route::get('/eccd', [AdminController::class, 'eccd'])->name('admin.eccd');

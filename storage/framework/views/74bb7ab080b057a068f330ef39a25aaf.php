@@ -57,4 +57,8 @@ No route parameter data available.
 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
 No database queries detected.
 <?php endif; ?>
+<<<<<<<< Updated upstream:storage/framework/views/74bb7ab080b057a068f330ef39a25aaf.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/markdown.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/markdown.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/805351d95a4b547dc75b8c1bb14c027d.php

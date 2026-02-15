@@ -62,4 +62,8 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php $component = $__componentOriginal12cb286571f553eebcbe98210b217f94; ?>
 <?php unset($__componentOriginal12cb286571f553eebcbe98210b217f94); ?>
 <?php endif; ?>
+<<<<<<<< Updated upstream:storage/framework/views/16273e36e96e312dda0c1e458afc9443.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\formatted-source.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\formatted-source.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/5149b191e005f0d67ad440f88ca261b4.php

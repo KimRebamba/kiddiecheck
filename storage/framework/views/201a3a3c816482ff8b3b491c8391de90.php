@@ -45,4 +45,8 @@ unset($__defined_vars, $__key, $__value); ?>
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 </div>
+<<<<<<<< Updated upstream:storage/framework/views/201a3a3c816482ff8b3b491c8391de90.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/request-header.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\request-header.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/9e64c2e6d668ca3393027db183da0b08.php

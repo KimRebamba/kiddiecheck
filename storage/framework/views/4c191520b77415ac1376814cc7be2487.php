@@ -177,4 +177,8 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php endif; ?>
     <?php endif; ?>
 </div>
+<<<<<<<< Updated upstream:storage/framework/views/4c191520b77415ac1376814cc7be2487.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/frame.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/frame.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/75ed475bff0f05f8fa26f24b96f5c09f.php

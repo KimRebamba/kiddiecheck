@@ -25,4 +25,8 @@
 
 </body>
 </html>
+<<<<<<<< Updated upstream:storage/framework/views/4c3a7c9e5d48aa0625631cb80904f12a.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/layout.blade.php ENDPATH**/ ?>
+========
+<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\layout.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/87ed1931d027064f79a0ad71febe53ae.php

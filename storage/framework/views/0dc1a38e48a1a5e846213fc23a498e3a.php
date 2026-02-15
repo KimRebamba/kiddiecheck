@@ -179,4 +179,8 @@
 </style>
 <?php $__env->stopSection(); ?>
 
+<<<<<<<< Updated upstream:storage/framework/views/0dc1a38e48a1a5e846213fc23a498e3a.php
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\teacher\student.blade.php ENDPATH**/ ?>
+========
+<?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\student.blade.php ENDPATH**/ ?>
+>>>>>>>> Stashed changes:storage/framework/views/bb20d9c76d6f3af7c59a03fc87c5ffe7.php

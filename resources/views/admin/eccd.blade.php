@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8">
-	<title>ECCD Scale Explorer</title>
-	<style>
-		body { font-family: Arial, sans-serif; margin: 16px; }
-		h1, h2, h3 { margin-top: 24px; }
-		table { border-collapse: collapse; width: 100%; margin-top: 8px; }
-		th, td { border: 1px solid #ccc; padding: 4px 6px; font-size: 13px; }
-		th { background-color: #f5f5f5; }
-		.domain-section { margin-top: 16px; }
-		.muted { color: #777; font-size: 12px; }
-		.form-inline { margin-bottom: 16px; }
-		.form-inline label { margin-right: 8px; }
-		.form-inline select { padding: 4px; }
-		.form-inline button { padding: 4px 10px; }
-	</style>
-</head>
-<body>
+@extends('admin.layout')
 
-	<h1>ECCD Scale Versions</h1>
+@section('content')
+	<h1 class="h4 mb-3">ECCD Scale Versions</h1>
 
 	<form method="GET" class="form-inline">
 		<label for="scale_version_id">Select scale version:</label>
@@ -180,9 +162,8 @@
 		@endif
 
 	@else
-		<p class="muted">Select a scale version above to view its questions and related data.</p>
+		<p class="text-muted small">Select a scale version above to view its questions and related data.</p>
 	@endif
 
-</body>
-</html>
+@endsection
 

@@ -1,0 +1,1 @@
+Welcome to index<?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\index.blade.php ENDPATH**/ ?>

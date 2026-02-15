@@ -17,6 +17,7 @@ Schema::create('users', function (Blueprint $table) {
     $table->string('email')->unique();
     $table->string('password');
     $table->enum('role', ['admin', 'teacher', 'family']);
+    $table->enum('status', ['active', 'inactive'])->default('active');
     $table->string('profile_path')->nullable();
     $table->timestamps();
 });

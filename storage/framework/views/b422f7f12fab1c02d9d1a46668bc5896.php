@@ -1,0 +1,1 @@
+you're a family<?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\family\index.blade.php ENDPATH**/ ?>

@@ -1,0 +1,1 @@
+YOURE A TEACHER<?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\teacher\index.blade.php ENDPATH**/ ?>

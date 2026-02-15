@@ -14,7 +14,7 @@ class Student extends Model
     public $incrementing = true;
 
     protected $fillable = [
-        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path'
+        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'section_id'
     ];
 
     protected $casts = [

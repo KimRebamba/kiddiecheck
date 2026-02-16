@@ -16,19 +16,7 @@ class Student extends Model
     public $incrementing = true;
 
     protected $fillable = [
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'section_id'
-=======
-        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'profile_image'
->>>>>>> Stashed changes
-=======
-        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'profile_image'
->>>>>>> Stashed changes
-=======
-        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'profile_image'
->>>>>>> Stashed changes
+        'first_name', 'last_name', 'date_of_birth', 'family_id', 'feature_path', 'section_id', 'profile_image'
     ];
 
     protected $casts = [

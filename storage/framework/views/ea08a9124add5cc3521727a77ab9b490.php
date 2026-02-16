@@ -119,10 +119,19 @@
                         <?php if($st['in_progress']): ?>
                           <a href="<?php echo e(route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0])); ?>" class="btn btn-outline-warning">Continue</a>
                         <?php elseif($st['eligible']): ?>
-                          <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST" style="display: inline;">
-                            <?php echo csrf_field(); ?>
-                            <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
-                          </form>
+                          <?php
+                            $availablePeriod = $s->assessmentPeriods()
+                                ->where('status', '!=', 'overdue')
+                                ->where('status', '!=', 'completed')
+                                ->first();
+                          ?>
+                          <?php if($availablePeriod): ?>
+                            <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST" style="display: inline;">
+                              <?php echo csrf_field(); ?>
+                              <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
+                              <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
+                            </form>
+                          <?php endif; ?>
                         <?php endif; ?>
                       </div>
                     </td>
@@ -200,10 +209,21 @@
                     <td><?php echo e($s->first_name); ?> <?php echo e($s->last_name); ?></td>
                     <td><?php echo e($latest ? $latest->test_date->format('M d, Y') : 'N/A'); ?></td>
                     <td>
-                      <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST">
-                        <?php echo csrf_field(); ?>
-                        <button type="submit" class="btn btn-sm btn-primary">Start Test</button>
-                      </form>
+                      <?php
+                        $availablePeriod = $s->assessmentPeriods()
+                            ->where('status', '!=', 'overdue')
+                            ->where('status', '!=', 'completed')
+                            ->first();
+                      ?>
+                      <?php if($availablePeriod): ?>
+                        <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST">
+                          <?php echo csrf_field(); ?>
+                          <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
+                          <button type="submit" class="btn btn-sm btn-primary">Start Test</button>
+                        </form>
+                      <?php else: ?>
+                        <span class="text-muted small">No available periods</span>
+                      <?php endif; ?>
                     </td>
                   </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>

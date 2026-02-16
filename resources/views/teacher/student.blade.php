@@ -87,14 +87,22 @@
                     </td>
                     <td>{{ $tests->count() }}</td>
                     <td>
-                      @if($student->eligible && $period->status !== 'completed')
+                      @if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue')
                         <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display: inline;">
                           @csrf
                           <input type="hidden" name="period_id" value="{{ $period->period_id }}">
                           <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
                         </form>
                       @else
-                        <span class="text-muted small">Not eligible</span>
+                        <span class="text-muted small">
+                          @if($period->status === 'overdue')
+                            Period overdue
+                          @elseif($period->status === 'completed')
+                            Period completed
+                          @else
+                            Not eligible
+                          @endif
+                        </span>
                       @endif
                     </td>
                   </tr>

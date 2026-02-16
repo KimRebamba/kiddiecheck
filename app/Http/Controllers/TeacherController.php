@@ -49,11 +49,20 @@ class TeacherController extends Controller
             $eligible = false;
 
             if (!$latestCompleted) {
-                $eligible = true; // Never tested
+                // Check if student has any non-overdue assessment periods
+                $eligible = $student->assessmentPeriods()
+                    ->where('status', '!=', 'overdue')
+                    ->where('status', '!=', 'completed')
+                    ->exists();
             } else {
-                // Eligible 6 months after last completed test
+                // Eligible 6 months after last completed test AND has non-overdue periods
                 $sixMonthsAgo = now()->subMonths(6);
-                $eligible = $latestCompleted->test_date <= $sixMonthsAgo;
+                $sixMonthsPassed = $latestCompleted->test_date <= $sixMonthsAgo;
+                $hasNonOverduePeriods = $student->assessmentPeriods()
+                    ->where('status', '!=', 'overdue')
+                    ->where('status', '!=', 'completed')
+                    ->exists();
+                $eligible = $sixMonthsPassed && $hasNonOverduePeriods;
             }
 
             $status[$student->student_id] = [
@@ -259,6 +268,16 @@ class TeacherController extends Controller
         }
         
         $period = AssessmentPeriod::findOrFail($periodId);
+
+        // Prevent starting tests for overdue periods
+        if ($period->status === 'overdue') {
+            return back()->with('error', 'Cannot start test for an overdue assessment period.');
+        }
+
+        // Prevent starting tests for completed periods
+        if ($period->status === 'completed') {
+            return back()->with('error', 'Cannot start test for a completed assessment period.');
+        }
 
         // Get first domain
         $firstDomain = Domain::orderBy('domain_id')->first();
@@ -498,11 +517,21 @@ class TeacherController extends Controller
             ->first();
 
         if (!$latestTest) {
-            return true;
+            // Check if student has any non-overdue assessment periods
+            return $student->assessmentPeriods()
+                ->where('status', '!=', 'overdue')
+                ->where('status', '!=', 'completed')
+                ->exists();
         }
 
-        // Check if 6 months have passed
-        return $latestTest->test_date->addMonths(6) <= now();
+        // Check if 6 months have passed and student has non-overdue periods
+        $sixMonthsPassed = $latestTest->test_date->addMonths(6) <= now();
+        $hasNonOverduePeriods = $student->assessmentPeriods()
+            ->where('status', '!=', 'overdue')
+            ->where('status', '!=', 'completed')
+            ->exists();
+
+        return $sixMonthsPassed && $hasNonOverduePeriods;
     }
 
     private function getLastStandardScore($student)

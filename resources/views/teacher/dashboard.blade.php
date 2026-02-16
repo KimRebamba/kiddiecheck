@@ -118,10 +118,19 @@
                         @if($st['in_progress'])
                           <a href="{{ route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0]) }}" class="btn btn-outline-warning">Continue</a>
                         @elseif($st['eligible'])
-                          <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
-                          </form>
+                          @php
+                            $availablePeriod = $s->assessmentPeriods()
+                                ->where('status', '!=', 'overdue')
+                                ->where('status', '!=', 'completed')
+                                ->first();
+                          @endphp
+                          @if($availablePeriod)
+                            <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST" style="display: inline;">
+                              @csrf
+                              <input type="hidden" name="period_id" value="{{ $availablePeriod->period_id }}">
+                              <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
+                            </form>
+                          @endif
                         @endif
                       </div>
                     </td>
@@ -199,10 +208,21 @@
                     <td>{{ $s->first_name }} {{ $s->last_name }}</td>
                     <td>{{ $latest ? $latest->test_date->format('M d, Y') : 'N/A' }}</td>
                     <td>
-                      <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-primary">Start Test</button>
-                      </form>
+                      @php
+                        $availablePeriod = $s->assessmentPeriods()
+                            ->where('status', '!=', 'overdue')
+                            ->where('status', '!=', 'completed')
+                            ->first();
+                      @endphp
+                      @if($availablePeriod)
+                        <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST">
+                          @csrf
+                          <input type="hidden" name="period_id" value="{{ $availablePeriod->period_id }}">
+                          <button type="submit" class="btn btn-sm btn-primary">Start Test</button>
+                        </form>
+                      @else
+                        <span class="text-muted small">No available periods</span>
+                      @endif
                     </td>
                   </tr>
                 @endforeach

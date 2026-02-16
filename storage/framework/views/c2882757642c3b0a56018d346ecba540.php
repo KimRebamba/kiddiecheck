@@ -89,14 +89,22 @@
                     </td>
                     <td><?php echo e($tests->count()); ?></td>
                     <td>
-                      <?php if($student->eligible && $period->status !== 'completed'): ?>
+                      <?php if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue'): ?>
                         <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display: inline;">
                           <?php echo csrf_field(); ?>
                           <input type="hidden" name="period_id" value="<?php echo e($period->period_id); ?>">
                           <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
                         </form>
                       <?php else: ?>
-                        <span class="text-muted small">Not eligible</span>
+                        <span class="text-muted small">
+                          <?php if($period->status === 'overdue'): ?>
+                            Period overdue
+                          <?php elseif($period->status === 'completed'): ?>
+                            Period completed
+                          <?php else: ?>
+                            Not eligible
+                          <?php endif; ?>
+                        </span>
                       <?php endif; ?>
                     </td>
                   </tr>

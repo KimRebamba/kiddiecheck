@@ -18,9 +18,6 @@
       </div>
       <div class="card-body">
         <p class="mb-2"><strong>Name:</strong> {{ $section->name }}</p>
-        @if($section->description)
-          <p class="mb-2"><strong>Description:</strong> {{ $section->description }}</p>
-        @endif
         <p class="mb-2"><strong>Total Students:</strong> {{ $students->count() }}</p>
       </div>
     </div>
@@ -84,7 +81,15 @@
                             </form>
                           @endif
                         @endif
-                      </div>
+                        
+                        <!-- Delete Section Button -->
+                        @if($section->student_count == 0)
+                          <form action="{{ route('teacher.sections.destroy', $section->section_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this section?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger">Delete Section</button>
+                          </form>
+                        @endif
                     </td>
                   </tr>
                 @endforeach

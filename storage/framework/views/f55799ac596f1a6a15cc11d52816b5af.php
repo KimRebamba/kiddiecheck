@@ -23,9 +23,6 @@
               <strong>Students:</strong> <?php echo e($section->student_count); ?>
 
             </p>
-            <?php if($section->description): ?>
-              <p class="card-text" style="font-size: 0.85rem;"><?php echo e(Str::limit($section->description, 60)); ?></p>
-            <?php endif; ?>
             <div class="btn-group btn-group-sm" role="group">
               <a href="<?php echo e(route('teacher.sections.show', $section->section_id)); ?>" class="btn btn-outline-primary">View</a>
               <a href="<?php echo e(route('teacher.sections.edit', $section->section_id)); ?>" class="btn btn-outline-secondary">Edit</a>

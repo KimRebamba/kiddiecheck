@@ -22,9 +22,6 @@
             <p class="card-text text-muted">
               <strong>Students:</strong> {{ $section->student_count }}
             </p>
-            @if($section->description)
-              <p class="card-text" style="font-size: 0.85rem;">{{ Str::limit($section->description, 60) }}</p>
-            @endif
             <div class="btn-group btn-group-sm" role="group">
               <a href="{{ route('teacher.sections.show', $section->section_id) }}" class="btn btn-outline-primary">View</a>
               <a href="{{ route('teacher.sections.edit', $section->section_id) }}" class="btn btn-outline-secondary">Edit</a>

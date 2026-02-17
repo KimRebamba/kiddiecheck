@@ -131,25 +131,29 @@ class TeacherController extends Controller
         $teacher = Auth::user();
         $teacherId = $teacher->id ?? $teacher->user_id;
         
-        // Get sections with correct column names
+        // Get sections with correct column names based on actual database schema
         $sections = DB::table('sections')
-            ->select('id', 'name', 'description', 'created_at', 'updated_at')
+            ->select('section_id', 'name', 'created_at', 'updated_at')
             ->get();
 
-        // Add student count manually for each section
+        // Add student count manually for each section - simple approach without whereExists
         $sections = $sections->map(function($section) use ($teacherId) {
+            // Count students in this section and assigned to this teacher
             $studentCount = DB::table('students')
                 ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
-                ->where('students.section_id', $section->id)
+                ->where('students.section_id', $section->section_id)
                 ->where('student_teacher.teacher_id', $teacherId)
                 ->count();
             
             $section->student_count = $studentCount;
-            $section->section_id = $section->id; // Add section_id for compatibility
             return $section;
         });
 
-        return view('teacher.sections', compact('sections'));
+        return response()->view('teacher.sections', compact('sections'))
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT')
+            ->header('Last-Modified', gmdate('D, d M Y H:i:s T').' GMT');
     }
 
     public function sectionsShow($sectionId)
@@ -157,18 +161,15 @@ class TeacherController extends Controller
         $teacher = Auth::user();
         $teacherId = $teacher->id ?? $teacher->user_id;
         
-        // Get section with students using correct column names
+        // Get section with correct column names
         $section = DB::table('sections')
-            ->select('id', 'name', 'description', 'created_at', 'updated_at')
-            ->where('id', $sectionId)
+            ->select('section_id', 'name', 'created_at', 'updated_at')
+            ->where('section_id', $sectionId)
             ->first();
 
         if (!$section) {
             abort(404);
         }
-
-        // Add section_id for compatibility
-        $section->section_id = $section->id;
 
         // Get students in this section assigned to this teacher
         $students = DB::table('students')
@@ -186,6 +187,9 @@ class TeacherController extends Controller
             return $student;
         });
 
+        // Add student count to section object
+        $section->student_count = $students->count();
+
         return view('teacher.sections_show', compact('section', 'students'));
     }
 
@@ -198,13 +202,11 @@ class TeacherController extends Controller
     public function sectionsStore(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'name' => 'required|string|max:255'
         ]);
 
         $sectionId = DB::table('sections')->insertGetId([
             'name' => $request->name,
-            'description' => $request->description,
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -227,15 +229,13 @@ class TeacherController extends Controller
     public function sectionsUpdate(Request $request, $sectionId)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string'
+            'name' => 'required|string|max:255'
         ]);
 
         DB::table('sections')
-            ->where('id', $sectionId)
+            ->where('section_id', $sectionId)
             ->update([
                 'name' => $request->name,
-                'description' => $request->description,
                 'updated_at' => now()
             ]);
 
@@ -245,16 +245,41 @@ class TeacherController extends Controller
     // Delete Section
     public function sectionsDestroy($sectionId)
     {
-        // Check if section has students
+        // Debug: Check what we're working with
+        \Log::info('Attempting to delete section', [
+            'sectionId' => $sectionId,
+            'request' => request()->all()
+        ]);
+        
+        // Check if section has students - more precise query to only count students in this section
         $studentCount = DB::table('students')
-            ->where('section_id', $sectionId)
+            ->where('section_id', '=', $sectionId)
             ->count();
 
+        \Log::info('Student count for section', [
+            'sectionId' => $sectionId,
+            'studentCount' => $studentCount,
+            'sql' => 'SELECT COUNT(*) FROM students WHERE section_id = ' . $sectionId
+        ]);
+
         if ($studentCount > 0) {
+            \Log::info('Cannot delete section - has students', [
+                'sectionId' => $sectionId,
+                'studentCount' => $studentCount
+            ]);
             return back()->with('error', 'Cannot delete section with assigned students.');
         }
 
-        DB::table('sections')->where('id', $sectionId)->delete();
+        \Log::info('Proceeding with section deletion', [
+            'sectionId' => $sectionId
+        ]);
+
+        $deleted = DB::table('sections')->where('section_id', $sectionId)->delete();
+
+        \Log::info('Section deletion result', [
+            'sectionId' => $sectionId,
+            'deleted' => $deleted
+        ]);
 
         return redirect()->route('teacher.sections')->with('success', 'Section deleted successfully.');
     }
@@ -612,15 +637,23 @@ class TeacherController extends Controller
     // Helper methods
     private function isStudentEligibleForTest($student, $teacher)
     {
-        $latestTest = Test::where('student_id', $student->student_id)
+        // Handle both Eloquent models and stdClass objects
+        $studentId = $student->student_id ?? $student->section_id ?? null;
+        
+        if (!$studentId) {
+            return false;
+        }
+
+        $latestTest = Test::where('student_id', $studentId)
             ->where('status', 'finalized')
             ->where('examiner_id', $teacher->user_id)
             ->orderBy('updated_at', 'desc')
             ->first();
 
         if (!$latestTest) {
-            // Check if student has any non-overdue assessment periods
-            return $student->assessmentPeriods()
+            // Check if student has any non-overdue assessment periods using query builder
+            return DB::table('assessment_periods')
+                ->where('student_id', $studentId)
                 ->where('status', '!=', 'overdue')
                 ->where('status', '!=', 'completed')
                 ->exists();
@@ -628,7 +661,8 @@ class TeacherController extends Controller
 
         // Check if 6 months have passed and student has non-overdue periods
         $sixMonthsPassed = $latestTest->test_date->addMonths(6) <= now();
-        $hasNonOverduePeriods = $student->assessmentPeriods()
+        $hasNonOverduePeriods = DB::table('assessment_periods')
+            ->where('student_id', $studentId)
             ->where('status', '!=', 'overdue')
             ->where('status', '!=', 'completed')
             ->exists();

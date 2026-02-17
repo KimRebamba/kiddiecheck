@@ -93,7 +93,12 @@ Route::prefix('teacher')->middleware('auth')->group(function () {
 	Route::get('/family', [TeacherController::class, 'family'])->name('teacher.family');
 	Route::get('/family/{family}', [TeacherController::class, 'familyShow'])->name('teacher.family.show');
 	Route::get('/sections', [TeacherController::class, 'sections'])->name('teacher.sections');
+	Route::get('/sections/create', [TeacherController::class, 'sectionsCreate'])->name('teacher.sections.create');
+	Route::post('/sections', [TeacherController::class, 'sectionsStore'])->name('teacher.sections.store');
 	Route::get('/sections/{section}', [TeacherController::class, 'sectionsShow'])->name('teacher.sections.show');
+	Route::get('/sections/{section}/edit', [TeacherController::class, 'sectionsEdit'])->name('teacher.sections.edit');
+	Route::put('/sections/{section}', [TeacherController::class, 'sectionsUpdate'])->name('teacher.sections.update');
+	Route::delete('/sections/{section}', [TeacherController::class, 'sectionsDestroy'])->name('teacher.sections.destroy');
 	Route::get('/reports', [TeacherController::class, 'reports'])->name('teacher.reports');
 	Route::get('/reports/{student}/{period}', [TeacherController::class, 'reportShow'])->name('teacher.reports.show');
 	Route::get('/reports/{student}/{period}/{test}', [TeacherController::class, 'reportDetail'])->name('teacher.reports.detail');

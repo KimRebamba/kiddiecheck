@@ -129,11 +129,25 @@ class TeacherController extends Controller
     public function sections()
     {
         $teacher = Auth::user();
+        $teacherId = $teacher->id ?? $teacher->user_id;
         
-        // Get sections that have students assigned to this teacher
-        $sections = Section::whereHas('students.teachers', function($q) use ($teacher) {
-            $q->where('user_id', $teacher->id);
-        })->get();
+        // Get sections with correct column names
+        $sections = DB::table('sections')
+            ->select('id', 'name', 'description', 'created_at', 'updated_at')
+            ->get();
+
+        // Add student count manually for each section
+        $sections = $sections->map(function($section) use ($teacherId) {
+            $studentCount = DB::table('students')
+                ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
+                ->where('students.section_id', $section->id)
+                ->where('student_teacher.teacher_id', $teacherId)
+                ->count();
+            
+            $section->student_count = $studentCount;
+            $section->section_id = $section->id; // Add section_id for compatibility
+            return $section;
+        });
 
         return view('teacher.sections', compact('sections'));
     }
@@ -141,21 +155,108 @@ class TeacherController extends Controller
     public function sectionsShow($sectionId)
     {
         $teacher = Auth::user();
-        $section = Section::with(['students' => function($q) use ($teacher) {
-            $q->whereHas('teachers', function($t) use ($teacher) {
-                $t->where('user_id', $teacher->id);
-            });
-        }])->findOrFail($sectionId);
+        $teacherId = $teacher->id ?? $teacher->user_id;
+        
+        // Get section with students using correct column names
+        $section = DB::table('sections')
+            ->select('id', 'name', 'description', 'created_at', 'updated_at')
+            ->where('id', $sectionId)
+            ->first();
+
+        if (!$section) {
+            abort(404);
+        }
+
+        // Add section_id for compatibility
+        $section->section_id = $section->id;
+
+        // Get students in this section assigned to this teacher
+        $students = DB::table('students')
+            ->select('students.*')
+            ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
+            ->where('student_teacher.teacher_id', $teacherId)
+            ->where('students.section_id', $sectionId)
+            ->get();
 
         // Add eligibility and last standard score for each student
-        $section->students = $section->students->map(function($student) use ($teacher) {
-            $student->age = $student->date_of_birth ? (int) $student->date_of_birth->diffInYears(now()) : null;
-            $student->eligible = $this->isStudentEligibleForTest($student, $teacher);
-            $student->last_standard_score = $this->getLastStandardScore($student);
+        $students = $students->map(function($student) use ($teacher) {
+            $student->age = $student->date_of_birth ? (int) \Carbon\Carbon::parse($student->date_of_birth)->diffInYears(now()) : null;
+            $student->eligible = $this->isStudentEligibleForTest((object)$student, $teacher);
+            $student->last_standard_score = $this->getLastStandardScore((object)$student);
             return $student;
         });
 
-        return view('teacher.sections_show', compact('section'));
+        return view('teacher.sections_show', compact('section', 'students'));
+    }
+
+    // Create Section
+    public function sectionsCreate()
+    {
+        return view('teacher.sections_create');
+    }
+
+    public function sectionsStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
+
+        $sectionId = DB::table('sections')->insertGetId([
+            'name' => $request->name,
+            'description' => $request->description,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return redirect()->route('teacher.sections')->with('success', 'Section created successfully.');
+    }
+
+    // Edit Section
+    public function sectionsEdit($sectionId)
+    {
+        $section = DB::table('sections')->where('section_id', $sectionId)->first();
+        
+        if (!$section) {
+            abort(404);
+        }
+
+        return view('teacher.sections_edit', compact('section'));
+    }
+
+    public function sectionsUpdate(Request $request, $sectionId)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string'
+        ]);
+
+        DB::table('sections')
+            ->where('id', $sectionId)
+            ->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'updated_at' => now()
+            ]);
+
+        return redirect()->route('teacher.sections')->with('success', 'Section updated successfully.');
+    }
+
+    // Delete Section
+    public function sectionsDestroy($sectionId)
+    {
+        // Check if section has students
+        $studentCount = DB::table('students')
+            ->where('section_id', $sectionId)
+            ->count();
+
+        if ($studentCount > 0) {
+            return back()->with('error', 'Cannot delete section with assigned students.');
+        }
+
+        DB::table('sections')->where('id', $sectionId)->delete();
+
+        return redirect()->route('teacher.sections')->with('success', 'Section deleted successfully.');
     }
 
     // Reports Page

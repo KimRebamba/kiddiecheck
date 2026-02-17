@@ -1,0 +1,1 @@
+<?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\test\start.blade.php ENDPATH**/ ?>

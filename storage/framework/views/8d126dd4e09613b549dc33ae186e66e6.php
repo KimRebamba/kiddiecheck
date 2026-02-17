@@ -83,6 +83,18 @@
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-12 col-md-3">
+        <label class="form-label form-label-sm">Section</label>
+        <select name="section_id" class="form-select form-select-sm">
+          <option value="">All sections</option>
+          <?php $__currentLoopData = $sectionOptions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sec): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <option value="<?php echo e($sec->section_id); ?>" <?php echo e((string)request('section_id') === (string)$sec->section_id ? 'selected' : ''); ?>>
+              <?php echo e($sec->name); ?>
+
+            </option>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
         <label class="form-label form-label-sm">Student name</label>
         <input type="text" name="student_name" value="<?php echo e(request('student_name')); ?>" class="form-control form-control-sm" placeholder="Search student">
       </div>
@@ -168,6 +180,7 @@
             <tr>
               <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.student-check').forEach(cb => cb.checked = this.checked);"></th>
               <th style="width:52px;">Photo</th>
+              <th>Section</th>
               <th>Student</th>
               <th>Age</th>
               <th>Family</th>
@@ -193,6 +206,7 @@
                     </div>
                   <?php endif; ?>
                 </td>
+                <td><?php echo e($s->section_name ?? '—'); ?></td>
                 <td><?php echo e($s->last_name); ?>, <?php echo e($s->first_name); ?></td>
                 <td><?php echo e($s->computed_age_years !== null ? $s->computed_age_years . ' yrs' : '—'); ?></td>
                 <td><?php echo e($s->family_name ?? '—'); ?></td>

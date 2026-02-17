@@ -28,6 +28,8 @@
       </div>
       <div class="card-body small">
         <dl class="row mb-0">
+          <dt class="col-5">Section</dt>
+          <dd class="col-7">{{ $student->section_name ?? '—' }}</dd>
           <dt class="col-5">Full name</dt>
           <dd class="col-7">{{ $student->first_name }} {{ $student->last_name }}</dd>
           <dt class="col-5">Date of birth</dt>

@@ -3,8 +3,4 @@
     <path d="M1.3125 6.00012H10.6875" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M6 10.6876C8.58883 10.6876 10.6875 8.58896 10.6875 6.00012C10.6875 3.41129 8.58883 1.31262 6 1.31262C3.41117 1.31262 1.3125 3.41129 1.3125 6.00012C1.3125 8.58896 3.41117 10.6876 6 10.6876Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
-<<<<<<<< Updated upstream:storage/framework/views/261290a30fbd4dfb4f059572aec607ce.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\icons\globe.blade.php ENDPATH**/ ?>
-========
-<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\icons\globe.blade.php ENDPATH**/ ?>
->>>>>>>> Stashed changes:storage/framework/views/8c0db7e8661a54c6a84c3ff7e16fb462.php

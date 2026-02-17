@@ -89,14 +89,22 @@
                     </td>
                     <td><?php echo e($tests->count()); ?></td>
                     <td>
-                      <?php if($student->eligible && $period->status !== 'completed'): ?>
+                      <?php if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue'): ?>
                         <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display: inline;">
                           <?php echo csrf_field(); ?>
                           <input type="hidden" name="period_id" value="<?php echo e($period->period_id); ?>">
                           <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
                         </form>
                       <?php else: ?>
-                        <span class="text-muted small">Not eligible</span>
+                        <span class="text-muted small">
+                          <?php if($period->status === 'overdue'): ?>
+                            Period overdue
+                          <?php elseif($period->status === 'completed'): ?>
+                            Period completed
+                          <?php else: ?>
+                            Not eligible
+                          <?php endif; ?>
+                        </span>
                       <?php endif; ?>
                     </td>
                   </tr>
@@ -179,8 +187,4 @@
 </style>
 <?php $__env->stopSection(); ?>
 
-<<<<<<<< Updated upstream:storage/framework/views/0dc1a38e48a1a5e846213fc23a498e3a.php
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\resources\views\teacher\student.blade.php ENDPATH**/ ?>
-========
-<?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\resources\views\teacher\student.blade.php ENDPATH**/ ?>
->>>>>>>> Stashed changes:storage/framework/views/bb20d9c76d6f3af7c59a03fc87c5ffe7.php

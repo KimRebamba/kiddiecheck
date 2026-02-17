@@ -83,6 +83,17 @@
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-12 col-md-3">
+        <label class="form-label form-label-sm">Section</label>
+        <select name="section_id" class="form-select form-select-sm">
+          <option value="">All sections</option>
+          @foreach($sectionOptions as $sec)
+            <option value="{{ $sec->section_id }}" {{ (string)request('section_id') === (string)$sec->section_id ? 'selected' : '' }}>
+              {{ $sec->name }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-12 col-md-3">
         <label class="form-label form-label-sm">Student name</label>
         <input type="text" name="student_name" value="{{ request('student_name') }}" class="form-control form-control-sm" placeholder="Search student">
       </div>
@@ -168,6 +179,7 @@
             <tr>
               <th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.student-check').forEach(cb => cb.checked = this.checked);"></th>
               <th style="width:52px;">Photo</th>
+              <th>Section</th>
               <th>Student</th>
               <th>Age</th>
               <th>Family</th>
@@ -192,6 +204,7 @@
                     </div>
                   @endif
                 </td>
+                <td>{{ $s->section_name ?? '—' }}</td>
                 <td>{{ $s->last_name }}, {{ $s->first_name }}</td>
                 <td>{{ $s->computed_age_years !== null ? $s->computed_age_years . ' yrs' : '—' }}</td>
                 <td>{{ $s->family_name ?? '—' }}</td>

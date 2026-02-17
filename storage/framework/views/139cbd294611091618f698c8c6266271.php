@@ -27,7 +27,19 @@
   </div>
 
   <div class="row g-3 mb-3">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
+      <label class="form-label">Section</label>
+      <select name="section_id" class="form-select form-select-sm" required>
+        <option value="">Select section...</option>
+        <?php $__currentLoopData = $sections; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sec): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+          <option value="<?php echo e($sec->section_id); ?>" <?php echo e((string)old('section_id', $student->section_id ?? '') === (string)$sec->section_id ? 'selected' : ''); ?>>
+            <?php echo e($sec->name); ?>
+
+          </option>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
       <label class="form-label">Family</label>
       <select name="family_id" class="form-select form-select-sm" required>
         <option value="">Select family...</option>
@@ -38,7 +50,7 @@
         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
       </select>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
       <label class="form-label">Photo path (optional)</label>
       <input type="text" name="feature_path" value="<?php echo e(old('feature_path', $student->feature_path ?? '')); ?>" class="form-control form-control-sm">
     </div>

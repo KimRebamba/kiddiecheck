@@ -13,7 +13,7 @@
   <div class="row g-3">
     @foreach($sections as $section)
       <div class="col-md-6 col-lg-4">
-        <div class="card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#sectionModal{{ $section->id }}">
+        <div class="card" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#sectionModal{{ $section->section_id }}">
           <div class="card-body">
             <h5 class="card-title">{{ $section->name }}</h5>
             <p class="card-text text-muted">
@@ -22,7 +22,7 @@
             @if($section->description)
               <p class="card-text" style="font-size: 0.85rem;">{{ Str::limit($section->description, 60) }}</p>
             @endif
-            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();" data-bs-toggle="modal" data-bs-target="#sectionModal{{ $section->id }}">
+            <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation();" data-bs-toggle="modal" data-bs-target="#sectionModal{{ $section->section_id }}">
               View Students
             </button>
           </div>
@@ -30,7 +30,7 @@
       </div>
 
       <!-- Section Modal with Students Table -->
-      <div class="modal fade" id="sectionModal{{ $section->id }}" tabindex="-1">
+      <div class="modal fade" id="sectionModal{{ $section->section_id }}" tabindex="-1">
         <div class="modal-dialog modal-lg">
           <div class="modal-content">
             <div class="modal-header">

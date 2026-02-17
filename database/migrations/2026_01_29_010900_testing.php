@@ -47,11 +47,19 @@ Schema::create('families', function (Blueprint $table) {
     $table->timestamps();
 });
 
+Schema::create('sections', function (Blueprint $table) {
+    $table->id('section_id');
+    $table->string('name');
+    $table->timestamps();
+});
+
 Schema::create('students', function (Blueprint $table) {
     $table->id('student_id');
     $table->string('first_name');
     $table->string('last_name');
     $table->date('date_of_birth');
+    $table->foreignId('section_id')
+          ->references('section_id')->on('sections')->onDelete('cascade'); // one section per student
     $table->foreignId('family_id')
           ->references('user_id')->on('families')->onDelete('cascade'); // one family per student
     $table->string('feature_path')->nullable();

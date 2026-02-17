@@ -396,6 +396,7 @@ class AdminController extends Controller
 
         $studentsQuery = DB::table('students as s')
             ->leftJoin('families as f', 's.family_id', '=', 'f.user_id')
+            ->leftJoin('sections as sec', 's.section_id', '=', 'sec.section_id')
             ->select(
                 's.student_id',
                 's.first_name',
@@ -405,7 +406,8 @@ class AdminController extends Controller
                 's.feature_path',
                 's.created_at',
                 's.updated_at',
-                'f.family_name'
+                'f.family_name',
+                'sec.name as section_name'
             );
 
         // Search filters
@@ -418,6 +420,12 @@ class AdminController extends Controller
         $familyName = trim((string) request('family_name'));
         if ($familyName !== '') {
             $studentsQuery->where('f.family_name', 'like', '%' . $familyName . '%');
+        }
+
+        // Section filter
+        $sectionId = request('section_id');
+        if ($sectionId) {
+            $studentsQuery->where('s.section_id', $sectionId);
         }
 
         // Age range filter (in years)
@@ -668,9 +676,17 @@ class AdminController extends Controller
                 'u.username',
             ]);
 
+        $sectionOptions = DB::table('sections')
+            ->orderBy('name')
+            ->get([
+                'section_id',
+                'name',
+            ]);
+
         return view('admin.students', [
             'students' => $students,
             'teacherOptions' => $teacherOptions,
+            'sectionOptions' => $sectionOptions,
             'alerts' => $alerts,
         ]);
     }
@@ -2341,6 +2357,7 @@ class AdminController extends Controller
             'mode' => 'create',
             'student' => null,
             'families' => $families,
+            'sections' => DB::table('sections')->orderBy('name')->get(),
         ]);
     }
 
@@ -2351,6 +2368,7 @@ class AdminController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'family_id' => 'required|exists:families,user_id',
+            'section_id' => 'required|exists:sections,section_id',
             'feature_path' => 'nullable|string|max:255',
         ]);
 
@@ -2359,6 +2377,7 @@ class AdminController extends Controller
             'last_name' => $validated['last_name'],
             'date_of_birth' => $validated['date_of_birth'],
             'family_id' => $validated['family_id'],
+            'section_id' => $validated['section_id'],
             'feature_path' => $validated['feature_path'] ?? null,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
@@ -2394,6 +2413,7 @@ class AdminController extends Controller
         $student = DB::table('students as s')
             ->leftJoin('families as f', 's.family_id', '=', 'f.user_id')
             ->leftJoin('users as fu', 'f.user_id', '=', 'fu.user_id')
+            ->leftJoin('sections as sec', 's.section_id', '=', 'sec.section_id')
             ->where('s.student_id', $studentId)
             ->select(
                 's.*',
@@ -2401,7 +2421,8 @@ class AdminController extends Controller
                 'f.home_address as family_home_address',
                 'f.emergency_contact',
                 'f.emergency_phone',
-                'fu.email as family_email'
+                'fu.email as family_email',
+                'sec.name as section_name'
             )
             ->first();
 
@@ -2543,6 +2564,7 @@ class AdminController extends Controller
             'mode' => 'edit',
             'student' => $student,
             'families' => $families,
+            'sections' => DB::table('sections')->orderBy('name')->get(),
         ]);
     }
 
@@ -2558,6 +2580,7 @@ class AdminController extends Controller
             'last_name' => 'required|string|max:255',
             'date_of_birth' => 'required|date',
             'family_id' => 'required|exists:families,user_id',
+            'section_id' => 'required|exists:sections,section_id',
             'feature_path' => 'nullable|string|max:255',
         ]);
 
@@ -2566,6 +2589,7 @@ class AdminController extends Controller
             'last_name' => $validated['last_name'],
             'date_of_birth' => $validated['date_of_birth'],
             'family_id' => $validated['family_id'],
+            'section_id' => $validated['section_id'],
             'feature_path' => $validated['feature_path'] ?? $existing->feature_path,
             'updated_at' => Carbon::now(),
         ]);

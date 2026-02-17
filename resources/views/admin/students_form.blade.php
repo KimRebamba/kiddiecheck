@@ -27,7 +27,18 @@
   </div>
 
   <div class="row g-3 mb-3">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
+      <label class="form-label">Section</label>
+      <select name="section_id" class="form-select form-select-sm" required>
+        <option value="">Select section...</option>
+        @foreach($sections as $sec)
+          <option value="{{ $sec->section_id }}" {{ (string)old('section_id', $student->section_id ?? '') === (string)$sec->section_id ? 'selected' : '' }}>
+            {{ $sec->name }}
+          </option>
+        @endforeach
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
       <label class="form-label">Family</label>
       <select name="family_id" class="form-select form-select-sm" required>
         <option value="">Select family...</option>
@@ -38,7 +49,7 @@
         @endforeach
       </select>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
       <label class="form-label">Photo path (optional)</label>
       <input type="text" name="feature_path" value="{{ old('feature_path', $student->feature_path ?? '') }}" class="form-control form-control-sm">
     </div>

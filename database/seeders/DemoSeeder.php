@@ -97,6 +97,29 @@ class DemoSeeder extends Seeder
         ]);
     }
 
+    protected function sections_add(): void
+    {
+        $now = now();
+
+        DB::table('sections')->insert([
+            [
+                'name' => 'Section A',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Section B',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'name' => 'Section C',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+    }
+
     protected function teachers_add(): void
     {
         $now = now();
@@ -187,6 +210,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Cruz',
                 'date_of_birth' => '2021-01-15',
                 'family_id' => 5,
+                'section_id' => 1,
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -197,6 +221,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Santos',
                 'date_of_birth' => '2020-06-10',
                 'family_id' => 6,
+                'section_id' => 2,
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -207,6 +232,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Reyes',
                 'date_of_birth' => '2019-03-20',
                 'family_id' => 7,
+                'section_id' => 3,
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -824,6 +850,7 @@ class DemoSeeder extends Seeder
             $this->users_add();
             $this->teachers_add();
             $this->families_add();
+            $this->sections_add();
             $this->students_add();
             $this->studentTeacher_add();
             $this->assessmentPeriods_add();

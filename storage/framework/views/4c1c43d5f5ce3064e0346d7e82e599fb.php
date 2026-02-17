@@ -154,8 +154,4 @@ unset($__defined_vars, $__key, $__value); ?>
 <?php unset($__componentOriginalb581a7e3a55d371fae986833ecafa668); ?>
 <?php endif; ?>
 </div>
-<<<<<<<< Updated upstream:storage/framework/views/4c1c43d5f5ce3064e0346d7e82e599fb.php
 <?php /**PATH C:\Users\Kim\Desktop\laravel\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\resources\exceptions\renderer\components\header.blade.php ENDPATH**/ ?>
-========
-<?php /**PATH C:\xamppkiddiecheck\htdocs\kiddiecheck\vendor\laravel\framework\src\Illuminate\Foundation\Providers/../resources/exceptions/renderer/components/header.blade.php ENDPATH**/ ?>
->>>>>>>> Stashed changes:storage/framework/views/6690ec514891e13f3600fbd376a3c548.php

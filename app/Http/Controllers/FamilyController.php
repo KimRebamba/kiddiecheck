@@ -151,66 +151,83 @@ class FamilyController extends Controller
     // ──────────────────────────────────────────────
 
     public function index()
-    {
-        $user = Auth::user();
+{
+    $user = Auth::user();
 
-        if ($user->role !== 'family') abort(403, 'Unauthorized access');
+    if ($user->role !== 'family') abort(403, 'Unauthorized access');
 
-        [$user, $family] = $this->getAuthFamily();
+    [$user, $family] = $this->getAuthFamily();
 
-        $avatars  = ['bunny', 'fox', 'frog', 'mouse', 'panda', 'tiger'];
+    $avatars = ['bunny', 'fox', 'frog', 'mouse', 'panda', 'tiger'];
 
-        $students = DB::table('students')
-            ->where('family_id', $family->user_id)
-            ->orderBy('date_of_birth', 'desc')
-            ->get();
+    $students = DB::table('students')
+        ->where('family_id', $family->user_id)
+        ->orderBy('date_of_birth', 'desc')
+        ->get();
 
-        $studentIds = $students->pluck('student_id');
+    $studentIds = $students->pluck('student_id');
 
-        // Upcoming assessments
-        $upcomingAssessments = DB::table('assessment_periods as ap')
-            ->join('students as s', 's.student_id', 'ap.student_id')
-            ->whereIn('ap.student_id', $studentIds)
-            ->where('ap.start_date', '>=', Carbon::now()->subDays(30))
-            ->orderBy('ap.start_date')
-            ->limit(10)
-            ->select('ap.*', 's.first_name', 's.last_name')
-            ->get()
-            ->map(function ($p) {
-                $now   = Carbon::now();
-                $start = Carbon::parse($p->start_date);
-                $end   = Carbon::parse($p->end_date);
+    // Build $children manually
+    $children = [];
+    foreach ($students as $student) {
+        $totalTests = DB::table('tests')->where('student_id', $student->student_id)->count();
+        $completed  = DB::table('tests')->where('student_id', $student->student_id)->whereIn('status', ['completed', 'finalized'])->count();
 
-                $p->display_status = match(true) {
-                    $p->status === 'completed' => 'completed',
-                    $now->greaterThan($end)    => 'overdue',
-                    $now->between($start, $end)=> 'in_progress',
-                    default                    => 'scheduled',
-                };
-
-                return $p;
-            });
-
-        // Latest test results per child
-        $latestResults = DB::table('tests as t')
-            ->join('test_standard_scores as ss', 'ss.test_id', 't.test_id')
-            ->join('students as s', 's.student_id', 't.student_id')
-            ->whereIn('t.student_id', $studentIds)
-            ->whereIn('t.status', ['completed', 'finalized'])
-            ->orderBy('t.test_date', 'desc')
-            ->select('t.student_id', 't.test_date', 'ss.standard_score', 'ss.interpretation',
-                     's.first_name', 's.last_name', 's.profile_image')
-            ->get()
-            ->unique('student_id'); // one result per child
-
-        return view('family.index', [
-            'family_name'          => $family->family_name ?? 'Family',
-            'students'             => $students,
-            'upcoming_assessments' => $upcomingAssessments,
-            'latest_results'       => $latestResults,
-            'avatars'              => $avatars,
-        ]);
+        $children[] = [
+            'name'          => $student->first_name . ' ' . $student->last_name,
+            'age'           => $this->calculateAge($student->date_of_birth),
+            'profile_image' => $student->feature_path,
+            'total_tests'   => $totalTests,
+            'completed'     => $completed,
+            'student_id'    => $student->student_id,
+        ];
     }
+
+    // Upcoming assessments
+    $upcomingAssessments = DB::table('assessment_periods as ap')
+        ->join('students as s', 's.student_id', 'ap.student_id')
+        ->whereIn('ap.student_id', $studentIds)
+        ->where('ap.start_date', '>=', Carbon::now()->subDays(30))
+        ->orderBy('ap.start_date')
+        ->limit(10)
+        ->select('ap.*', 's.first_name', 's.last_name')
+        ->get();
+
+    // Latest test results per child
+    $rawResults = DB::table('tests as t')
+        ->join('test_standard_scores as ss', 'ss.test_id', 't.test_id')
+        ->join('students as s', 's.student_id', 't.student_id')
+        ->whereIn('t.student_id', $studentIds)
+        ->whereIn('t.status', ['completed', 'finalized'])
+        ->orderBy('t.test_date', 'desc')
+        ->select('t.student_id', 't.test_date', 'ss.standard_score', 'ss.interpretation',
+                 's.first_name', 's.last_name', 's.feature_path')
+        ->get();
+
+    // One result per child, formatted as array
+    $latest_results = [];
+    $seen = [];
+    foreach ($rawResults as $r) {
+        if (in_array($r->student_id, $seen)) continue;
+        $seen[] = $r->student_id;
+
+        $latest_results[] = [
+            'child_name'     => $r->first_name . ' ' . $r->last_name,
+            'score'          => $r->standard_score,
+            'interpretation' => $r->interpretation,
+            'date'           => $r->test_date,
+            'profile_image'  => $r->feature_path,
+        ];
+    }
+
+    return view('family.index', [
+        'family_name'          => $family->family_name ?? 'Family',
+        'children'             => $children,
+        'upcoming_assessments' => $upcomingAssessments,
+        'latest_results'       => $latest_results,
+        'avatars'              => $avatars,
+    ]);
+}
 
     // ──────────────────────────────────────────────
     //  PROFILE IMAGE
@@ -232,24 +249,24 @@ class FamilyController extends Controller
             'profile_image'   => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $newImage = $student->profile_image;
+        $newImage = $student->feature_path;
 
         if ($request->filled('selected_avatar')) {
             $newImage = $request->selected_avatar;
         }
 
         if ($request->hasFile('profile_image')) {
-            if ($student->profile_image && str_starts_with($student->profile_image, 'profiles/')) {
-                Storage::disk('public')->delete($student->profile_image);
+            if ($student->feature_path && str_starts_with($student->feature_path, 'profiles/')) {
+                Storage::disk('public')->delete($student->feature_path);
             }
             $newImage = $request->file('profile_image')->store('profiles', 'public');
         }
 
         DB::table('students')
             ->where('student_id', $studentId)
-            ->update(['profile_image' => $newImage, 'updated_at' => now()]);
+            ->update(['feature_path' => $newImage, 'updated_at' => now()]);
 
-        return redirect()->route('family.dashboard')
+        return redirect()->route('family.index')
             ->with('success', 'Profile image updated successfully!');
     }
 

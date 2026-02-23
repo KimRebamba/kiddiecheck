@@ -156,47 +156,48 @@ class FamilyController extends Controller
 
     if ($user->role !== 'family') abort(403, 'Unauthorized access');
 
-    [$user, $family] = $this->getAuthFamily();
+    $family = DB::table('families as f')
+        ->where('f.user_id', $user->user_id)
+        ->first();
 
-    $avatars = ['bunny', 'fox', 'frog', 'mouse', 'panda', 'tiger'];
+    if (!$family) abort(404, 'Family profile not found');
 
-    $students = DB::table('students')
-        ->where('family_id', $family->user_id)
-        ->orderBy('date_of_birth', 'desc')
+    $students = DB::table('students as s')
+        ->where('s.family_id', $family->user_id)
+        ->orderBy('s.date_of_birth', 'desc')
         ->get();
 
-    $studentIds = $students->pluck('student_id');
-
-    // Build $children manually
     $children = [];
-    foreach ($students as $student) {
-        $totalTests = DB::table('tests')->where('student_id', $student->student_id)->count();
-        $completed  = DB::table('tests')->where('student_id', $student->student_id)->whereIn('status', ['completed', 'finalized'])->count();
+    foreach ($students as $s) {
+        $total     = DB::table('tests')->where('student_id', $s->student_id)->count();
+        $completed = DB::table('tests')->where('student_id', $s->student_id)->whereIn('status', ['completed', 'finalized'])->count();
 
         $children[] = [
-            'name'          => $student->first_name . ' ' . $student->last_name,
-            'age'           => $this->calculateAge($student->date_of_birth),
-            'profile_image' => $student->feature_path,
-            'total_tests'   => $totalTests,
+            'student_id'    => $s->student_id,
+            'name'          => $s->first_name . ' ' . $s->last_name,
+            'first_name'    => $s->first_name,
+            'age'           => $this->calculateAge($s->date_of_birth),
+            'profile_image' => $s->feature_path,
+            'total_tests'   => $total,
             'completed'     => $completed,
-            'student_id'    => $student->student_id,
         ];
     }
 
-    // Upcoming assessments
-    $upcomingAssessments = DB::table('assessment_periods as ap')
-        ->join('students as s', 's.student_id', 'ap.student_id')
+    $studentIds = array_column($children, 'student_id');
+
+    $assessments = DB::table('assessment_periods as ap')
+        ->join('students as s', 's.student_id', '=', 'ap.student_id')
         ->whereIn('ap.student_id', $studentIds)
-        ->where('ap.start_date', '>=', Carbon::now()->subDays(30))
+        ->where('ap.end_date', '>=', now())
         ->orderBy('ap.start_date')
-        ->limit(10)
-        ->select('ap.*', 's.first_name', 's.last_name')
+        ->limit(5)
+        ->select('ap.period_id', 'ap.student_id', 'ap.start_date', 'ap.end_date', 'ap.status',
+                 's.first_name', 's.last_name')
         ->get();
 
-    // Latest test results per child
     $rawResults = DB::table('tests as t')
-        ->join('test_standard_scores as ss', 'ss.test_id', 't.test_id')
-        ->join('students as s', 's.student_id', 't.student_id')
+        ->join('test_standard_scores as ss', 'ss.test_id', '=', 't.test_id')
+        ->join('students as s', 's.student_id', '=', 't.student_id')
         ->whereIn('t.student_id', $studentIds)
         ->whereIn('t.status', ['completed', 'finalized'])
         ->orderBy('t.test_date', 'desc')
@@ -204,14 +205,12 @@ class FamilyController extends Controller
                  's.first_name', 's.last_name', 's.feature_path')
         ->get();
 
-    // One result per child, formatted as array
-    $latest_results = [];
+    $latestResults = [];
     $seen = [];
     foreach ($rawResults as $r) {
         if (in_array($r->student_id, $seen)) continue;
         $seen[] = $r->student_id;
-
-        $latest_results[] = [
+        $latestResults[] = [
             'child_name'     => $r->first_name . ' ' . $r->last_name,
             'score'          => $r->standard_score,
             'interpretation' => $r->interpretation,
@@ -221,11 +220,10 @@ class FamilyController extends Controller
     }
 
     return view('family.index', [
-        'family_name'          => $family->family_name ?? 'Family',
-        'children'             => $children,
-        'upcoming_assessments' => $upcomingAssessments,
-        'latest_results'       => $latest_results,
-        'avatars'              => $avatars,
+        'family_name'    => $family->family_name ?? 'Family',
+        'children'       => $children,
+        'assessments'    => $assessments,
+        'latest_results' => $latestResults,
     ]);
 }
 

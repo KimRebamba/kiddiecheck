@@ -149,11 +149,7 @@ class TeacherController extends Controller
             return $section;
         });
 
-        return response()->view('teacher.sections', compact('sections'))
-            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
-            ->header('Pragma', 'no-cache')
-            ->header('Expires', 'Fri, 01 Jan 1990 00:00:00 GMT')
-            ->header('Last-Modified', gmdate('D, d M Y H:i:s T').' GMT');
+        return view('teacher.sections', compact('sections'));
     }
 
     public function sectionsShow($sectionId)
@@ -245,41 +241,16 @@ class TeacherController extends Controller
     // Delete Section
     public function sectionsDestroy($sectionId)
     {
-        // Debug: Check what we're working with
-        \Log::info('Attempting to delete section', [
-            'sectionId' => $sectionId,
-            'request' => request()->all()
-        ]);
-        
         // Check if section has students - more precise query to only count students in this section
         $studentCount = DB::table('students')
             ->where('section_id', '=', $sectionId)
             ->count();
 
-        \Log::info('Student count for section', [
-            'sectionId' => $sectionId,
-            'studentCount' => $studentCount,
-            'sql' => 'SELECT COUNT(*) FROM students WHERE section_id = ' . $sectionId
-        ]);
-
         if ($studentCount > 0) {
-            \Log::info('Cannot delete section - has students', [
-                'sectionId' => $sectionId,
-                'studentCount' => $studentCount
-            ]);
             return back()->with('error', 'Cannot delete section with assigned students.');
         }
 
-        \Log::info('Proceeding with section deletion', [
-            'sectionId' => $sectionId
-        ]);
-
         $deleted = DB::table('sections')->where('section_id', $sectionId)->delete();
-
-        \Log::info('Section deletion result', [
-            'sectionId' => $sectionId,
-            'deleted' => $deleted
-        ]);
 
         return redirect()->route('teacher.sections')->with('success', 'Section deleted successfully.');
     }

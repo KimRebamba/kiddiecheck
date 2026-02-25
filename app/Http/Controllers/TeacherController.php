@@ -46,7 +46,7 @@ class TeacherController extends Controller
             $latestTest = $tests->first();
 
             // Check if student is eligible for a new test
-            $latestCompleted = $tests->firstWhere('status', 'completed');
+            $latestCompleted = $tests->firstWhere('status', 'finalized');
             $eligible = false;
 
             if (!$latestCompleted) {
@@ -241,9 +241,14 @@ class TeacherController extends Controller
     // Delete Section
     public function sectionsDestroy($sectionId)
     {
-        // Check if section has students - more precise query to only count students in this section
+        $teacher = Auth::user();
+        $teacherId = $teacher->id ?? $teacher->user_id;
+        
+        // Check if section has students assigned to this teacher - consistent with display logic
         $studentCount = DB::table('students')
-            ->where('section_id', '=', $sectionId)
+            ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
+            ->where('students.section_id', $sectionId)
+            ->where('student_teacher.teacher_id', $teacherId)
             ->count();
 
         if ($studentCount > 0) {
@@ -615,9 +620,10 @@ class TeacherController extends Controller
             return false;
         }
 
+        $teacherId = $teacher->id ?? $teacher->user_id;
         $latestTest = Test::where('student_id', $studentId)
             ->where('status', 'finalized')
-            ->where('examiner_id', $teacher->user_id)
+            ->where('examiner_id', $teacherId)
             ->orderBy('updated_at', 'desc')
             ->first();
 

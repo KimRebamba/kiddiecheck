@@ -430,6 +430,101 @@ foreach ($students as $s) {
             'totalAnswered', 'totalQuestions',
             'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
         ));
+
+            $questionText = $question->display_text ?? $question->text;
+
+    // Redirect matching question to game
+    if (str_contains(strtolower($questionText), 'match objects that are the same')) {
+        return redirect()->route('family.tests.game', [
+            'test'   => $testId,
+            'domain' => $domainNumber,
+            'index'  => $questionIndex,
+        ]);
+    }
+
+    // ADD THIS: Redirect color matching question to color game
+    if (str_contains(strtolower($questionText), 'match objects of the same color')) {
+        return redirect()->route('family.tests.color.game', [
+            'test'   => $testId,
+            'domain' => $domainNumber,
+            'index'  => $questionIndex,
+        ]);
+    }
+
+    return view('family.question', compact(
+        'test', 'testId', 'currentDomain', 'question', 'questionText',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
+    ));
+    }
+
+    public function startTest($studentId)
+    {
+    $user = Auth::user();
+
+    if ($user->role !== 'family') {
+        abort(403, 'Unauthorized access');
+    }
+
+    // Verify student belongs to this family
+    $student = DB::table('students')
+        ->where('student_id', $studentId)
+        ->where('family_id', $user->user_id)
+        ->first();
+
+    if (!$student) {
+        return redirect()->route('family.index')
+            ->with('error', 'Student not found or does not belong to your family.');
+    }
+
+    // Find an active assessment period for this student
+    $period = DB::table('assessment_periods')
+        ->where('student_id', $studentId)
+        ->where('status', '!=', 'completed')
+        ->where('start_date', '<=', now())
+        ->where('end_date', '>=', now())
+        ->first();
+
+    if (!$period) {
+        return redirect()->route('family.index')
+            ->with('error', 'No active assessment period found for this student.');
+    }
+
+    // Check if there's already an in-progress test
+    $existingTest = DB::table('tests')
+        ->where('student_id', $studentId)
+        ->where('examiner_id', $user->user_id)
+        ->where('status', 'in_progress')
+        ->first();
+
+    if ($existingTest) {
+        // If test exists, redirect to first question
+        return redirect()->route('family.tests.question', [
+            'test'   => $existingTest->test_id,
+            'domain' => 1,
+            'index'  => 1,
+        ]);
+    }
+
+    // Create a new test
+    $testId = DB::table('tests')->insertGetId([
+        'period_id'    => $period->period_id,
+        'student_id'   => $studentId,
+        'examiner_id'  => $user->user_id,
+        'test_date'    => now(),
+        'notes'        => null,
+        'status'       => 'in_progress',
+        'created_at'   => now(),
+        'updated_at'   => now(),
+    ]);
+
+    // Redirect to first domain, first question
+    return redirect()->route('family.tests.question', [
+        'test'   => $testId,
+        'domain' => 1,
+        'index'  => 1,
+    ]);
     }
 
     public function showGame($testId, $domainNumber, $questionIndex)
@@ -459,6 +554,34 @@ foreach ($students as $s) {
         'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
     ));
 }
+
+    public function showColorGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses as tr')
+        ->where('tr.test_id', $testId)
+        ->where('tr.question_id', $question->question_id)
+        ->value('tr.response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.color-matching-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
 
     public function submitQuestion(Request $request, $testId, $domainNumber, $questionIndex)
     {

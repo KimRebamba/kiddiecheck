@@ -167,21 +167,32 @@ class FamilyController extends Controller
         ->orderBy('s.date_of_birth', 'desc')
         ->get();
 
-    $children = [];
-    foreach ($students as $s) {
-        $total     = DB::table('tests')->where('student_id', $s->student_id)->count();
-        $completed = DB::table('tests')->where('student_id', $s->student_id)->whereIn('status', ['completed', 'finalized'])->count();
+    $scaleVersionId = $this->getScaleVersionId();
+$totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
 
-        $children[] = [
-            'student_id'    => $s->student_id,
-            'name'          => $s->first_name . ' ' . $s->last_name,
-            'first_name'    => $s->first_name,
-            'age'           => $this->calculateAge($s->date_of_birth),
-            'profile_image' => $s->feature_path,
-            'total_tests'   => $total,
-            'completed'     => $completed,
-        ];
-    }
+$children = [];
+foreach ($students as $s) {
+
+    $latestTest = DB::table('tests')
+        ->where('student_id', $s->student_id)
+        ->orderByRaw("CASE WHEN status = 'in_progress' THEN 0 ELSE 1 END")
+        ->orderBy('created_at', 'desc')
+        ->first();
+
+    $answered = $latestTest
+        ? DB::table('test_responses')->where('test_id', $latestTest->test_id)->count()
+        : 0;
+
+    $children[] = [
+        'student_id'    => $s->student_id,
+        'name'          => $s->first_name . ' ' . $s->last_name,
+        'first_name'    => $s->first_name,
+        'age'           => $this->calculateAge($s->date_of_birth),
+        'profile_image' => $s->feature_path,
+        'total_tests'   => $totalQuestions,
+        'completed'     => $answered,
+    ];
+}
 
     $studentIds = array_column($children, 'student_id');
 
@@ -320,49 +331,54 @@ class FamilyController extends Controller
     // ──────────────────────────────────────────────
     //  TEST FLOW
     // ──────────────────────────────────────────────
-
-    public function startTest($studentId)
+    public function showStartTest($studentId)
     {
-        $user = Auth::user();
+    $user = Auth::user();
 
-        $student = DB::table('students')
-            ->where('student_id', $studentId)
-            ->where('family_id', $user->user_id)
-            ->first();
+    $student = DB::table('students')
+        ->where('student_id', $studentId)
+        ->where('family_id', $user->user_id)
+        ->first();
 
-        if (!$student) {
-            return redirect()->route('family.index')
-                ->with('error', 'Student not found or does not belong to your family.');
-        }
+    if (!$student) {
+        return redirect()->route('family.index')
+            ->with('error', 'Student not found.');
+    }
 
-        $period = DB::table('assessment_periods')
-            ->where('student_id', $studentId)
-            ->where('status', '!=', 'completed')
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->first();
+    $period = DB::table('assessment_periods')
+        ->where('student_id', $studentId)
+        ->where('status', '!=', 'completed')
+        ->where('start_date', '<=', now())
+        ->where('end_date', '>=', now())
+        ->first();
 
-        if (!$period) {
-            return redirect()->route('family.index')
-                ->with('error', 'No active assessment period found for this student.');
-        }
+    if (!$period) {
+        return redirect()->route('family.index')
+            ->with('error', 'No active assessment period found.');
+    }
 
-        $testId = DB::table('tests')->insertGetId([
-            'period_id'   => $period->period_id,
-            'student_id'  => $studentId,
-            'examiner_id' => $user->user_id,
-            'test_date'   => now(),
-            'notes'       => null,
-            'status'      => 'in_progress',
-            'created_at'  => now(),
-            'updated_at'  => now(),
-        ]);
+    $scaleVersionId = $this->getScaleVersionId();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
 
-        return redirect()->route('family.tests.question', [
-            'test'   => $testId,
-            'domain' => 1,
-            'index'  => 1,
-        ]);
+    $existingTest = DB::table('tests')
+        ->where('student_id', $studentId)
+        ->where('examiner_id', $user->user_id)
+        ->where('status', 'in_progress')
+        ->first();
+
+    $answeredCount = $existingTest
+        ? DB::table('test_responses')->where('test_id', $existingTest->test_id)->count()
+        : 0;
+
+    // If all questions answered, no need to continue — treat as no existing test
+    if ($answeredCount >= $totalQuestions) {
+        $existingTest  = null;
+        $answeredCount = 0;
+    }
+
+    return view('family.start-test', compact(
+        'student', 'period', 'existingTest', 'answeredCount', 'totalQuestions'
+    ));
     }
 
     public function showQuestion($testId, $domainNumber, $questionIndex)
@@ -399,6 +415,15 @@ class FamilyController extends Controller
 
         $questionText = $question->display_text ?? $question->text;
 
+        // Redirect matching question to game
+        if (str_contains(strtolower($questionText), 'match objects that are the same')) {
+            return redirect()->route('family.tests.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
         return view('family.question', compact(
             'test', 'testId', 'currentDomain', 'question', 'questionText',
             'domainNumber', 'questionIndex', 'existingResponse',
@@ -406,6 +431,34 @@ class FamilyController extends Controller
             'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
         ));
     }
+
+    public function showGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses as tr')
+        ->where('tr.test_id', $testId)
+        ->where('tr.question_id', $question->question_id)
+        ->value('tr.response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.matching-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+}
 
     public function submitQuestion(Request $request, $testId, $domainNumber, $questionIndex)
     {

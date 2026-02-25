@@ -44,12 +44,6 @@
             margin-bottom: 32px;
         }
 
-        .progress-counter {
-            font-size: 15px;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
         .progress-answered {
             font-size: 14px;
             color: #7C3AED;
@@ -79,6 +73,11 @@
             font-weight: 500;
         }
 
+        /* Gray out question if already answered */
+        .question-answered {
+            color: #999;
+        }
+
         .btn-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -93,7 +92,7 @@
             font-size: 28px;
             font-weight: 800;
             cursor: pointer;
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-family: inherit;
@@ -117,20 +116,20 @@
 
         .btn-answer:active {
             transform: translateY(2px);
-            box-shadow: 0 1px 0 #2e7d32;
         }
 
-        .btn-no:active {
-            box-shadow: 0 1px 0 #c62828;
-        }
-
+        /* Selected/Answered state - darker with outline */
         .btn-yes.selected {
-            outline: 4px solid #2e7d32;
+            background: #9E9E9E;
+            box-shadow: 0 4px 0 #616161, 0 0 0 4px #BDBDBD;
+            outline: 4px solid #9E9E9E;
             outline-offset: 2px;
         }
 
         .btn-no.selected {
-            outline: 4px solid #c62828;
+            background: #9E9E9E;
+            box-shadow: 0 4px 0 #616161, 0 0 0 4px #BDBDBD;
+            outline: 4px solid #9E9E9E;
             outline-offset: 2px;
         }
 
@@ -174,6 +173,7 @@
             justify-content: space-between;
             align-items: center;
             margin-top: 32px;
+            gap: 12px;
         }
 
         .nav-center {
@@ -185,9 +185,9 @@
             padding: 12px 24px;
             border-radius: 10px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             text-decoration: none;
-            transition: background 0.15s;
+            transition: all 0.2s;
             border: 2px solid #ccc;
             cursor: pointer;
             background: #fff;
@@ -196,6 +196,7 @@
 
         .btn-nav:hover {
             background: #f5f5f5;
+            transform: translateY(-1px);
         }
 
         .btn-nav.hidden {
@@ -203,14 +204,14 @@
         }
 
         .btn-prev {
-            background: transparent;
-            border: none;
-            color: #999;
+            background: #f5f5f5;
+            border-color: #999;
+            color: #666;
         }
 
         .btn-prev:hover {
-            background: transparent;
-            color: #666;
+            background: #e0e0e0;
+            color: #333;
         }
 
         @media (max-width: 768px) {
@@ -233,11 +234,14 @@
 
             .nav-footer {
                 flex-wrap: wrap;
-                gap: 12px;
+            }
+
+            .btn-prev {
+                width: 100%;
+                order: -1;
             }
 
             .nav-center {
-                order: 3;
                 width: 100%;
                 justify-content: center;
             }
@@ -248,7 +252,6 @@
 
 <div class="question-card">
     <div class="progress-info">
-        <!-- <div class="progress-counter">Question {{ $domainNumber }}-{{ $questionIndex }} of {{ $totalQuestions }}</div> -->
         <div class="progress-answered">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
     </div>
 
@@ -267,7 +270,7 @@
 
     <div class="domain-icon">{{ $icon }}</div>
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
-    <div class="question-text">{{ $questionText }}</div>
+    <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
 
     <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}">
         @csrf
@@ -298,7 +301,7 @@
                     ← Previous
                 </a>
             @else
-                <span class="btn-nav btn-prev hidden">← Previous</span>
+                <span class="btn-nav btn-prev" style="visibility: hidden;">← Previous</span>
             @endif
 
             <div class="nav-center">

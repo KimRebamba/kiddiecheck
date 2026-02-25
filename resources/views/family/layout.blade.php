@@ -38,7 +38,11 @@
     <a class="{{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}"><img class="family-logo" src="{{ asset('family-logo.svg') }}" alt="Kiddie Family"></a>
     <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</span></a>
     <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Children</a>
-    <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Tests</a>
+    @php
+    $navFamily   = DB::table('families')->where('user_id', Auth::id())->first();
+    $navStudent  = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
+    @endphp
+    <a class="pill {{ request()->routeIs('family.tests.*') ? 'active' : '' }}" href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Tests</a>
     <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Help</a>
     <div class="spacer"></div>
     @php($initial = strtoupper(substr(optional(Auth::user())->name ?? 'U', 0, 1)))

@@ -1,723 +1,542 @@
-@extends('layouts.app')
+@extends('family.layout')
 
-@section('title', 'Family Dashboard - ECCD Checklist')
+@section('title', 'Family Dashboard')
 
 @section('content')
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
+    body { background: #ffe8f0; }
 
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        background: white;
-        min-height: 100vh;
-        padding: 2rem;
-    }
-
-    .dashboard-container {
-        max-width: 1400px;
+    .dashboard {
+        max-width: 1200px;
         margin: 0 auto;
+        padding: 1rem;
     }
 
-    /* Welcome Card */
-    .welcome-card {
-        background: linear-gradient(135deg, #FFE66D 0%, #FFD93D 100%);
-        border-radius: 25px;
-        padding: 2.5rem 3rem;
-        margin-bottom: 2rem;
+    /* ── Top Row ── */
+    .top-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+
+    /* ── Bottom Row ── */
+    .bottom-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1.2rem;
+    }
+
+    /* ── Welcome Banner ── */
+    .welcome-banner {
+        background: white;
+        border-radius: 24px;
+        padding: 1.5rem 2rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        border: 3px solid rgba(255,255,255,0.3);
         position: relative;
         overflow: hidden;
-        height: 240px;
     }
 
-    .welcome-content h1 {
-        font-size: 2.8rem;
+    .welcome-banner::before {
+        content: '🌟';
+        position: absolute;
+        font-size: 6rem;
+        opacity: 0.08;
+        right: 120px;
+        top: -5px;
+    }
+
+    .welcome-banner h1 {
+        font-size: 1.8rem;
         font-weight: 900;
-        color: #2D3142;
-        margin-bottom: 0.8rem;
-        line-height: 1.2;
+        color: #7a4f00;
+        margin-bottom: 0.3rem;
     }
 
-    .welcome-subtitle {
-        font-size: 1.05rem;
-        color: #2D3142;
-        font-weight: 400;
-        line-height: 1.5;
+    .welcome-banner p {
+        font-size: 0.9rem;
+        color: #9a6a00;
+        margin: 0 0 0.8rem 0;
     }
 
-    .welcome-graphic {
-        width: 200px;
-        height: 200px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .graphic-image {
-        width: 100%;
-        height: 100%;
+    .welcome-banner img {
+        width: 170px;
+        height: 170px;
         object-fit: contain;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+        flex-shrink: 0;
     }
 
-    /* New Grid Layout - Top Row (Welcome + Children) */
-    .top-row {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 2rem;
-        margin-bottom: 2rem;
-    }
-
-    /* Bottom Row Grid Layout */
-    .content-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr 400px;
-        gap: 2rem;
-        margin-bottom: 2rem;
-        align-items: start;
-    }
-
-    /* Section Headers */
-    .section-header {
+    .fun-dots {
         display: flex;
-        align-items: center;
-        margin-bottom: 1.2rem;
-        gap: 0.5rem;
+        gap: 0.4rem;
     }
 
-    .section-icon {
-        font-size: 1.5rem;
+    .fun-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        animation: bdot 1.2s infinite alternate;
     }
 
-    .section-title {
-        font-size: 1.8rem;
-        font-weight: 900;
-        color: #2D3142;
-        text-shadow: none;
+    .fun-dot:nth-child(1) { background: #ff6b9d; animation-delay: 0s; }
+    .fun-dot:nth-child(2) { background: #ff9f43; animation-delay: 0.2s; }
+    .fun-dot:nth-child(3) { background: #6bcf7f; animation-delay: 0.4s; }
+    .fun-dot:nth-child(4) { background: #ff6b9d; animation-delay: 0.6s; }
+
+    @keyframes bdot {
+        from { transform: translateY(0); }
+        to   { transform: translateY(-5px); }
     }
 
-    /* Test Result, Assessment and Notification Section Containers */
-    .test-result-section,
-    .assessments-section,
-    .notifications-section {
+    /* ── Card Base ── */
+    .card {
         background: white;
-        border-radius: 25px;
-        padding: 2rem 2.5rem;
-        height: 520px;
-        overflow-y: auto;
+        border-radius: 24px;
+        padding: 1.2rem 1.5rem;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.07);
+        border: 3px solid #ffe0ec;
+        height: 100%;
     }
 
-    /* Test Result Card */
-    .test-result-card {
-        background: linear-gradient(135deg, #A770EF 0%, #CF8BF3 100%);
-        border-radius: 25px;
-        padding: 2rem 2.5rem;
-        color: white;
-        height: 380px;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding-top: 2rem;
-        cursor: pointer;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .card-title {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #c0392b;
+        margin-bottom: 1rem;
+        padding-bottom: 0.6rem;
+        border-bottom: 2px dashed #ffe0ec;
     }
 
-    .test-result-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(167, 112, 239, 0.4);
-    }
-
-    .test-header {
+    /* ── Child Items ── */
+    .child-item {
         display: flex;
         align-items: center;
-        gap: 1rem;
-        margin-bottom: 1rem;
+        gap: 0.8rem;
+        background: linear-gradient(135deg, #ff6b9d, #ff9f43);
+        border-radius: 16px;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.7rem;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 3px solid rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
     }
 
-    .test-avatar {
-        width: 60px;
-        height: 60px;
+    .child-item::after {
+        content: '✨';
+        position: absolute;
+        right: 10px;
+        font-size: 1rem;
+        opacity: 0.5;
+    }
+
+    .child-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(255,107,157,0.4);
+    }
+
+    .child-item:last-child { margin-bottom: 0; }
+
+    .child-avatar {
+        width: 46px;
+        height: 46px;
         background: white;
         border-radius: 50%;
-        flex-shrink: 0;
-        overflow: hidden;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.6);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
     }
 
-    .test-name-section {
-        text-align: left;
-    }
+    .child-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-    .test-child-name {
-        font-size: 1.8rem;
-        font-weight: 900;
-        margin-bottom: 0.2rem;
-    }
+    .child-name { font-size: 0.95rem; font-weight: 900; }
+    .child-age  { font-size: 0.73rem; opacity: 0.9; margin-top: 0.1rem; }
 
-    .test-section {
-        font-size: 1rem;
-        opacity: 0.9;
-    }
-
-    .test-score-area {
-        text-align: center;
-    }
-
-    .test-score {
-        font-size: 4.5rem;
-        font-weight: 900;
-        margin-bottom: 1rem;
-        line-height: 1;
-    }
-
-    .test-interpretation {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .test-date {
-        font-size: 0.95rem;
-        opacity: 0.9;
-    }
-
-    /* Quick Action Buttons */
-    .action-btn {
-        display: inline-block;
-        padding: 0;
-        background: none;
-        border: none;
-        color: white;
-        font-weight: 700;
-        font-size: 0.95rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        margin-top: 1rem;
-        opacity: 0.9;
-    }
-
-    .action-btn:hover {
-        opacity: 1;
-        text-decoration: underline;
-        transform: translateX(3px);
-    }
-
-    .action-btn-assessment {
-        background: none;
-        border: none;
-        padding: 0;
-        color: white;
-        font-weight: 700;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-block;
-        margin-top: 0.8rem;
-        text-decoration: none;
-        opacity: 0.95;
-    }
-
-    .action-btn-assessment:hover {
-        opacity: 1;
-        text-decoration: underline;
-        transform: translateX(3px);
-    }
-
-    /* Progress Bar */
-    .progress-container {
-        margin-top: 0.5rem;
-    }
-
-    .progress-bar {
-        width: 100%;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.3);
+    .prog-bar {
+        height: 5px;
+        background: rgba(255,255,255,0.3);
         border-radius: 10px;
         overflow: hidden;
+        margin-top: 0.4rem;
     }
 
-    .progress-fill {
+    .prog-fill {
         height: 100%;
         background: white;
         border-radius: 10px;
-        transition: width 0.3s ease;
+        transition: width 0.5s ease;
     }
 
-    .progress-text {
-        font-size: 0.75rem;
-        margin-top: 0.3rem;
-        opacity: 0.9;
-    }
+    .prog-text { font-size: 0.68rem; opacity: 0.9; margin-top: 0.2rem; }
 
-    /* Status Badge */
-    .status-badge {
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 700;
-        margin-left: 0.5rem;
-    }
-
-    .status-badge.upcoming {
-        background: #6BCF7F;
+    /* ── Score Card ── */
+    .score-card {
+        background: linear-gradient(135deg, #ff6b9d, #ffb347);
+        border-radius: 18px;
+        padding: 1.2rem;
         color: white;
-    }
-
-    .status-badge.in-progress {
-        background: #FFD93D;
-        color: #2D3142;
-    }
-
-    .status-badge.overdue {
-        background: #FF6B6B;
-        color: white;
-    }
-
-    /* Color-Coded Scores */
-    .score-very-superior {
-        color: #FFD93D !important;
-    }
-
-    .score-superior {
-        color: #6BCF7F !important;
-    }
-
-    .score-high-average {
-        color: #A0E7FF !important;
-    }
-
-    .score-average {
-        color: white !important;
-    }
-
-    .score-low-average {
-        color: #FFB366 !important;
-    }
-
-    .score-borderline {
-        color: #FF9A9A !important;
-    }
-
-    /* Assessment Items */
-    .assessment-item {
-        margin-bottom: 1rem;
-        padding: 1.5rem;
-        background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C1 100%);
-        border-radius: 20px;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .assessment-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
-    }
-
-    .assessment-item h3 {
-        color: white;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-    }
-
-    .assessment-item p {
-        color: white;
-        font-size: 0.95rem;
-        opacity: 0.95;
-    }
-
-    .assessment-item span {
-        display: inline-block;
-        background: rgba(255, 255, 255, 0.3);
-        color: white;
-        padding: 0.3rem 0.8rem;
-        border-radius: 10px;
-        font-size: 0.85rem;
-        margin-top: 0.5rem;
-    }
-
-    .assessment-empty {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 380px;
-        color: #A8B4C9;
-        font-size: 1.1rem;
-    }
-
-    /* Children Section */
-    .children-section {
-        background: white;
-        border-radius: 25px;
-        padding: 2rem 2.5rem;
-        height: 240px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* Child Card */
-    .child-card {
-        background: linear-gradient(135deg, #FF9A56 0%, #FF6B6B 100%);
-        border-radius: 20px;
-        padding: 1.2rem 1.5rem;
-        margin-bottom: 0.8rem;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.3s;
-    }
-
-    .child-card:hover {
-        transform: translateY(-3px);
-    }
-
-    .child-card:last-child {
-        margin-bottom: 0;
-    }
-
-    .child-header {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .child-avatar-small {
-        width: 50px;
-        height: 50px;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 3px solid rgba(255, 255, 255, 0.5);
-        flex-shrink: 0;
+        position: relative;
         overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.3);
     }
 
-    .avatar-image {
-        width: 70%;
-        height: 70%;
-        object-fit: cover;
+    .score-card::before {
+        content: '🏆';
+        position: absolute;
+        font-size: 5rem;
+        opacity: 0.07;
+        right: -5px;
+        bottom: -10px;
     }
 
-    .child-info h3 {
-        font-size: 1.3rem;
-        font-weight: 900;
-        margin-bottom: 0.2rem;
-    }
-
-    .child-meta {
-        font-size: 0.85rem;
-        opacity: 0.95;
-        line-height: 1.3;
-    }
-
-    /* Notification Cards */
-    .notification-card {
-        border-radius: 20px;
-        padding: 1.5rem 2rem;
-        margin-bottom: 1rem;
-        color: white;
-        cursor: pointer;
-        transition: transform 0.3s;
+    .score-header {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 0.8rem;
+        margin-bottom: 1rem;
     }
 
-    .notification-card:hover {
-        transform: translateX(5px);
-    }
-
-    .notification-card.pink {
-        background: linear-gradient(135deg, #FF6B9D 0%, #FFA3C1 100%);
-    }
-
-    .notification-card.yellow {
-        background: linear-gradient(135deg, #FFD93D 0%, #FFE66D 100%);
-        color: #2D3142;
-    }
-
-    .notification-card.green {
-        background: linear-gradient(135deg, #6BCF7F 0%, #8FE3A0 100%);
-    }
-
-    .notification-avatar {
-        width: 50px;
-        height: 50px;
+    .score-avatar {
+        width: 46px;
+        height: 46px;
         background: white;
         border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        border: 3px solid rgba(255,255,255,0.6);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .score-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .score-child-name { font-size: 0.95rem; font-weight: 900; }
+    .score-label      { font-size: 0.73rem; opacity: 0.85; }
+
+    .score-number {
+        font-size: 3.2rem;
+        font-weight: 900;
+        line-height: 1;
+        text-align: center;
+        margin-bottom: 0.3rem;
+        text-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    }
+
+    .score-interp {
+        font-size: 0.9rem;
+        font-weight: 800;
+        background: rgba(255,255,255,0.25);
+        display: inline-block;
+        padding: 0.2rem 1rem;
+        border-radius: 20px;
+        text-align: center;
+        width: 100%;
+        margin-bottom: 0.3rem;
+    }
+
+    .score-date { font-size: 0.73rem; opacity: 0.85; text-align: center; margin-top: 0.2rem; }
+
+    /* ── Assessment Items ── */
+    .assess-item {
+        background: linear-gradient(135deg, #ff9f43, #ffdd57);
+        border-radius: 16px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.7rem;
+        color: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 3px solid rgba(255,255,255,0.3);
+    }
+
+    .assess-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(255,159,67,0.4);
+    }
+
+    .assess-item:last-child { margin-bottom: 0; }
+
+    .assess-name  { font-size: 0.9rem; font-weight: 900; margin-bottom: 0.2rem; }
+    .assess-dates { font-size: 0.75rem; opacity: 0.9; margin-bottom: 0.3rem; }
+
+    .badge-status {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.67rem;
+        font-weight: 800;
+        background: rgba(255,255,255,0.3);
+        color: white;
+        margin-left: 0.3rem;
+    }
+
+    .start-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        margin-top: 0.4rem;
+        background: white;
+        color: #ff9f43;
+        padding: 0.28rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.76rem;
+        font-weight: 800;
+        text-decoration: none;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .start-btn:hover {
+        transform: scale(1.06);
+        color: #ff9f43;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.13);
+    }
+
+    /* ── Notification Items ── */
+    .notif-item {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        border-radius: 16px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.7rem;
+        color: white;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 3px solid rgba(255,255,255,0.3);
+        cursor: pointer;
+    }
+
+    .notif-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+    }
+
+    .notif-item:last-child { margin-bottom: 0; }
+    .notif-item.green  { background: linear-gradient(135deg, #6bcf7f, #a3e4a1); }
+    .notif-item.yellow { background: linear-gradient(135deg, #ff9f43, #ffdd57); }
+    .notif-item.light  { background: linear-gradient(135deg, #ff6b9d, #ffb3d1); }
+
+    .notif-icon {
+        font-size: 1.6rem;
+        width: 42px;
+        height: 42px;
+        background: rgba(255,255,255,0.25);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         flex-shrink: 0;
     }
 
-    .notification-content {
-        flex: 1;
-    }
+    .notif-title { font-size: 0.88rem; font-weight: 900; }
+    .notif-text  { font-size: 0.73rem; opacity: 0.9; margin-top: 0.1rem; }
 
-    .notification-title {
-        font-size: 1.3rem;
-        font-weight: 900;
-        margin-bottom: 0.2rem;
-    }
-
-    .notification-text {
-        font-size: 0.9rem;
-        opacity: 0.9;
-    }
-
-    /* Empty State */
-    .empty-state {
+    /* ── Empty State ── */
+    .empty {
         text-align: center;
-        padding: 2rem;
-        color: #A8B4C9;
+        padding: 1.2rem;
+        color: #ffb3d1;
+        font-size: 0.83rem;
     }
 
-    .empty-title {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        color: #7C8BA1;
+    .empty span { font-size: 2rem; display: block; margin-bottom: 0.4rem; }
+    .empty p    { color: #ff6b9d; font-weight: 700; margin: 0; }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+        .top-row    { grid-template-columns: 1fr; }
+        .bottom-row { grid-template-columns: 1fr; }
     }
 
-    .empty-description {
-        font-size: 1rem;
-    }
-
-    /* Responsive */
-    @media (max-width: 1200px) {
-        .top-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .content-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 768px) {
-        body {
-            padding: 1rem;
-        }
-
-        .welcome-card {
-            flex-direction: column;
-            text-align: center;
-            padding: 2rem;
-            height: auto;
-        }
-
-        .welcome-content h1 {
-            font-size: 2.5rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-        }
-
-        .test-score {
-            font-size: 4rem;
-        }
+    @media (max-width: 600px) {
+        .welcome-banner { flex-direction: column; text-align: center; gap: 1rem; }
+        .welcome-banner h1 { font-size: 1.4rem; }
     }
 </style>
 
-<div class="dashboard-container">
-    <!-- Top Row: Welcome Card + Your Children -->
+<div class="dashboard">
+
+    {{-- ── Top Row: Welcome (left) + Children (right) ── --}}
     <div class="top-row">
-        <!-- Welcome Card -->
-        <div class="welcome-card">
-            <div class="welcome-content">
-                <h1>Hello! Family</h1>
-                <p class="welcome-subtitle">Good Day! Don't forget to track your children's development today</p>
+
+        {{-- Welcome Banner --}}
+        <div class="welcome-banner">
+            <div>
+                <h1>Hello, {{ $family_name }}!</h1>
+                <p>Let's check on your little ones today! 🌱</p>
             </div>
-            <div class="welcome-graphic">
-                <img src="{{ asset('images/kids.png') }}" alt="Welcome Bear" class="graphic-image">
-            </div>
+            <img src="{{ asset('images/kids.png') }}" alt="Kids">
         </div>
 
-        <!-- Your Children -->
-        <div class="children-section">
-            <div class="section-header">
-                <span class="section-icon">✨</span>
-                <h2 class="section-title">Your Children</h2>
-            </div>
+        {{-- Your Children --}}
+        <div class="card">
+            <div class="card-title">🧒 Your Children</div>
 
             @forelse($children as $child)
-                <div class="child-card">
-                    <div class="child-header">
-                        <div class="child-avatar-small">
-                            @if(isset($child['profile_image']) && $child['profile_image'])
-                                <img src="/images/{{ $child['profile_image'] }}" alt="{{ $child['name'] }}" class="avatar-image">
-                            @endif
-                        </div>
-                        <div class="child-info">
-                            <h3>{{ $child['name'] }}</h3>
-                            <div class="child-meta">Section: Nursery</div>
-                            <div class="child-meta">Age: {{ $child['age'] }}</div>
-                            @if(isset($child['total_tests']) && $child['total_tests'] > 0)
-                                <div class="progress-container">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" style="width: {{ ($child['completed'] / $child['total_tests']) * 100 }}%"></div>
-                                    </div>
-                                    <div class="progress-text">{{ $child['completed'] }}/{{ $child['total_tests'] }} tests completed</div>
-                                </div>
-                            @endif
-                        </div>
+                <div class="child-item">
+                    <div class="child-avatar">
+                        @if($child['profile_image'])
+                            <img src="{{ asset('storage/' . $child['profile_image']) }}" alt="{{ $child['name'] }}">
+                        @else
+                            🐣
+                        @endif
+                    </div>
+                    <div style="flex:1">
+                        <div class="child-name">{{ $child['first_name'] }}</div>
+                        <div class="child-age">🎂 Age: {{ $child['age'] }}</div>
+                        @if($child['total_tests'] > 0)
+                            <div class="prog-bar">
+                                <div class="prog-fill" style="width: {{ ($child['completed'] / $child['total_tests']) * 100 }}%"></div>
+                            </div>
+                            <div class="prog-text">✅ {{ $child['completed'] }}/{{ $child['total_tests'] }} questions answered</div>
+                        @endif
                     </div>
                 </div>
             @empty
-                <div class="empty-state">
-                    <div class="empty-title">No children registered</div>
+                <div class="empty">
+                    <span>🐣</span>
+                    <p>No children registered yet.</p>
                 </div>
             @endforelse
         </div>
+
     </div>
 
-    <!-- Bottom Row: Latest Test Result + Upcoming Assessments + Notifications -->
-    <div class="content-grid">
-        <!-- Latest Test Result -->
-        <div class="test-result-section">
-            <div class="section-header">
-                <span class="section-icon">⭐</span>
-                <h2 class="section-title">Latest Test Result</h2>
-            </div>
-            
+    {{-- ── Bottom Row: Latest Result (left) + Assessments (middle) + Notifications (right) ── --}}
+    <div class="bottom-row">
+
+        {{-- Latest Result --}}
+        <div class="card">
+            <div class="card-title">⭐ Latest Test Result</div>
+
             @if(count($latest_results) > 0)
-                @php 
-                    $result = $latest_results[0];
-                    $score = $result['score'];
-                    $scoreClass = 'score-average';
-                    if ($score >= 130) $scoreClass = 'score-very-superior';
-                    elseif ($score >= 120) $scoreClass = 'score-superior';
-                    elseif ($score >= 110) $scoreClass = 'score-high-average';
-                    elseif ($score >= 90) $scoreClass = 'score-average';
-                    elseif ($score >= 80) $scoreClass = 'score-low-average';
-                    elseif ($score >= 70) $scoreClass = 'score-borderline';
-                @endphp
-                <div class="test-result-card">
-                    <div class="test-header">
-                        <div class="test-avatar">
-                            @if(isset($result['profile_image']) && $result['profile_image'])
-                                <img src="/images/{{ $result['profile_image'] }}" alt="{{ $result['child_name'] }}" class="avatar-image">
+                @php $r = $latest_results[0]; @endphp
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-avatar">
+                            @if($r['profile_image'])
+                                <img src="{{ asset('storage/' . $r['profile_image']) }}" alt="">
+                            @else
+                                🌟
                             @endif
                         </div>
-                        <div class="test-name-section">
-                            <div class="test-child-name">{{ $result['child_name'] }}</div>
-                            <div class="test-section">Section</div>
+                        <div>
+                            <div class="score-child-name">{{ $r['child_name'] }}</div>
+                            <div class="score-label">Most Recent Assessment</div>
                         </div>
                     </div>
-                    <div class="test-score-area">
-                        <div class="test-score {{ $scoreClass }}">{{ $result['score'] }}</div>
-                        <div class="test-interpretation">{{ $result['interpretation'] }}</div>
-                        <div class="test-date">Completed: {{ \Carbon\Carbon::parse($result['date'])->format('M d, Y') }}</div>
-                        <a href="#" class="action-btn">View Full Report →</a>
-                    </div>
+                    <div class="score-number">{{ $r['score'] }}</div>
+                    <div class="score-interp">{{ $r['interpretation'] }}</div>
+                    <div class="score-date">📅 {{ \Carbon\Carbon::parse($r['date'])->format('M d, Y') }}</div>
                 </div>
             @else
-                <div class="test-result-card">
-                    <div class="empty-state">
-                        <div class="empty-title">No test results yet</div>
-                        <div class="empty-description">Results will appear here</div>
-                    </div>
+                <div class="empty">
+                    <span>📋</span>
+                    <p>No results yet.</p>
                 </div>
             @endif
         </div>
 
-        <!-- Upcoming Assessments -->
-        <div class="assessments-section">
-            <div class="section-header">
-                <span class="section-icon">📅</span>
-                <h2 class="section-title">Upcoming Assessments</h2>
-            </div>
-            
-            @forelse($upcoming_assessments as $assessment)
+        {{-- Upcoming Assessments --}}
+        <div class="card">
+            <div class="card-title">📅 Upcoming Assessments</div>
+
+            @forelse($assessments as $a)
                 @php
-                    $now = now();
-                    $status = 'upcoming';
-                    $statusText = 'Upcoming';
-                    if ($assessment->start_date <= $now && $assessment->end_date >= $now) {
-                        $status = 'in-progress';
-                        $statusText = 'In Progress';
-                    } elseif ($assessment->end_date < $now) {
-                        $status = 'overdue';
-                        $statusText = 'Overdue';
-                    }
+                    $now   = now();
+                    $start = \Carbon\Carbon::parse($a->start_date);
+                    $end   = \Carbon\Carbon::parse($a->end_date);
+
+                    if ($now->between($start, $end))  { $badgeText = '🟡 In Progress'; }
+                    elseif ($now->gt($end))           { $badgeText = '🔴 Overdue'; }
+                    else                              { $badgeText = '🟢 Upcoming'; }
                 @endphp
-                <div class="assessment-item">
-                    <h3>
-                        {{ $assessment->description }}
-                        <span class="status-badge {{ $status }}">{{ $statusText }}</span>
-                    </h3>
-                    <p>{{ $assessment->start_date->format('M d') }} - {{ $assessment->end_date->format('M d, Y') }}</p>
-                    <span>{{ $assessment->student->first_name }} {{ $assessment->student->last_name }}</span>
-                    <br>
-                    <a href="#" class="action-btn-assessment">Start Assessment →</a>
+                <div class="assess-item">
+                    <div class="assess-name">
+                        {{ $a->first_name }} {{ $a->last_name }}
+                        <span class="badge-status">{{ $badgeText }}</span>
+                    </div>
+                    <div class="assess-dates">
+                        📆 {{ $start->format('M d') }} – {{ $end->format('M d, Y') }}
+                    </div>
+                    @if($now->between($start, $end))
+                    <a href="{{ route('family.tests.start.show', $a->student_id) }}" class="start-btn">
+                    ▶ Start Now
+                </a>
+                @endif
                 </div>
             @empty
-                <div class="assessment-empty">
-                    <p>No upcoming assessments scheduled</p>
+                <div class="empty">
+                    <span>🗓️</span>
+                    <p>No upcoming assessments.</p>
                 </div>
             @endforelse
         </div>
 
-        <!-- Notifications -->
-        <div class="notifications-section">
-            <div class="section-header">
-                <span class="section-icon">🔔</span>
-                <h2 class="section-title">Notifications</h2>
-            </div>
+        {{-- Notifications --}}
+        <div class="card">
+            <div class="card-title">🔔 Notifications</div>
 
             @php
-                $hasIncompleteTests = collect($children)->sum(function($child) {
-                    return $child['total_tests'] - $child['completed'];
-                }) > 0;
+                $incomplete = 0;
+                foreach ($children as $c) {
+                    if ($c['completed'] < $c['total_tests']) {
+                        $incomplete++;
+                    }
+                }
             @endphp
 
-            @if($hasIncompleteTests)
-                <div class="notification-card pink">
-                    <div class="notification-avatar"></div>
-                    <div class="notification-content">
-                        <div class="notification-title">Test Not Done</div>
-                        <div class="notification-text">finish where you left >></div>
+            @if($incomplete > 0)
+                <div class="notif-item green">
+                    <div class="notif-icon">📝</div>
+                    <div>
+                        <div class="notif-title">Unfinished Test</div>
+                        <div class="notif-text">{{ $incomplete }} test(s) still need to be completed.</div>
                     </div>
                 </div>
             @endif
 
             @if(count($latest_results) > 0)
-                <div class="notification-card yellow">
-                    <div class="notification-avatar"></div>
-                    <div class="notification-content">
-                        <div class="notification-title">Check Results</div>
-                        <div class="notification-text">View results >></div>
+                <div class="notif-item yellow">
+                    <div class="notif-icon">🏆</div>
+                    <div>
+                        <div class="notif-title">Results Available</div>
+                        <div class="notif-text">Check your child's latest score!</div>
                     </div>
                 </div>
             @endif
 
-            @if(count($upcoming_assessments) > 0)
-                <div class="notification-card green">
-                    <div class="notification-avatar"></div>
-                    <div class="notification-content">
-                        <div class="notification-title">Check Results</div>
-                        <div class="notification-text">View results >></div>
+            @if(count($assessments) > 0)
+                <div class="notif-item light">
+                    <div class="notif-icon">📅</div>
+                    <div>
+                        <div class="notif-title">Assessment Scheduled</div>
+                        <div class="notif-text">{{ count($assessments) }} assessment(s) coming up.</div>
                     </div>
                 </div>
             @endif
 
-            @if(!$hasIncompleteTests && count($latest_results) == 0 && count($upcoming_assessments) == 0)
-                <div class="empty-state">
-                    <div class="empty-title">No notifications</div>
+            @if($incomplete == 0 && count($latest_results) == 0 && count($assessments) == 0)
+                <div class="empty">
+                    <span>🎉</span>
+                    <p>All caught up!</p>
                 </div>
             @endif
         </div>
+
     </div>
 </div>
 @endsection

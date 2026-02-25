@@ -71,20 +71,24 @@ Route::prefix('admin')->middleware('auth')->group(function () {
 	Route::post('/profile/password', [AdminController::class, 'profilePassword'])->name('admin.profile.password');
 });
 
+
 // Family routes
 Route::prefix('family')->middleware('auth')->group(function () {
-	Route::get('/', [FamilyController::class, 'index'])->name('family.index');
-	Route::get('/children/{student}', [FamilyController::class, 'child'])->name('family.child');
-	Route::post('/tests/start/{student}', [FamilyController::class, 'startTest'])->name('family.tests.start');
-	Route::get('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'showQuestion'])->name('family.tests.question');
-	Route::post('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'submitQuestion'])->name('family.tests.question.submit');
-	Route::get('/tests/{test}/result', [FamilyController::class, 'result'])->name('family.tests.result');
-	Route::post('/tests/{test}/finalize', [FamilyController::class, 'finalize'])->name('family.tests.finalize');
-	Route::post('/tests/{test}/mark-incomplete', [FamilyController::class, 'markIncomplete'])->name('family.tests.incomplete');
-	Route::post('/tests/{test}/cancel', [FamilyController::class, 'cancel'])->name('family.tests.cancel');
-	Route::post('/tests/{test}/terminate', [FamilyController::class, 'terminate'])->name('family.tests.terminate');
-	Route::post('/tests/{test}/pause', [FamilyController::class, 'pause'])->name('family.tests.pause');
+    Route::get('/', [FamilyController::class, 'index'])->name('family.index');
+    Route::get('/children/{student}', [FamilyController::class, 'child'])->name('family.child');
+    Route::get('/tests/start/{student}', [FamilyController::class, 'showStartTest'])->name('family.tests.start.show');
+    Route::post('/tests/start/{student}', [FamilyController::class, 'startTest'])->name('family.tests.start');
+    Route::get('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'showQuestion'])->name('family.tests.question');
+    Route::post('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'submitQuestion'])->name('family.tests.question.submit');
+    Route::get('/tests/{test}/result', [FamilyController::class, 'result'])->name('family.tests.result');
+    Route::post('/tests/{test}/finalize', [FamilyController::class, 'finalize'])->name('family.tests.finalize');
+    Route::post('/tests/{test}/mark-incomplete', [FamilyController::class, 'markIncomplete'])->name('family.tests.incomplete');
+    Route::post('/tests/{test}/cancel', [FamilyController::class, 'cancel'])->name('family.tests.cancel');
+    Route::post('/tests/{test}/terminate', [FamilyController::class, 'terminate'])->name('family.tests.terminate');
+    Route::post('/tests/{test}/pause', [FamilyController::class, 'pause'])->name('family.tests.pause');
+    Route::get('/tests/{test}/domain/{domain}/game/{index}', [FamilyController::class, 'showGame'])->name('family.tests.game');
 });
+
 
 // Teacher routes (simple, no CSS UI)
 Route::prefix('teacher')->middleware('auth')->group(function () {

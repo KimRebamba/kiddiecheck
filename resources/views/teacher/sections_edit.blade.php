@@ -27,6 +27,8 @@
             @enderror
           </div>
 
+          <!-- Description field removed - not present in database schema -->
+
           <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Update Section</button>
             <a href="{{ route('teacher.sections') }}" class="btn btn-outline-secondary">Cancel</a>

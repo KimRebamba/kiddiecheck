@@ -26,6 +26,14 @@
             @enderror
           </div>
 
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="4">{{ old('description') }}</textarea>
+            @error('description')
+              <div class="text-danger small mt-1">{{ $message }}</div>
+            @enderror
+          </div>
+
           <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">Create Section</button>
             <a href="{{ route('teacher.sections') }}" class="btn btn-outline-secondary">Cancel</a>

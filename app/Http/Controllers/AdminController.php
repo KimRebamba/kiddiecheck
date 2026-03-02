@@ -584,7 +584,8 @@ class AdminController extends Controller
             if ($s->date_of_birth) {
                 try {
                     $dob = Carbon::parse($s->date_of_birth);
-                    $ageYears = $dob->diffInYears($now);
+                    $ageYears = (int) $dob->diffInYears($now);
+      
                 } catch (\Throwable $e) {
                     $ageYears = null;
                 }
@@ -2433,13 +2434,13 @@ class AdminController extends Controller
         $now = Carbon::now();
         $ageYears = null;
         if ($student->date_of_birth) {
-            try {
-                $dob = Carbon::parse($student->date_of_birth);
-                $ageYears = $dob->diffInYears($now);
-            } catch (\Throwable $e) {
-                $ageYears = null;
-            }
-        }
+    try {
+        // The ->age property automatically calculates the integer difference from "now"
+        $ageYears = Carbon::parse($student->date_of_birth)->age;
+    } catch (\Throwable $e) {
+        $ageYears = null;
+    }
+}
 
         $teachers = DB::table('student_teacher as st')
             ->join('teachers as t', 'st.teacher_id', '=', 't.user_id')

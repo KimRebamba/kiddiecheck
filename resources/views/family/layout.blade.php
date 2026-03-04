@@ -6,77 +6,129 @@
   <title>Family · KiddieCheck</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    :root{
-      --bg:#a3c365;       
-      --pill:#7eaf64;     
-      --text:white;     
-      --avatar:#b5db6b;   
-      --hover:#a3c365;   
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    
+    body {
+      margin: 0;
+      background: #f5f5f5;
+      color: #333;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--text);font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"}
-    .family-header{display:flex;align-items:center;gap:18px;padding:10px 16px;position:relative;z-index:10}
-    .family-logo{height:44px;display:block}
-    .pill{display:inline-block;text-decoration:none; background:var(--bg); color:var(--text); padding:2px 16px; border-radius:12px; font-weight:700; letter-spacing:.025rem; font-size:1.55rem}
-    .pill:hover{opacity:.95; color:#fcf8a0;}
-    .pill-italic{font-style:italic}
-    .check{margin-left:8px; opacity:.8}
-    .spacer{flex:1}
-    .avatar{width:40px;height:40px;border-radius:12px; background:var(--avatar); display:inline-flex; align-items:center; justify-content:center; color:#2f5130; font-weight:800; text-decoration:none; overflow:hidden; border:none}
-    .profile{position:relative}
-    .menu{position:absolute; right:0; top:calc(100% + 8px); background:#b5db6b; color:var(--text); border-radius:12px; padding:8px; min-width:200px; display:none; z-index:9999}
-    .profile.open .menu{display:block}
-    .menu-item{display:block; width:100%; text-align:left; background:transparent; color:var(--text); font-weight:700; border:0; padding:10px 12px; border-radius:10px; cursor:pointer; text-decoration:none}
-    .menu-item:hover{background:var(--hover)}
-    .main{padding:16px}
-    .card{background:#fff;color:#333;border-radius:12px;padding:12px;}
+
+    .family-header { background: white; border-bottom: 2px solid #e5e5e5; padding: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+    .header-container { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; padding: 0 20px; height: 70px; }
+
+    /* Brand */
+    .brand { font-size: 1.5rem; font-weight: 800; text-decoration: none; margin-right: 3rem; letter-spacing: -0.02em; }
+
+    /* Alternating colors per letter */
+    .brand span:nth-child(4n+1) { color: #3B82F6; }
+    .brand span:nth-child(4n+2) { color: #F59E0B; }
+    .brand span:nth-child(4n+3) { color: #EF4444; }
+    .brand span:nth-child(4n+0) { color: #10B981; }
+
+    .nav-links { display: flex; align-items: center; gap: 0.5rem; flex: 1; }
+
+    .nav-link { text-decoration: none; color: #6b7280; font-weight: 600; font-size: 0.95rem; padding: 0.6rem 1.2rem; border-radius: 8px; transition: all 0.2s; }
+    .nav-link:hover { color: #667eea; background: #f3f4f6; }
+    .nav-link.active { color: #667eea; background: transparent; font-weight: 700; }
+
+    .profile-section { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+    .profile-menu { position: relative; }
+
+    .profile-button {
+      background: transparent; border: 2px solid #e5e5e5; color: #6b7280;
+      font-weight: 600; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 8px;
+      cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; text-decoration: none;
+    }
+    .profile-button:hover { border-color: #667eea; color: #667eea; background: #f9fafb; }
+
+    .dropdown-menu {
+      position: absolute; right: 0; top: calc(100% + 8px);
+      background: white; border: 2px solid #e5e5e5; border-radius: 12px;
+      padding: 0.5rem; min-width: 180px; opacity: 0; visibility: hidden;
+      transform: translateY(-10px); transition: all 0.2s;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1); z-index: 1000;
+    }
+    .profile-menu:hover .dropdown-menu,
+    .profile-menu:focus-within .dropdown-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+
+    .dropdown-item {
+      display: block; width: 100%; text-align: left; background: transparent; border: none;
+      color: #6b7280; font-weight: 600; font-size: 0.9rem; padding: 0.7rem 1rem;
+      border-radius: 8px; cursor: pointer; text-decoration: none; transition: all 0.2s;
+    }
+    .dropdown-item:hover { background: #f3f4f6; color: #667eea; }
+
+    .main { max-width: 1400px; margin: 0 auto; padding: 2rem 20px; }
+
+    .alert { background: white; border: 2px solid #e5e5e5; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; font-weight: 500; }
+    .alert-success { background: #f0fdf4; border-color: #86efac; color: #166534; }
+    .alert-error   { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+
+    @media (max-width: 768px) {
+      .header-container { padding: 15px; height: auto; flex-wrap: wrap; }
+      .brand { margin-right: auto; font-size: 1.2rem; }
+      .nav-links { width: 100%; justify-content: flex-start; margin-top: 10px; gap: 0.3rem; overflow-x: auto; }
+      .nav-link { font-size: 0.85rem; padding: 0.5rem 0.9rem; white-space: nowrap; }
+      .profile-section { margin-left: auto; }
+      .profile-button { font-size: 0.85rem; padding: 0.4rem 0.8rem; }
+    }
   </style>
 </head>
 <body>
   <header class="family-header">
-    <a class="{{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}"><img class="family-logo" src="{{ asset('family-logo.svg') }}" alt="Kiddie Family"></a>
-    <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</span></a>
-    <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Children</a>
-    @php
-    $navFamily   = DB::table('families')->where('user_id', Auth::id())->first();
-    $navStudent  = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
-    @endphp
-    <a class="pill {{ request()->routeIs('family.tests.*') ? 'active' : '' }}" href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Tests</a>
-    <a class="pill {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Help</a>
-    <div class="spacer"></div>
-    @php($initial = strtoupper(substr(optional(Auth::user())->name ?? 'U', 0, 1)))
-    <div class="profile" id="familyProfileMenu">
-      <button type="button" class="avatar" aria-haspopup="true" aria-expanded="false" title="Profile">{{ $initial }}</button>
-      <div class="menu" role="menu" aria-labelledby="familyProfileMenu">
-        <a href="{{ route('family.index') }}" class="menu-item" role="menuitem">Profile Settings</a>
-        <form method="POST" action="{{ route('logout') }}" style="margin:0" role="none">
-          @csrf
-          <button type="submit" class="menu-item" role="menuitem">Logout</button>
-        </form>
+    <div class="header-container">
+
+      <a class="brand" href="{{ route('family.index') }}">
+        @foreach(str_split('KiddieCheck') as $l)<span>{{ $l }}</span>@endforeach
+      </a>
+
+      <div class="nav-links">
+        <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</a>
+        <a class="nav-link {{ request()->routeIs('family.child*') ? 'active' : '' }}" href="{{ route('family.index') }}">Children</a>
+        @php
+          $navFamily  = DB::table('families')->where('user_id', Auth::id())->first();
+          $navStudent = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
+        @endphp
+        <a class="nav-link {{ request()->routeIs('family.tests.*') ? 'active' : '' }}"
+           href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Tests</a>
+        <a class="nav-link" href="{{ route('family.index') }}">Help</a>
       </div>
+
+      <div class="profile-section">
+        <div class="profile-menu">
+          <a href="#" class="profile-button" tabindex="0">
+            <span>{{ optional(Auth::user())->username ?? 'Account' }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </a>
+          <div class="dropdown-menu">
+            <a href="{{ route('family.index') }}" class="dropdown-item">Profile Settings</a>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0">
+              @csrf
+              <button type="submit" class="dropdown-item">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   </header>
 
   <main class="main">
     @if(session('success'))
-      <div class="card" role="alert">{{ session('success') }}</div>
+      <div class="alert alert-success">{{ session('success') }}</div>
     @endif
     @if(session('error'))
-      <div class="card" role="alert">{{ session('error') }}</div>
+      <div class="alert alert-error">{{ session('error') }}</div>
     @endif
     @yield('content')
   </main>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    (function(){
-      const profile = document.querySelector('#familyProfileMenu');
-      if(!profile) return;
-      const btn = profile.querySelector('.avatar');
-      btn.addEventListener('click', function(e){ e.preventDefault(); profile.classList.toggle('open'); });
-      document.addEventListener('click', function(e){ if(!profile.contains(e.target)) profile.classList.remove('open'); });
-      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') profile.classList.remove('open'); });
-    })();
-  </script>
 </body>
 </html>

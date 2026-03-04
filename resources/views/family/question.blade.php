@@ -73,7 +73,6 @@
             font-weight: 500;
         }
 
-        /* Gray out question if already answered */
         .question-answered {
             color: #999;
         }
@@ -96,6 +95,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             font-family: inherit;
+            transform: scale(1);
         }
 
         .btn-yes {
@@ -115,35 +115,53 @@
         }
 
         .btn-answer:active {
-            transform: translateY(2px);
+            transform: translateY(2px) scale(1);
         }
 
-        /* Selected/Answered state - darker with outline */
+        /* Selected state - bigger with lighter color */
         .btn-yes.selected {
-            background: #9E9E9E;
-            box-shadow: 0 4px 0 #616161, 0 0 0 4px #BDBDBD;
-            outline: 4px solid #9E9E9E;
-            outline-offset: 2px;
+            background: #A5D6A7;
+            color: #2E7D32;
+            box-shadow: 0 6px 0 #66BB6A, 0 0 0 4px #C8E6C9;
+            transform: scale(1.05);
+            border: 3px solid #4CAF50;
         }
 
         .btn-no.selected {
-            background: #9E9E9E;
-            box-shadow: 0 4px 0 #616161, 0 0 0 4px #BDBDBD;
-            outline: 4px solid #9E9E9E;
-            outline-offset: 2px;
+            background: #FFCDD2;
+            color: #C62828;
+            box-shadow: 0 6px 0 #EF5350, 0 0 0 4px #FFEBEE;
+            transform: scale(1.05);
+            border: 3px solid #F06060;
+        }
+
+        .btn-yes.selected:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-no.selected:hover {
+            transform: scale(1.05);
         }
 
         .comment-section {
             display: none;
             margin-bottom: 24px;
+            animation: slideDown 0.3s ease;
         }
 
-        #show_comment:checked ~ .comment-section {
+        .comment-section.show {
             display: block;
         }
 
-        #show_comment {
-            display: none;
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .comment-box {
@@ -232,6 +250,11 @@
                 padding: 24px;
             }
 
+            .btn-yes.selected,
+            .btn-no.selected {
+                transform: scale(1.03);
+            }
+
             .nav-footer {
                 flex-wrap: wrap;
             }
@@ -272,26 +295,26 @@
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
     <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
 
-    <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}">
+    <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
         @csrf
+        <input type="hidden" name="response" id="responseInput" value="{{ $existingResponse ?? '' }}">
 
         <div class="btn-group">
-            <button type="submit" name="response" value="yes" class="btn-answer btn-yes {{ $existingResponse === 'yes' ? 'selected' : '' }}">
+            <button type="button" onclick="selectAnswer('yes')" class="btn-answer btn-yes {{ $existingResponse === 'yes' ? 'selected' : '' }}" id="btnYes">
                 YES
             </button>
 
-            <label for="show_comment" class="btn-answer btn-no {{ $existingResponse === 'no' ? 'selected' : '' }}" style="display: flex; align-items: center; justify-content: center; margin: 0;">
+            <button type="button" onclick="selectAnswer('no')" class="btn-answer btn-no {{ $existingResponse === 'no' ? 'selected' : '' }}" id="btnNo">
                 NO
-            </label>
+            </button>
         </div>
 
-        <input type="checkbox" id="show_comment" {{ $existingResponse === 'no' ? 'checked' : '' }}>
-
-        <div class="comment-section">
+        <div class="comment-section {{ $existingResponse === 'no' ? 'show' : '' }}" id="commentSection">
             <textarea
                 class="comment-box"
                 name="comment"
                 placeholder="Add comment (optional)"
+                id="commentBox"
             ></textarea>
         </div>
 
@@ -305,7 +328,7 @@
             @endif
 
             <div class="nav-center">
-                <button type="submit" name="response" value="no" class="btn-nav">
+                <button type="submit" class="btn-nav" id="btnNext">
                     Next →
                 </button>
 
@@ -322,6 +345,41 @@
         </div>
     </form>
 </div>
+
+<script>
+function selectAnswer(value) {
+    const btnYes = document.getElementById('btnYes');
+    const btnNo = document.getElementById('btnNo');
+    const commentSection = document.getElementById('commentSection');
+    const responseInput = document.getElementById('responseInput');
+
+    // Remove selected class from both buttons
+    btnYes.classList.remove('selected');
+    btnNo.classList.remove('selected');
+
+    // Add selected class to clicked button
+    if (value === 'yes') {
+        btnYes.classList.add('selected');
+        commentSection.classList.remove('show');
+    } else {
+        btnNo.classList.add('selected');
+        commentSection.classList.add('show');
+    }
+
+    // Update hidden input value
+    responseInput.value = value;
+}
+
+// Form validation - ensure answer is selected before submitting
+document.getElementById('answerForm').addEventListener('submit', function(e) {
+    const responseValue = document.getElementById('responseInput').value;
+    
+    if (!responseValue) {
+        e.preventDefault();
+        alert('Please select YES or NO before continuing.');
+    }
+});
+</script>
 
 </body>
 </html>

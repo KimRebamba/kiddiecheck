@@ -381,7 +381,7 @@ foreach ($students as $s) {
     ));
     }
 
-    public function showQuestion($testId, $domainNumber, $questionIndex)
+   public function showQuestion($testId, $domainNumber, $questionIndex)
     {
         $test = $this->verifyTestOwnership($testId);
 
@@ -415,12 +415,54 @@ foreach ($students as $s) {
 
         $questionText = $question->display_text ?? $question->text;
 
-        // Redirect matching question to game
+        // Redirect: matching objects game
         if (str_contains(strtolower($questionText), 'match objects that are the same')) {
             return redirect()->route('family.tests.game', [
                 'test'   => $testId,
                 'domain' => $domainNumber,
                 'index'  => $questionIndex,
+            ]);
+        }
+
+        // Redirect: color matching game
+        if (str_contains(strtolower($questionText), 'match objects of the same color')) {
+            return redirect()->route('family.tests.color.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        // Redirect: picture matching game
+        if (str_contains(strtolower($questionText), 'match two pictures that are the same')) {
+            return redirect()->route('family.tests.picture.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        if (str_contains(strtolower($questionText), 'sort or put things together based on their shape')) {
+        return redirect()->route('family.tests.shape.game', [
+        'test'   => $testId,
+        'domain' => $domainNumber,
+        'index'  => $questionIndex,
+        ]);
+        }
+
+        if (str_contains(strtolower($questionText), 'sort objects using both color and size')) {
+        return redirect()->route('family.tests.size.color.game', [
+        'test'   => $testId,
+        'domain' => $domainNumber,
+        'index'  => $questionIndex,
+            ]);
+        }
+
+        if (str_contains(strtolower($questionText), 'line up objects from smallest to biggest')) {
+        return redirect()->route('family.tests.size.order.game', [
+        'test'   => $testId,
+        'domain' => $domainNumber,
+        'index'  => $questionIndex,
             ]);
         }
 
@@ -430,33 +472,6 @@ foreach ($students as $s) {
             'totalAnswered', 'totalQuestions',
             'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
         ));
-
-            $questionText = $question->display_text ?? $question->text;
-
-    // Redirect matching question to game
-    if (str_contains(strtolower($questionText), 'match objects that are the same')) {
-        return redirect()->route('family.tests.game', [
-            'test'   => $testId,
-            'domain' => $domainNumber,
-            'index'  => $questionIndex,
-        ]);
-    }
-
-    // ADD THIS: Redirect color matching question to color game
-    if (str_contains(strtolower($questionText), 'match objects of the same color')) {
-        return redirect()->route('family.tests.color.game', [
-            'test'   => $testId,
-            'domain' => $domainNumber,
-            'index'  => $questionIndex,
-        ]);
-    }
-
-    return view('family.question', compact(
-        'test', 'testId', 'currentDomain', 'question', 'questionText',
-        'domainNumber', 'questionIndex', 'existingResponse',
-        'totalAnswered', 'totalQuestions',
-        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
-    ));
     }
 
     public function startTest($studentId)
@@ -576,6 +591,118 @@ foreach ($students as $s) {
     [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
 
     return view('family.color-matching-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
+
+    public function showPictureGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses')
+        ->where('test_id', $testId)
+        ->where('question_id', $question->question_id)
+        ->value('response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.picture-matching-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
+
+    public function showShapeGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses')
+        ->where('test_id', $testId)
+        ->where('question_id', $question->question_id)
+        ->value('response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.shape-sorting-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
+
+    public function showSizeColorGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses')
+        ->where('test_id', $testId)
+        ->where('question_id', $question->question_id)
+        ->value('response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.size-color-sorting-game', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
+
+    public function showSizeOrderGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses')
+        ->where('test_id', $testId)
+        ->where('question_id', $question->question_id)
+        ->value('response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.size-ordering-game', compact(
         'test', 'testId', 'currentDomain', 'question',
         'domainNumber', 'questionIndex', 'existingResponse',
         'totalAnswered', 'totalQuestions',

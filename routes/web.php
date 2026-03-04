@@ -82,6 +82,10 @@ Route::prefix('family')->middleware('auth')->group(function () {
     Route::post('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'submitQuestion'])->name('family.tests.question.submit');
 	Route::get('/tests/{test}/domain/{domain}/question/{index}/game', [FamilyController::class, 'showGame'])->name('family.tests.game');
     Route::get('/tests/{test}/domain/{domain}/question/{index}/color-game', [FamilyController::class, 'showColorGame'])->name('family.tests.color.game');
+	Route::get('/tests/{test}/domain/{domain}/question/{index}/picture-game', [FamilyController::class, 'showPictureGame'])->name('family.tests.picture.game');
+	Route::get('/tests/{test}/domain/{domain}/question/{index}/shape-game', [FamilyController::class, 'showShapeGame'])->name('family.tests.shape.game');
+	Route::get('/tests/{test}/domain/{domain}/question/{index}/size-color-game', [FamilyController::class, 'showSizeColorGame'])->name('family.tests.size.color.game');
+	Route::get('/tests/{test}/domain/{domain}/question/{index}/size-order-game', [FamilyController::class, 'showSizeOrderGame'])->name('family.tests.size.order.game');
     Route::get('/tests/{test}/result', [FamilyController::class, 'result'])->name('family.tests.result');
     Route::post('/tests/{test}/finalize', [FamilyController::class, 'finalize'])->name('family.tests.finalize');
     Route::post('/tests/{test}/mark-incomplete', [FamilyController::class, 'markIncomplete'])->name('family.tests.incomplete');

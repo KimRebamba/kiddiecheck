@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Match the Colors!</title>
+    <title>Match the Pictures!</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -42,8 +42,11 @@
         .domain-icon  { text-align: center; font-size: 48px; margin-bottom: 10px; }
         .domain-title { text-align: center; font-size: 28px; font-weight: 900; color: #1a1a2e; margin-bottom: 0.5rem; }
         .question-text {
-            text-align: center; font-size: 18px; color: #555;
-            line-height: 1.6; margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 18px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
         }
 
         .game-box {
@@ -86,75 +89,86 @@
             margin-bottom: 1rem;
         }
 
-        .crayons-container {
+        .pics-container {
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            align-items: center;
         }
 
-        .crayon-card {
-            border-radius: 16px;
+        .pic-card {
+            width: 140px;
+            height: 140px;
+            border-radius: 20px;
             border: 4px solid #e0e0e0;
             background: #fff;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            user-select: none;
-            min-height: 80px;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 8px;
+            cursor: grab;
+            transition: all 0.3s;
+            user-select: none;
             position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        .crayon-card:hover:not(.matched) {
-            transform: scale(1.05);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        .pic-card:active { cursor: grabbing; }
+
+        .pic-card:hover:not(.matched) {
+            transform: scale(1.07) rotate(-2deg);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            border-color: #f5a623;
         }
 
-        .crayon-card.dragging {
-            opacity: 0.5;
+        .pic-card.dragging {
+            opacity: 0.45;
+            transform: scale(0.93);
         }
 
-        .crayon-card.drag-over {
+        .pic-card.drag-over {
             border-color: #7C3AED;
             background: #f0ebff;
-            box-shadow: 0 0 0 4px #7C3AED;
+            box-shadow: 0 0 0 4px #7C3AED44;
+            transform: scale(1.08);
         }
 
-        .crayon-card.matched {
+        .pic-card.matched {
             border-color: #9E9E9E;
             background: #f5f5f5;
             cursor: default;
+            transform: scale(1);
+            animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
         }
 
-        .crayon-card.matched::after {
+        .pic-card.matched::after {
             content: "✓";
             position: absolute;
-            top: 5px;
+            top: 6px;
             right: 10px;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             color: #666;
             font-weight: 900;
         }
 
-        .crayon-inner {
-            width: 100%;
-            height: 50px;
-            border-radius: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 1rem;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            box-shadow: inset 0 -3px 8px rgba(0,0,0,0.2);
+        .pic-emoji {
+            font-size: 3.5rem;
+            line-height: 1;
         }
 
-        .red    { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .blue   { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .yellow { background: linear-gradient(135deg, #f1c40f, #f39c12); }
+        .pic-label {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #555;
+            text-align: center;
+        }
+
+        @keyframes popIn {
+            0%  { transform: scale(0.85); }
+            60% { transform: scale(1.1); }
+            100%{ transform: scale(1); }
+        }
 
         .answer-hint {
             text-align: center;
@@ -204,6 +218,8 @@
         @media (max-width: 768px) {
             .card { padding: 24px 16px; }
             .game-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .pic-card { width: 110px; height: 110px; }
+            .pic-emoji { font-size: 2.8rem; }
         }
     </style>
 </head>
@@ -217,42 +233,52 @@
     <div class="question-text">{{ $question->display_text ?? $question->text }}</div>
 
     <div class="game-box">
-        <div class="game-title">🎨 Match the Colors!</div>
-        <div class="game-subtitle">Drag each crayon from the left to match its color on the right!</div>
+        <div class="game-title">🧩 Match the Pictures!</div>
+        <div class="game-subtitle">Drag each picture from the left to match its pair on the right!</div>
 
         <div class="game-grid">
 
             <div>
                 <div class="column-header">👈 Drag from here</div>
-                <div class="crayons-container">
-                    <div class="crayon-card" draggable="true" data-color="red" id="left-red">
-                        <div class="crayon-inner red">🖍️ Red</div>
+                <div class="pics-container">
+
+                    <div class="pic-card" draggable="true" data-pic="apple" id="left-apple">
+                        <span class="pic-emoji">🍎</span>
+                        <span class="pic-label">Apple</span>
                     </div>
 
-                    <div class="crayon-card" draggable="true" data-color="blue" id="left-blue">
-                        <div class="crayon-inner blue">🖍️ Blue</div>
+                    <div class="pic-card" draggable="true" data-pic="banana" id="left-banana">
+                        <span class="pic-emoji">🍌</span>
+                        <span class="pic-label">Banana</span>
                     </div>
 
-                    <div class="crayon-card" draggable="true" data-color="yellow" id="left-yellow">
-                        <div class="crayon-inner yellow">🖍️ Yellow</div>
+                    <div class="pic-card" draggable="true" data-pic="orange" id="left-orange">
+                        <span class="pic-emoji">🍊</span>
+                        <span class="pic-label">Orange</span>
                     </div>
+
                 </div>
             </div>
 
             <div>
                 <div class="column-header">Drop on match 👉</div>
-                <div class="crayons-container">
-                    <div class="crayon-card" data-color="blue" id="right-blue">
-                        <div class="crayon-inner blue">🖍️ Blue</div>
+                <div class="pics-container">
+
+                    <div class="pic-card" data-pic="banana" id="right-banana">
+                        <span class="pic-emoji">🍌</span>
+                        <span class="pic-label">Banana</span>
                     </div>
 
-                    <div class="crayon-card" data-color="yellow" id="right-yellow">
-                        <div class="crayon-inner yellow">🖍️ Yellow</div>
+                    <div class="pic-card" data-pic="orange" id="right-orange">
+                        <span class="pic-emoji">🍊</span>
+                        <span class="pic-label">Orange</span>
                     </div>
 
-                    <div class="crayon-card" data-color="red" id="right-red">
-                        <div class="crayon-inner red">🖍️ Red</div>
+                    <div class="pic-card" data-pic="apple" id="right-apple">
+                        <span class="pic-emoji">🍎</span>
+                        <span class="pic-label">Apple</span>
                     </div>
+
                 </div>
             </div>
 
@@ -260,11 +286,13 @@
 
     </div>
 
-    <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
+    <form method="POST"
+          action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}"
+          id="answerForm">
         @csrf
         <input type="hidden" name="response" id="responseInput" value="">
 
-        <div class="answer-hint">Match the colors, then click Next to continue</div>
+        <div class="answer-hint">Match the pictures, then click Next to continue</div>
 
         <div class="nav-footer">
 
@@ -296,15 +324,15 @@
 <script>
 let draggedItem = null;
 
-// Store matches: { leftColor: rightColor }
+// Store matches: { leftPic: rightPic }
 const matches = {
-    'red': null,
-    'blue': null,
-    'yellow': null
+    'apple': null,
+    'banana': null,
+    'orange': null
 };
 
-const leftItems = document.querySelectorAll('.game-grid > div:first-child .crayon-card[draggable="true"]');
-const rightItems = document.querySelectorAll('.game-grid > div:last-child .crayon-card');
+const leftItems = document.querySelectorAll('.game-grid > div:first-child .pic-card[draggable="true"]');
+const rightItems = document.querySelectorAll('.game-grid > div:last-child .pic-card');
 
 // Drag start
 leftItems.forEach(item => {
@@ -337,8 +365,8 @@ rightItems.forEach(item => {
 
         if (this.classList.contains('matched')) return;
 
-        const draggedColor = draggedItem.dataset.color;
-        const dropColor = this.dataset.color;
+        const draggedPic = draggedItem.dataset.pic;
+        const dropPic = this.dataset.pic;
 
         // Allow ANY match (even incorrect ones)
         draggedItem.classList.add('matched');
@@ -346,15 +374,46 @@ rightItems.forEach(item => {
         draggedItem.draggable = false;
 
         // Store the match
-        matches[draggedColor] = dropColor;
+        matches[draggedPic] = dropPic;
     });
 });
 
-// Check if all colors are correctly matched
+// Click / Tap for mobile
+let selectedItem = null;
+
+leftItems.forEach(item => {
+    item.addEventListener('click', function() {
+        if (this.classList.contains('matched')) return;
+        if (selectedItem) selectedItem.style.outline = '';
+        if (selectedItem === this) { selectedItem = null; return; }
+        selectedItem = this;
+        this.style.outline = '3px solid #7C3AED';
+        this.style.outlineOffset = '3px';
+    });
+});
+
+rightItems.forEach(item => {
+    item.addEventListener('click', function() {
+        if (!selectedItem || this.classList.contains('matched')) return;
+
+        const draggedPic = selectedItem.dataset.pic;
+        const dropPic = this.dataset.pic;
+
+        selectedItem.classList.add('matched');
+        this.classList.add('matched');
+        selectedItem.draggable = false;
+        selectedItem.style.outline = '';
+
+        matches[draggedPic] = dropPic;
+        selectedItem = null;
+    });
+});
+
+// Check if all pictures are correctly matched
 function checkMatches() {
-    return matches['red'] === 'red' && 
-           matches['blue'] === 'blue' && 
-           matches['yellow'] === 'yellow';
+    return matches['apple'] === 'apple' && 
+           matches['banana'] === 'banana' && 
+           matches['orange'] === 'orange';
 }
 
 // Submit answer based on match correctness
@@ -362,8 +421,7 @@ function submitAnswer() {
     const allMatched = Object.values(matches).every(v => v !== null);
     
     if (!allMatched) {
-        // Not all colors have been matched
-        alert('Please match all colors before continuing!');
+        alert('Please match all pictures before continuing!');
         return;
     }
 

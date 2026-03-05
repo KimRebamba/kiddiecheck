@@ -279,6 +279,20 @@ foreach ($students as $s) {
             ->with('success', 'Profile image updated successfully!');
     }
 
+        public function showStudentProfile($studentId)
+    {
+        [$user, $family] = $this->getAuthFamily();
+
+        $student = DB::table('students')
+            ->where('student_id', $studentId)
+            ->where('family_id', $family->user_id)
+            ->first();
+
+        if (!$student) abort(404);
+
+        return view('family.student-profile', compact('student'));
+    }
+
     // ──────────────────────────────────────────────
     //  AJAX ENDPOINTS
     // ──────────────────────────────────────────────
@@ -466,12 +480,14 @@ foreach ($students as $s) {
             ]);
         }
 
+        $totalDomainQuestions = count($questions);
+
         return view('family.question', compact(
-            'test', 'testId', 'currentDomain', 'question', 'questionText',
-            'domainNumber', 'questionIndex', 'existingResponse',
-            'totalAnswered', 'totalQuestions',
-            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
-        ));
+        'test', 'testId', 'currentDomain', 'question', 'questionText',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions', 'totalDomainQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex', 'domains'
+    ));
     }
 
     public function startTest($studentId)

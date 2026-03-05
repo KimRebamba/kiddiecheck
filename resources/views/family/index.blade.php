@@ -459,7 +459,7 @@
                             </div>
                         @endif
                     </div>
-                    <a href="{{ route('family.index') }}" class="child-view-btn">View →</a>
+                    <a href="{{ route('family.student.profile', $child['student_id']) }}" class="child-view-btn">View →</a>
                 </div>
             @empty
                 <div class="empty">

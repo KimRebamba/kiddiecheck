@@ -79,6 +79,12 @@
   </style>
 </head>
 <body>
+
+@php
+    $navFamily  = DB::table('families')->where('user_id', Auth::id())->first();
+    $navStudent = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
+@endphp
+
   <header class="family-header">
     <div class="header-container">
 
@@ -89,10 +95,6 @@
       <div class="nav-links">
         <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</a>
         <a class="nav-link {{ request()->routeIs('family.child*') ? 'active' : '' }}" href="{{ route('family.index') }}">Children</a>
-        @php
-          $navFamily  = DB::table('families')->where('user_id', Auth::id())->first();
-          $navStudent = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
-        @endphp
         <a class="nav-link {{ request()->routeIs('family.tests.*') ? 'active' : '' }}"
            href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Tests</a>
         <a class="nav-link" href="{{ route('family.index') }}">Help</a>
@@ -107,7 +109,8 @@
             </svg>
           </a>
           <div class="dropdown-menu">
-            <a href="{{ route('family.index') }}" class="dropdown-item">Profile Settings</a>
+            <a href="{{ $navStudent ? route('family.student.profile', $navStudent->student_id) : route('family.index') }}" 
+   class="dropdown-item">Profile Settings</a>
             <form method="POST" action="{{ route('logout') }}" style="margin:0">
               @csrf
               <button type="submit" class="dropdown-item">Logout</button>

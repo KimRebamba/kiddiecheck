@@ -1,6 +1,6 @@
-{{-- resources/views/family/student-profile.blade.php --}}
+@extends('family.layout')
 
-@extends('layouts.app')
+@section('title', 'Student Profile')
 
 @section('content')
 
@@ -119,7 +119,7 @@
                 Age: {{ $age->y }} yrs, {{ $age->m }} mos
             </div>
         </div>
-        <a href="{{ route('family.dashboard') }}" class="back-btn">← Back</a>
+        <a href="{{ route('family.index') }}" class="back-btn">← Back</a>
     </div>
 
     {{-- Child Info --}}

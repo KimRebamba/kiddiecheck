@@ -48,6 +48,14 @@
             font-size: 14px;
             color: #7C3AED;
             font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        /* NEW: domain and overall counters */
+        .progress-domain {
+            font-size: 12px;
+            color: #aaa;
+            font-weight: 600;
         }
 
         .domain-icon {
@@ -275,7 +283,10 @@
 
 <div class="question-card">
     <div class="progress-info">
+        {{-- Overall answered counter --}}
         <div class="progress-answered">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
+        {{-- Domain question counter (requires $questionIndex and $totalDomainQuestions from controller) --}}
+        <div class="progress-domain">Question {{ $questionIndex }} of {{ $totalDomainQuestions }} in this domain</div>
     </div>
 
     @php

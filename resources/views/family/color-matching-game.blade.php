@@ -25,185 +25,229 @@
             background: #fff;
             border-radius: 30px;
             padding: 40px 50px;
-            max-width: 900px;
+            max-width: 920px;
             width: 100%;
             box-shadow: 0 8px 30px rgba(0,0,0,0.15);
             border: 3px solid #000;
         }
 
-        .progress {
-            text-align: center;
-            font-size: 14px;
-            color: #7C3AED;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-
+        .progress { text-align: center; font-size: 14px; color: #7C3AED; font-weight: 700; margin-bottom: 1.5rem; }
         .domain-icon  { text-align: center; font-size: 48px; margin-bottom: 10px; }
         .domain-title { text-align: center; font-size: 28px; font-weight: 900; color: #1a1a2e; margin-bottom: 0.5rem; }
-        .question-text {
-            text-align: center; font-size: 18px; color: #555;
-            line-height: 1.6; margin-bottom: 1.5rem;
-        }
+        .question-text { text-align: center; font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 1.5rem; }
 
         .game-box {
             background: #fffbea;
             border: 3px dashed #f5a623;
             border-radius: 20px;
-            padding: 2rem;
+            padding: 2rem 96px 1.5rem;
             margin-bottom: 1.5rem;
-        }
-
-        .game-title {
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: 900;
-            color: #e07b00;
-            margin-bottom: 0.5rem;
-        }
-
-        .game-subtitle {
-            text-align: center;
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-bottom: 2rem;
-        }
-
-        .game-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 3rem;
-            margin-bottom: 2rem;
-        }
-
-        .column-header {
-            text-align: center;
-            font-size: 0.9rem;
-            font-weight: 800;
-            color: #888;
-            text-transform: uppercase;
-            letter-spacing: 0.05rem;
-            margin-bottom: 1rem;
-        }
-
-        .crayons-container {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .crayon-card {
-            border-radius: 16px;
-            border: 4px solid #e0e0e0;
-            background: #fff;
-            padding: 1.5rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            user-select: none;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             position: relative;
         }
 
-        .crayon-card:hover:not(.matched) {
-            transform: scale(1.05);
-            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        /* Locked state */
+        .game-box.locked { background: #f8f8f8; border-color: #ccc; }
+
+        .locked-banner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 10px 18px;
+            margin-bottom: 1.2rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #856404;
+        }
+        .locked-banner.visible { display: flex; }
+
+        .game-title    { text-align: center; font-size: 1.2rem; font-weight: 900; color: #e07b00; margin-bottom: 0.3rem; }
+        .game-subtitle { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 2rem; }
+
+        /* ── Connect arena ── */
+        .dots-arena {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            min-height: 300px;
         }
 
-        .crayon-card.dragging {
-            opacity: 0.5;
-        }
-
-        .crayon-card.drag-over {
-            border-color: #7C3AED;
-            background: #f0ebff;
-            box-shadow: 0 0 0 4px #7C3AED;
-        }
-
-        .crayon-card.matched {
-            border-color: #9E9E9E;
-            background: #f5f5f5;
-            cursor: default;
-        }
-
-        .crayon-card.matched::after {
-            content: "✓";
+        .lines-svg {
             position: absolute;
-            top: 5px;
-            right: 10px;
-            font-size: 1.5rem;
-            color: #666;
-            font-weight: 900;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 1;
         }
 
-        .crayon-inner {
-            width: 100%;
-            height: 50px;
-            border-radius: 25px;
+        .connection-line {
+            stroke-width: 6;
+            stroke-linecap: round;
+            fill: none;
+            opacity: 0.9;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
+        }
+
+        /* ── Dot columns ── */
+        .dots-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+            z-index: 2;
+            width: 38%;
+            align-items: center;
+        }
+
+        .col-header {
+            font-size: 0.78rem;
+            font-weight: 900;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 0.2rem;
+            text-align: center;
+        }
+
+        .dot-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.15s;
+            user-select: none;
+        }
+        .dot-item:hover { transform: scale(1.06); }
+
+        /* Locked: disable interaction */
+        .dots-arena.is-locked .dot-item { cursor: default; pointer-events: none; }
+        .dots-arena.is-locked .dot-item:hover { transform: none; }
+        .dots-arena.is-locked .dot { opacity: 0.75; }
+
+        .dot {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            border: 5px solid rgba(0,0,0,0.15);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.18);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 1rem;
-            color: white;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            box-shadow: inset 0 -3px 8px rgba(0,0,0,0.2);
+            font-size: 1.8rem;
+            transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+            position: relative;
         }
 
-        .red    { background: linear-gradient(135deg, #e74c3c, #c0392b); }
-        .blue   { background: linear-gradient(135deg, #3498db, #2980b9); }
-        .yellow { background: linear-gradient(135deg, #f1c40f, #f39c12); }
-
-        .answer-hint {
-            text-align: center;
-            font-size: 0.85rem;
-            color: #aaa;
-            margin-bottom: 0.8rem;
+        .dot.selected {
+            box-shadow: 0 0 0 6px #7C3AED, 0 4px 14px rgba(0,0,0,0.18);
+            transform: scale(1.15);
+            border-color: #7C3AED;
+        }
+        .dot.connected {
+            border-color: #555;
+            box-shadow: 0 0 0 4px rgba(0,0,0,0.12), 0 4px 14px rgba(0,0,0,0.18);
+        }
+        .dot.connected::after {
+            content: '✓';
+            position: absolute;
+            top: -10px; right: -10px;
+            background: #555; color: #fff;
+            font-size: 0.7rem; font-weight: 900;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .nav-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 1rem;
-        }
+        .dot.red    { background: linear-gradient(135deg, #ff6b6b, #e74c3c); }
+        .dot.blue   { background: linear-gradient(135deg, #74b9ff, #3498db); }
+        .dot.yellow { background: linear-gradient(135deg, #fdcb6e, #f1c40f); }
 
+        .dot-name {
+            font-size: 0.9rem; font-weight: 900; letter-spacing: 0.03em;
+            padding: 3px 14px; border-radius: 20px; color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.25); text-transform: uppercase;
+        }
+        .dot-name.red    { background: #e74c3c; }
+        .dot-name.blue   { background: #3498db; }
+        .dot-name.yellow { background: #e6a800; color: #fff; }
+
+        .tap-hint { text-align: center; font-size: 0.82rem; color: #bbb; margin-top: 1.2rem; }
+        .answer-hint { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 0.8rem; }
+
+        .nav-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
         .nav-center { display: flex; gap: 10px; }
 
         .btn-nav {
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            text-decoration: none;
-            border: 2px solid #ccc;
-            cursor: pointer;
+            padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            text-decoration: none; border: 2px solid #ccc; cursor: pointer;
+            background: #fff; color: #333; transition: all 0.2s;
+        }
+        .btn-nav:hover  { background: #f5f5f5; transform: translateY(-2px); }
+        .btn-prev       { background: #f5f5f5; border-color: #999; color: #666; }
+        .btn-prev:hover { background: #e0e0e0; color: #333; }
+
+        /* Locked Next button */
+        .btn-nav.btn-locked { background: #e9e9e9; border-color: #ccc; color: #999; cursor: not-allowed; }
+        .btn-nav.btn-locked:hover { transform: none; background: #e9e9e9; }
+
+        /* ── Modal overlay ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal-box {
             background: #fff;
-            color: #333;
-            transition: all 0.2s;
+            border-radius: 24px;
+            padding: 36px 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            border: 3px solid #000;
+            text-align: center;
+            animation: modalPop 0.25s ease;
         }
 
-        .btn-nav:hover {
-            background: #f5f5f5;
-            transform: translateY(-2px);
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
         }
 
-        .btn-prev {
-            background: #f5f5f5;
-            border-color: #999;
-            color: #666;
-        }
+        .modal-icon  { font-size: 3rem; margin-bottom: 12px; }
+        .modal-title { font-size: 1.25rem; font-weight: 900; color: #1a1a2e; margin-bottom: 8px; }
+        .modal-body  { font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
 
-        .btn-prev:hover {
-            background: #e0e0e0;
-            color: #333;
+        .btn-modal-ok {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #7C3AED; color: #fff; border: none; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
         }
+        .btn-modal-ok:hover { background: #6d28d9; transform: translateY(-2px); }
 
-        @media (max-width: 768px) {
+        .btn-modal-cancel {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #fff; color: #555; border: 2px solid #ccc; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-modal-cancel:hover { background: #f0f0f0; transform: translateY(-2px); }
+
+        @media (max-width: 600px) {
             .card { padding: 24px 16px; }
-            .game-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .game-box { padding: 1.5rem 40px 1.5rem; }
+            .dot { width: 56px; height: 56px; font-size: 1.4rem; }
+            .dot-name { font-size: 0.75rem; padding: 2px 10px; }
         }
     </style>
 </head>
@@ -211,63 +255,74 @@
 <div class="card">
 
     <div class="progress">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
-
     <div class="domain-icon">🧠</div>
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
     <div class="question-text">{{ $question->display_text ?? $question->text }}</div>
 
-    <div class="game-box">
-        <div class="game-title">🎨 Match the Colors!</div>
-        <div class="game-subtitle">Drag each crayon from the left to match its color on the right!</div>
+    <div class="game-box" id="gameBox">
 
-        <div class="game-grid">
+        {{-- Already-answered banner --}}
+        <div class="locked-banner" id="lockedBanner">
+            🔒 This question has already been answered and cannot be changed.
+        </div>
 
-            <div>
-                <div class="column-header">👈 Drag from here</div>
-                <div class="crayons-container">
-                    <div class="crayon-card" draggable="true" data-color="red" id="left-red">
-                        <div class="crayon-inner red">🖍️ Red</div>
-                    </div>
+        <div class="game-title">🎨 Connect the Colors!</div>
+        <div class="game-subtitle">Tap a circle on the left, then tap its matching color on the right</div>
 
-                    <div class="crayon-card" draggable="true" data-color="blue" id="left-blue">
-                        <div class="crayon-inner blue">🖍️ Blue</div>
-                    </div>
+        <div class="dots-arena" id="arena">
 
-                    <div class="crayon-card" draggable="true" data-color="yellow" id="left-yellow">
-                        <div class="crayon-inner yellow">🖍️ Yellow</div>
-                    </div>
+            <svg class="lines-svg" id="linesSvg"></svg>
+
+            <!-- LEFT column -->
+            <div class="dots-col left">
+                <div class="col-header">👈 Tap to start</div>
+
+                <div class="dot-item" data-side="left" data-color="red">
+                    <div class="dot red" id="dot-left-red"></div>
+                    <span class="dot-name red">Red</span>
+                </div>
+                <div class="dot-item" data-side="left" data-color="blue">
+                    <div class="dot blue" id="dot-left-blue"></div>
+                    <span class="dot-name blue">Blue</span>
+                </div>
+                <div class="dot-item" data-side="left" data-color="yellow">
+                    <div class="dot yellow" id="dot-left-yellow"></div>
+                    <span class="dot-name yellow">Yellow</span>
                 </div>
             </div>
 
-            <div>
-                <div class="column-header">Drop on match 👉</div>
-                <div class="crayons-container">
-                    <div class="crayon-card" data-color="blue" id="right-blue">
-                        <div class="crayon-inner blue">🖍️ Blue</div>
-                    </div>
+            <!-- RIGHT column (shuffled order) -->
+            <div class="dots-col right">
+                <div class="col-header">Tap to match 👉</div>
 
-                    <div class="crayon-card" data-color="yellow" id="right-yellow">
-                        <div class="crayon-inner yellow">🖍️ Yellow</div>
-                    </div>
-
-                    <div class="crayon-card" data-color="red" id="right-red">
-                        <div class="crayon-inner red">🖍️ Red</div>
-                    </div>
+                <div class="dot-item" data-side="right" data-color="blue">
+                    <div class="dot blue" id="dot-right-blue"></div>
+                    <span class="dot-name blue">Blue</span>
+                </div>
+                <div class="dot-item" data-side="right" data-color="yellow">
+                    <div class="dot yellow" id="dot-right-yellow"></div>
+                    <span class="dot-name yellow">Yellow</span>
+                </div>
+                <div class="dot-item" data-side="right" data-color="red">
+                    <div class="dot red" id="dot-right-red"></div>
+                    <span class="dot-name red">Red</span>
                 </div>
             </div>
 
         </div>
 
+        <div class="tap-hint" id="tapHint">Tap a connected circle again to remove its line</div>
     </div>
 
-    <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
+    <form method="POST"
+          action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}"
+          id="answerForm">
         @csrf
         <input type="hidden" name="response" id="responseInput" value="">
 
-        <div class="answer-hint">Match the colors, then click Next to continue</div>
+        <div class="answer-hint" id="answerHint">Connect all 3 colors, then click Next →</div>
 
         <div class="nav-footer">
-
             @if($prevDomain && $prevIndex)
                 <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $prevDomain, 'index' => $prevIndex]) }}"
                    class="btn-nav btn-prev">← Previous</a>
@@ -276,9 +331,7 @@
             @endif
 
             <div class="nav-center">
-                <button type="button" onclick="submitAnswer()" class="btn-nav">
-                    Next →
-                </button>
+                <button type="button" id="btnNext" onclick="handleNext()" class="btn-nav">Next →</button>
 
                 @if($nextDomain && $nextIndex)
                     <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
@@ -287,92 +340,190 @@
                     <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">Review →</a>
                 @endif
             </div>
-
         </div>
     </form>
 
 </div>
 
+{{-- ── Confirm-submit modal (fresh question) ── --}}
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">Submit Answer?</div>
+        <div class="modal-body">
+            Next means submitting the answer and not returning to it.<br><br>
+            Are you sure you want to submit?
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-modal-ok"     onclick="confirmSubmit()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+{{-- ── Already-answered modal ── --}}
+<div class="modal-overlay" id="lockedModal">
+    <div class="modal-box">
+        <div class="modal-icon">🔒</div>
+        <div class="modal-title">Answer Already Submitted</div>
+        <div class="modal-body">
+            Clicking <strong>Next</strong> doesn't allow you to go back and answer it again.<br><br>
+            Your previous answer has been saved and is now locked.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-ok" onclick="closeLockedModal()">Got it!</button>
+        </div>
+    </div>
+</div>
+
 <script>
-let draggedItem = null;
+// ── Pass existing response from Blade ──
+const existingResponse = '<?php echo addslashes($existingResponse ?? ''); ?>';
+const isLocked = existingResponse !== '';
 
-// Store matches: { leftColor: rightColor }
-const matches = {
-    'red': null,
-    'blue': null,
-    'yellow': null
-};
+const connections = { red: null, blue: null, yellow: null };
+let selectedLeft  = null;
+const colors      = ['red', 'blue', 'yellow'];
+const lineColors  = { red: '#e74c3c', blue: '#3498db', yellow: '#e6a800' };
+const svg         = document.getElementById('linesSvg');
+const arena       = document.getElementById('arena');
 
-const leftItems = document.querySelectorAll('.game-grid > div:first-child .crayon-card[draggable="true"]');
-const rightItems = document.querySelectorAll('.game-grid > div:last-child .crayon-card');
-
-// Drag start
-leftItems.forEach(item => {
-    item.addEventListener('dragstart', function() {
-        draggedItem = this;
-        this.classList.add('dragging');
-    });
-
-    item.addEventListener('dragend', function() {
-        this.classList.remove('dragging');
-    });
+// ── On page load: apply locked state if already answered ──
+window.addEventListener('DOMContentLoaded', () => {
+    if (isLocked) {
+        applyLockedUI();
+    }
 });
 
-// Drop targets - accept ANY drop
-rightItems.forEach(item => {
-    item.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        if (!this.classList.contains('matched')) {
-            this.classList.add('drag-over');
-        }
-    });
+function applyLockedUI() {
+    document.getElementById('lockedBanner').classList.add('visible');
+    document.getElementById('gameBox').classList.add('locked');
+    arena.classList.add('is-locked');
+    document.getElementById('tapHint').style.display   = 'none';
+    document.getElementById('answerHint').style.display = 'none';
+    document.getElementById('btnNext').classList.add('btn-locked');
 
-    item.addEventListener('dragleave', function() {
-        this.classList.remove('drag-over');
-    });
-
-    item.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('drag-over');
-
-        if (this.classList.contains('matched')) return;
-
-        const draggedColor = draggedItem.dataset.color;
-        const dropColor = this.dataset.color;
-
-        // Allow ANY match (even incorrect ones)
-        draggedItem.classList.add('matched');
-        this.classList.add('matched');
-        draggedItem.draggable = false;
-
-        // Store the match
-        matches[draggedColor] = dropColor;
-    });
-});
-
-// Check if all colors are correctly matched
-function checkMatches() {
-    return matches['red'] === 'red' && 
-           matches['blue'] === 'blue' && 
-           matches['yellow'] === 'yellow';
+    // Draw all correct connections
+    colors.forEach(c => { connections[c] = c; });
+    refreshDots();
+    redrawLines();
 }
 
-// Submit answer based on match correctness
-function submitAnswer() {
-    const allMatched = Object.values(matches).every(v => v !== null);
-    
-    if (!allMatched) {
-        // Not all colors have been matched
-        alert('Please match all colors before continuing!');
+function dotCenter(el) {
+    const ar = arena.getBoundingClientRect();
+    const dr = el.getBoundingClientRect();
+    return { x: dr.left + dr.width / 2 - ar.left, y: dr.top + dr.height / 2 - ar.top };
+}
+
+function redrawLines() {
+    svg.querySelectorAll('.connection-line').forEach(l => l.remove());
+    colors.forEach(lc => {
+        const rc = connections[lc];
+        if (!rc) return;
+        const ld = document.getElementById(`dot-left-${lc}`);
+        const rd = document.getElementById(`dot-right-${rc}`);
+        if (!ld || !rd) return;
+        const lp = dotCenter(ld), rp = dotCenter(rd);
+        const cx = (lp.x + rp.x) / 2;
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${lp.x} ${lp.y} C ${cx} ${lp.y}, ${cx} ${rp.y}, ${rp.x} ${rp.y}`);
+        path.setAttribute('class', 'connection-line');
+        path.setAttribute('stroke', lineColors[lc]);
+        svg.appendChild(path);
+    });
+}
+
+function refreshDots() {
+    colors.forEach(c => {
+        const ld = document.getElementById(`dot-left-${c}`);
+        const rd = document.getElementById(`dot-right-${c}`);
+        ld.classList.toggle('selected',  selectedLeft === c);
+        ld.classList.toggle('connected', connections[c] !== null && selectedLeft !== c);
+        rd.classList.toggle('connected', Object.values(connections).includes(c));
+    });
+}
+
+document.querySelectorAll('.dot-item').forEach(item => {
+    item.addEventListener('click', () => {
+        if (isLocked) return;
+
+        const side  = item.dataset.side;
+        const color = item.dataset.color;
+
+        if (side === 'left') {
+            if (connections[color] !== null) {
+                connections[color] = null;
+                selectedLeft = color;
+            } else {
+                selectedLeft = (selectedLeft === color) ? null : color;
+            }
+            refreshDots();
+            redrawLines();
+            return;
+        }
+
+        // right side
+        const existingLeft = Object.keys(connections).find(lc => connections[lc] === color);
+        if (existingLeft) {
+            connections[existingLeft] = null;
+            if (selectedLeft && selectedLeft !== existingLeft) {
+                connections[selectedLeft] = color;
+                selectedLeft = null;
+            } else {
+                selectedLeft = null;
+            }
+        } else {
+            if (!selectedLeft) return;
+            connections[selectedLeft] = color;
+            selectedLeft = null;
+        }
+        refreshDots();
+        redrawLines();
+    });
+});
+
+window.addEventListener('resize', redrawLines);
+
+// ── Next button handler ────────────────────────────────────────────────────
+function handleNext() {
+    if (isLocked) {
+        document.getElementById('lockedModal').classList.add('show');
         return;
     }
 
-    // Check if matches are correct
-    const isCorrect = checkMatches();
-    
+    if (!colors.every(c => connections[c] !== null)) {
+        alert('Please connect all 3 colors before continuing!');
+        return;
+    }
+
+    document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmSubmit() {
+    closeConfirmModal();
+    submitAnswer();
+}
+
+function submitAnswer() {
+    const isCorrect = colors.every(c => connections[c] === c);
     document.getElementById('responseInput').value = isCorrect ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+}
+function closeLockedModal() {
+    document.getElementById('lockedModal').classList.remove('show');
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+document.getElementById('lockedModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLockedModal();
+});
 </script>
 
 </body>

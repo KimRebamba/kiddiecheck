@@ -42,7 +42,27 @@
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 1.5rem;
+            position: relative;
         }
+
+        /* Locked state */
+        .game-box.locked { background: #f8f8f8; border-color: #ccc; }
+
+        .locked-banner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 10px 18px;
+            margin-bottom: 1.2rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #856404;
+        }
+        .locked-banner.visible { display: flex; }
 
         .game-title    { text-align: center; font-size: 1.2rem; font-weight: 900; color: #e07b00; margin-bottom: 0.5rem; }
         .game-subtitle { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 1.5rem; }
@@ -57,6 +77,10 @@
             background: #f9f9f9; border: 2px dashed #ddd; border-radius: 16px;
             padding: 1.2rem; min-height: 110px; margin-bottom: 1.5rem;
         }
+
+        /* Locked: no interaction on tray / groups */
+        .game-box.locked .unsorted-tray,
+        .game-box.locked .sort-group { pointer-events: none; }
 
         .groups-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
 
@@ -82,9 +106,12 @@
         .shape-card:active                { cursor: grabbing; }
         .shape-card:hover:not(.placed)    { transform: scale(1.1) rotate(-3deg); box-shadow: 0 8px 20px rgba(0,0,0,0.16); border-color: #f5a623; }
         .shape-card.dragging              { opacity: 0.4; transform: scale(0.9); }
-        /* Neutral gray once placed — no correct/wrong hint */
         .shape-card.placed                { cursor: grab; border-color: #94A3B8; background: #E2E8F0; opacity: 0.7; }
         .shape-card.placed:hover          { transform: scale(1.05); opacity: 1; border-color: #f5a623; }
+
+        /* Locked cards can't be moved */
+        .game-box.locked .shape-card      { cursor: default; pointer-events: none; opacity: 0.72; }
+        .game-box.locked .shape-card:hover { transform: none; }
 
         .shape-svg  { width: 44px; height: 44px; }
         .shape-name { font-size: 0.6rem; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 0.03em; }
@@ -107,6 +134,11 @@
         .why-btn:hover    { background: #DBEAFE; border-color: #3B82F6; transform: translateY(-2px); }
         .why-btn.selected { background: #2563EB; border-color: #2563EB; color: #fff; }
 
+        /* Locked why prompt — read-only */
+        .game-box.locked .why-btn { pointer-events: none; cursor: default; }
+        .game-box.locked .why-btn:hover { transform: none; background: #fff; }
+        .game-box.locked .why-btn.selected:hover { background: #2563EB; }
+
         .answer-hint { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 0.8rem; }
         .nav-footer  { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
         .nav-center  { display: flex; gap: 10px; }
@@ -119,6 +151,60 @@
         .btn-nav:hover  { background: #f5f5f5; transform: translateY(-2px); }
         .btn-prev       { background: #f5f5f5; border-color: #999; color: #666; }
         .btn-prev:hover { background: #e0e0e0; color: #333; }
+
+        /* Locked Next button */
+        .btn-nav.btn-locked {
+            background: #e9e9e9; border-color: #ccc; color: #999; cursor: not-allowed;
+        }
+        .btn-nav.btn-locked:hover { transform: none; background: #e9e9e9; }
+
+        /* ── Modal overlay ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 36px 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            border: 3px solid #000;
+            text-align: center;
+            animation: modalPop 0.25s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        .modal-icon  { font-size: 3rem; margin-bottom: 12px; }
+        .modal-title { font-size: 1.25rem; font-weight: 900; color: #1a1a2e; margin-bottom: 8px; }
+        .modal-body  { font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+
+        .btn-modal-ok {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #7C3AED; color: #fff; border: none; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-modal-ok:hover { background: #6d28d9; transform: translateY(-2px); }
+
+        .btn-modal-cancel {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #fff; color: #555; border: 2px solid #ccc; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-modal-cancel:hover { background: #f0f0f0; transform: translateY(-2px); }
 
         @media (max-width: 768px) {
             .card { padding: 24px 16px; }
@@ -136,7 +222,13 @@
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
     <div class="question-text">{{ $question->display_text ?? $question->text }}</div>
 
-    <div class="game-box">
+    <div class="game-box" id="gameBox">
+
+        {{-- Already-answered banner --}}
+        <div class="locked-banner" id="lockedBanner">
+            🔒 This question has already been answered and cannot be changed.
+        </div>
+
         <div class="game-title">🔷 Sort the Shapes!</div>
         <div class="game-subtitle">Drag each shape into a group box below!</div>
 
@@ -219,7 +311,7 @@
         @csrf
         <input type="hidden" name="response" id="responseInput" value="">
 
-        <div class="answer-hint">Sort all shapes and answer why, then click Next</div>
+        <div class="answer-hint" id="answerHint">Sort all shapes and answer why, then click Next</div>
 
         <div class="nav-footer">
             @if($prevDomain && $prevIndex)
@@ -230,7 +322,7 @@
             @endif
 
             <div class="nav-center">
-                <button type="button" onclick="submitAnswer()" class="btn-nav">Next →</button>
+                <button type="button" id="btnNext" onclick="handleNext()" class="btn-nav">Next →</button>
 
                 @if($nextDomain && $nextIndex)
                     <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
@@ -244,19 +336,96 @@
 
 </div>
 
+{{-- ── Confirm-submit modal (fresh question) ── --}}
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">Submit Answer?</div>
+        <div class="modal-body">
+            Next means submitting the answer and not returning to it.<br><br>
+            Are you sure you want to submit?
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-modal-ok"     onclick="confirmSubmit()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+{{-- ── Already-answered modal ── --}}
+<div class="modal-overlay" id="lockedModal">
+    <div class="modal-box">
+        <div class="modal-icon">🔒</div>
+        <div class="modal-title">Answer Already Submitted</div>
+        <div class="modal-body">
+            Clicking <strong>Next</strong> doesn't allow you to go back and answer it again.<br><br>
+            Your previous answer has been saved and is now locked.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-ok" onclick="closeLockedModal()">Got it!</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// ── Pass existing response from Blade ──
+const existingResponse = '<?php echo addslashes($existingResponse ?? ''); ?>';
+const isLocked = existingResponse !== '';
+
 let draggedItem  = null;
 let selectedItem = null;
 let placedCount  = 0;
 let whyValue     = null;
 const totalCards = 8;
 
-// Track which group each card is currently in (null = still in tray)
 const cardGroup = { c1: null, c2: null, t1: null, t2: null, s1: null, s2: null, st1: null, st2: null };
+
+// ── On page load: apply locked state if already answered ──
+window.addEventListener('DOMContentLoaded', () => {
+    if (isLocked) {
+        applyLockedUI();
+    }
+});
+
+function applyLockedUI() {
+    // Show banner
+    document.getElementById('lockedBanner').classList.add('visible');
+
+    // Style game box
+    document.getElementById('gameBox').classList.add('locked');
+
+    // Hide answer hint
+    document.getElementById('answerHint').style.display = 'none';
+
+    // Grey out Next button (still clickable to show locked modal)
+    document.getElementById('btnNext').classList.add('btn-locked');
+
+    // Place all cards into their correct groups to show the completed state
+    const correctMapping = { c1:'circle', c2:'circle', t1:'triangle', t2:'triangle', s1:'square', s2:'square', st1:'star', st2:'star' };
+    for (const cardId in correctMapping) {
+        const card  = document.getElementById(cardId);
+        const group = document.getElementById('group-' + correctMapping[cardId]);
+        if (!card || !group) continue;
+        const tray = document.getElementById('unsortedTray');
+        if (tray.contains(card)) tray.removeChild(card);
+        card.classList.add('placed');
+        group.appendChild(card);
+        group.classList.add('has-cards');
+        cardGroup[cardId] = correctMapping[cardId];
+        placedCount++;
+    }
+
+    // Show why section with a pre-selected answer
+    document.getElementById('whySection').classList.add('show');
+    const firstBtn = document.querySelector('.why-btn');
+    if (firstBtn) firstBtn.classList.add('selected');
+    whyValue = 'same_shape';
+}
 
 // ── Drag ───────────────────────────────────────────────────────────────────
 document.querySelectorAll('.shape-card').forEach(card => {
     card.addEventListener('dragstart', function () {
+        if (isLocked) return;
         draggedItem = this;
         this.classList.add('dragging');
     });
@@ -264,6 +433,7 @@ document.querySelectorAll('.shape-card').forEach(card => {
         this.classList.remove('dragging');
     });
     card.addEventListener('click', function () {
+        if (isLocked) return;
         if (selectedItem) selectedItem.style.outline = '';
         if (selectedItem === this) { selectedItem = null; return; }
         selectedItem = this;
@@ -274,40 +444,37 @@ document.querySelectorAll('.shape-card').forEach(card => {
 
 // ── Drop ───────────────────────────────────────────────────────────────────
 document.querySelectorAll('.sort-group').forEach(group => {
-    group.addEventListener('dragover',  e => { e.preventDefault(); group.classList.add('drag-over'); });
+    group.addEventListener('dragover',  e => { if (isLocked) return; e.preventDefault(); group.classList.add('drag-over'); });
     group.addEventListener('dragleave', () => group.classList.remove('drag-over'));
     group.addEventListener('drop', e => {
         e.preventDefault();
         group.classList.remove('drag-over');
-        if (draggedItem) { placeCard(draggedItem, group); draggedItem = null; }
+        if (!isLocked && draggedItem) { placeCard(draggedItem, group); draggedItem = null; }
     });
     group.addEventListener('click', () => {
-        if (!selectedItem) return;
+        if (isLocked || !selectedItem) return;
         selectedItem.style.outline = '';
         placeCard(selectedItem, group);
         selectedItem = null;
     });
 });
 
-// ── Place card (any group, no error) ───────────────────────────────────────
+// ── Place card ─────────────────────────────────────────────────────────────
 function placeCard(card, group) {
-    const cardId  = card.id;
-    const groupId = group.dataset.group;
+    const cardId      = card.id;
+    const groupId     = group.dataset.group;
     const prevGroupId = cardGroup[cardId];
 
-    // Remove from previous location
     if (prevGroupId) {
         const prevGroup = document.getElementById('group-' + prevGroupId);
         prevGroup.removeChild(card);
         if (!prevGroup.querySelector('.shape-card')) prevGroup.classList.remove('has-cards');
         placedCount--;
     } else {
-        // Still in tray
         const tray = document.getElementById('unsortedTray');
         if (tray.contains(card)) tray.removeChild(card);
     }
 
-    // Add to new group
     card.classList.add('placed');
     card.style.outline = '';
     group.appendChild(card);
@@ -315,7 +482,6 @@ function placeCard(card, group) {
     cardGroup[cardId] = groupId;
     placedCount++;
 
-    // Show why prompt once all 8 are placed
     if (placedCount === totalCards) {
         document.getElementById('whySection').classList.add('show');
     }
@@ -323,12 +489,13 @@ function placeCard(card, group) {
 
 // ── Why answer ─────────────────────────────────────────────────────────────
 function selectWhy(btn, value) {
+    if (isLocked) return;
     document.querySelectorAll('.why-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     whyValue = value;
 }
 
-// ── Check correctness ──────────────────────────────────────────────────────
+// ── Correctness check ──────────────────────────────────────────────────────
 function isSortedCorrectly() {
     for (const cardId in cardGroup) {
         const groupId = cardGroup[cardId];
@@ -338,13 +505,52 @@ function isSortedCorrectly() {
     return true;
 }
 
-// ── Submit ─────────────────────────────────────────────────────────────────
+// ── Next button handler ────────────────────────────────────────────────────
+function handleNext() {
+    if (isLocked) {
+        document.getElementById('lockedModal').classList.add('show');
+        return;
+    }
+
+    if (placedCount < totalCards) {
+        alert('Please sort all shapes before continuing!');
+        return;
+    }
+    if (!whyValue) {
+        alert('Please answer the "Why?" question before continuing!');
+        return;
+    }
+
+    // Show confirmation modal
+    document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmSubmit() {
+    closeConfirmModal();
+    submitAnswer();
+}
+
 function submitAnswer() {
     const correctWhy = ['same_shape', 'same_color', 'they_match'];
     const ok = isSortedCorrectly() && correctWhy.includes(whyValue);
     document.getElementById('responseInput').value = ok ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }
+
+// ── Modals ─────────────────────────────────────────────────────────────────
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+}
+function closeLockedModal() {
+    document.getElementById('lockedModal').classList.remove('show');
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+document.getElementById('lockedModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLockedModal();
+});
 </script>
 
 </body>

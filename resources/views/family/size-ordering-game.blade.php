@@ -31,9 +31,9 @@
             border: 3px solid #000;
         }
 
-        .progress   { text-align: center; font-size: 14px; color: #7C3AED; font-weight: 700; margin-bottom: 1.5rem; }
-        .domain-icon  { text-align: center; font-size: 48px; margin-bottom: 10px; }
-        .domain-title { text-align: center; font-size: 28px; font-weight: 900; color: #1a1a2e; margin-bottom: 0.5rem; }
+        .progress      { text-align: center; font-size: 14px; color: #7C3AED; font-weight: 700; margin-bottom: 1.5rem; }
+        .domain-icon   { text-align: center; font-size: 48px; margin-bottom: 10px; }
+        .domain-title  { text-align: center; font-size: 28px; font-weight: 900; color: #1a1a2e; margin-bottom: 0.5rem; }
         .question-text { text-align: center; font-size: 18px; color: #555; line-height: 1.6; margin-bottom: 1.5rem; }
 
         .game-box {
@@ -42,7 +42,33 @@
             border-radius: 20px;
             padding: 2rem;
             margin-bottom: 1.5rem;
+            position: relative;
         }
+
+        /* Locked state */
+        .game-box.locked { background: #f8f8f8; border-color: #ccc; }
+
+        .locked-banner {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 12px;
+            padding: 10px 18px;
+            margin-bottom: 1.2rem;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #856404;
+        }
+        .locked-banner.visible { display: flex; }
+
+        /* Disable all interactions when locked */
+        .game-box.locked .shape   { cursor: default; pointer-events: none; opacity: 0.72; }
+        .game-box.locked .shape:hover { transform: none; box-shadow: 0 3px 10px rgba(0,0,0,0.1); border-color: #e0e0e0; }
+        .game-box.locked .slot    { pointer-events: none; }
+        .game-box.locked .tray    { pointer-events: none; }
 
         .game-title    { text-align: center; font-size: 1.2rem; font-weight: 900; color: #e07b00; margin-bottom: 0.4rem; }
         .game-subtitle { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 1.5rem; }
@@ -79,7 +105,9 @@
             padding: 1rem 1.5rem;
             min-height: 120px;
             margin-bottom: 1.2rem;
+            transition: border-color 0.2s, background 0.2s;
         }
+        .tray.over { border-color: #f5a623; background: #fffbea; }
 
         /* Drop slots */
         .slots { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; }
@@ -96,8 +124,8 @@
             justify-content: center;
             transition: border-color 0.2s, background 0.2s;
         }
-        .slot.over    { border-color: #7C3AED; background: #f0ebff; }
-        .slot.filled  { border-color: #94A3B8; background: #f5f5f5; }
+        .slot.over   { border-color: #7C3AED; background: #f0ebff; }
+        .slot.filled { border-color: #94A3B8; background: #f5f5f5; }
 
         /* Shape cards */
         .shape {
@@ -106,12 +134,12 @@
             cursor: grab; transition: all 0.25s; user-select: none;
             box-shadow: 0 3px 10px rgba(0,0,0,0.1); flex-shrink: 0;
         }
-        .shape:hover:not(.placed) { transform: scale(1.1) rotate(-3deg); box-shadow: 0 8px 20px rgba(0,0,0,0.18); border-color: #f5a623; }
+        .shape:hover  { transform: scale(1.1) rotate(-3deg); box-shadow: 0 8px 20px rgba(0,0,0,0.18); border-color: #f5a623; }
         .shape.dragging { opacity: 0.4; transform: scale(0.9); }
-        .shape.placed   { cursor: default; border-color: #94A3B8; background: #f5f5f5; animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .shape.placed { border-color: #94A3B8; background: #f5f5f5; animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1); }
+        .shape.placed:hover { transform: scale(1.06); border-color: #7C3AED; cursor: grab; }
         .shape.selected { outline: 3px solid #7C3AED; outline-offset: 3px; }
 
-        /* 4 graduated card sizes */
         .sz1 { width: 52px;  height: 52px; }
         .sz2 { width: 70px;  height: 70px; }
         .sz3 { width: 88px;  height: 88px; }
@@ -133,6 +161,60 @@
         .btn-nav:hover { background: #f5f5f5; transform: translateY(-2px); }
         .btn-prev { background: #f5f5f5; border-color: #999; color: #666; }
 
+        /* Locked Next button */
+        .btn-nav.btn-locked {
+            background: #e9e9e9; border-color: #ccc; color: #999; cursor: not-allowed;
+        }
+        .btn-nav.btn-locked:hover { transform: none; background: #e9e9e9; }
+
+        /* ── Modal overlay ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 36px 40px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            border: 3px solid #000;
+            text-align: center;
+            animation: modalPop 0.25s ease;
+        }
+
+        @keyframes modalPop {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+
+        .modal-icon  { font-size: 3rem; margin-bottom: 12px; }
+        .modal-title { font-size: 1.25rem; font-weight: 900; color: #1a1a2e; margin-bottom: 8px; }
+        .modal-body  { font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 24px; }
+        .modal-actions { display: flex; gap: 12px; justify-content: center; }
+
+        .btn-modal-ok {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #7C3AED; color: #fff; border: none; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-modal-ok:hover { background: #6d28d9; transform: translateY(-2px); }
+
+        .btn-modal-cancel {
+            padding: 12px 32px; border-radius: 10px; font-size: 15px; font-weight: 700;
+            background: #fff; color: #555; border: 2px solid #ccc; cursor: pointer;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .btn-modal-cancel:hover { background: #f0f0f0; transform: translateY(-2px); }
+
         @keyframes popIn  { 0%{transform:scale(0.8)} 60%{transform:scale(1.15)} 100%{transform:scale(1)} }
 
         @media (max-width: 640px) {
@@ -151,7 +233,13 @@
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
     <div class="question-text">{{ $question->display_text ?? $question->text }}</div>
 
-    <div class="game-box">
+    <div class="game-box" id="gameBox">
+
+        {{-- Already-answered banner --}}
+        <div class="locked-banner" id="lockedBanner">
+            🔒 This question has already been answered and cannot be changed.
+        </div>
+
         <div class="game-title">📐 Order from Smallest to Biggest!</div>
         <div class="game-subtitle">Drag each shape into the correct slot — smallest on the left, biggest on the right.</div>
 
@@ -205,12 +293,13 @@
 
             <div class="success" id="ok-ci">🎉 All circles placed! Click Next to submit.</div>
         </div>
+
     </div>
 
     <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
         @csrf
         <input type="hidden" name="response" id="responseInput" value="">
-        <div class="answer-hint">Order the shapes then click Next to submit your answer</div>
+        <div class="answer-hint" id="answerHint">Order the shapes then click Next to submit your answer</div>
         <div class="nav-footer">
             @if($prevDomain && $prevIndex)
                 <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $prevDomain, 'index' => $prevIndex]) }}" class="btn-nav btn-prev">← Previous</a>
@@ -218,7 +307,7 @@
                 <span class="btn-nav btn-prev" style="visibility:hidden">← Previous</span>
             @endif
             <div class="nav-center">
-                <button type="button" onclick="submitAnswer()" class="btn-nav">Next →</button>
+                <button type="button" id="btnNext" onclick="handleNext()" class="btn-nav">Next →</button>
                 @if($nextDomain && $nextIndex)
                     <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}" class="btn-nav">Skip (Answer Later)</a>
                 @else
@@ -230,72 +319,218 @@
 
 </div>
 
+{{-- ── Confirm-submit modal (fresh question) ── --}}
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">Submit Answer?</div>
+        <div class="modal-body">
+            Next means submitting the answer and not returning to it.<br><br>
+            Are you sure you want to submit?
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn-modal-ok"     onclick="confirmSubmit()">Yes, Submit</button>
+        </div>
+    </div>
+</div>
+
+{{-- ── Already-answered modal ── --}}
+<div class="modal-overlay" id="lockedModal">
+    <div class="modal-box">
+        <div class="modal-icon">🔒</div>
+        <div class="modal-title">Answer Already Submitted</div>
+        <div class="modal-body">
+            Clicking <strong>Next</strong> doesn't allow you to go back and answer it again.<br><br>
+            Your previous answer has been saved and is now locked.
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal-ok" onclick="closeLockedModal()">Got it!</button>
+        </div>
+    </div>
+</div>
+
 <script>
+// ── Pass existing response from Blade ──
+const existingResponse = '<?php echo addslashes($existingResponse ?? ''); ?>';
+const isLocked = existingResponse !== '';
+
 let dragged  = null;
 let selected = null;
-// Track how many shapes placed in circles phase (for showing success banner)
-let ciPlaced = 0;
 
-function setup(trayId, slotsId) {
-    document.querySelectorAll('#' + trayId + ' .shape').forEach(c => {
-        c.addEventListener('dragstart', () => { dragged = c; c.classList.add('dragging'); });
-        c.addEventListener('dragend',   () => c.classList.remove('dragging'));
-        c.addEventListener('click', () => {
-            if (c.classList.contains('placed')) return;
-            if (selected) selected.classList.remove('selected');
-            selected = (selected === c) ? null : c;
-            if (selected) selected.classList.add('selected');
-        });
+const placedCount = { sq: 0, ci: 0 };
+
+// ── On page load: apply locked state if already answered ──
+window.addEventListener('DOMContentLoaded', () => {
+    if (isLocked) {
+        applyLockedUI();
+    } else {
+        setupPhase('sq');
+    }
+});
+
+function applyLockedUI() {
+    document.getElementById('lockedBanner').classList.add('visible');
+    document.getElementById('gameBox').classList.add('locked');
+    document.getElementById('answerHint').style.display = 'none';
+    document.getElementById('btnNext').classList.add('btn-locked');
+
+    // Show both phases completed
+    // Place squares in correct order
+    const sqSlots = document.querySelectorAll('#slots-sq .slot');
+    const sqCards = [...document.querySelectorAll('#tray-sq .shape')].sort((a, b) => a.dataset.size - b.dataset.size);
+    sqCards.forEach((card, i) => {
+        card.classList.add('placed');
+        sqSlots[i].appendChild(card);
+        sqSlots[i].classList.add('filled');
+    });
+    document.getElementById('ok-sq').classList.add('show');
+    document.getElementById('tab-sq').className = 'phase-tab done';
+
+    // Show circles phase
+    document.getElementById('phase-sq').style.display = 'none';
+    document.getElementById('phase-ci').style.display = 'block';
+    document.getElementById('tab-ci').className = 'phase-tab active';
+
+    // Place circles in correct order
+    const ciSlots = document.querySelectorAll('#slots-ci .slot');
+    const ciCards = [...document.querySelectorAll('#tray-ci .shape')].sort((a, b) => a.dataset.size - b.dataset.size);
+    ciCards.forEach((card, i) => {
+        card.classList.add('placed');
+        ciSlots[i].appendChild(card);
+        ciSlots[i].classList.add('filled');
+    });
+    document.getElementById('ok-ci').classList.add('show');
+}
+
+// ── Generic phase setup ──────────────────────────────────────────────────────
+function setupPhase(phase) {
+    const trayEl  = document.getElementById('tray-' + phase);
+    const slotsEl = document.getElementById('slots-' + phase);
+
+    trayEl.querySelectorAll('.shape').forEach(card => bindCard(card, phase));
+
+    trayEl.addEventListener('dragover', e => { e.preventDefault(); trayEl.classList.add('over'); });
+    trayEl.addEventListener('dragleave', () => trayEl.classList.remove('over'));
+    trayEl.addEventListener('drop', e => {
+        e.preventDefault();
+        trayEl.classList.remove('over');
+        if (dragged) { returnToTray(dragged, phase); dragged = null; }
     });
 
-    document.querySelectorAll('#' + slotsId + ' .slot').forEach(s => {
-        s.addEventListener('dragover',  e => { e.preventDefault(); if (!s.classList.contains('filled')) s.classList.add('over'); });
-        s.addEventListener('dragleave', () => s.classList.remove('over'));
-        s.addEventListener('drop',      e => { e.preventDefault(); s.classList.remove('over'); placeCard(dragged, s); dragged = null; });
-        s.addEventListener('click',     () => { if (selected && !s.classList.contains('filled')) { selected.classList.remove('selected'); placeCard(selected, s); selected = null; } });
+    slotsEl.querySelectorAll('.slot').forEach(slot => {
+        slot.addEventListener('dragover', e => { e.preventDefault(); slot.classList.add('over'); });
+        slot.addEventListener('dragleave', () => slot.classList.remove('over'));
+        slot.addEventListener('drop', e => {
+            e.preventDefault();
+            slot.classList.remove('over');
+            if (dragged) { placeCard(dragged, slot, phase); dragged = null; }
+        });
+        slot.addEventListener('click', () => {
+            if (!selected) return;
+            clearSelected();
+            placeCard(selected, slot, phase);
+            selected = null;
+        });
     });
 }
 
-function placeCard(card, slot) {
-    if (!card || card.classList.contains('placed') || slot.classList.contains('filled')) return;
+function bindCard(card, phase) {
+    card.addEventListener('dragstart', () => {
+        if (isLocked) return;
+        dragged = card;
+        card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', () => card.classList.remove('dragging'));
 
-    // If slot already has a child, return it to the tray first
-    if (slot.firstElementChild) {
-        const existing = slot.firstElementChild;
-        existing.classList.remove('placed');
-        existing.draggable = true;
-        const trayId = slot.dataset.phase === 'ci' ? 'tray-ci' : 'tray-sq';
-        document.getElementById(trayId).appendChild(existing);
-        if (slot.dataset.phase === 'ci') ciPlaced--;
+    card.addEventListener('click', e => {
+        if (isLocked) return;
+        e.stopPropagation();
+        if (selected && selected !== card) {
+            if (card.classList.contains('placed')) {
+                const slot = card.parentElement;
+                if (slot && slot.classList.contains('slot')) {
+                    returnToTray(card, phase);
+                    clearSelected();
+                    placeCard(selected, slot, phase);
+                    selected = null;
+                    return;
+                }
+            }
+            clearSelected();
+        }
+        if (selected === card) { clearSelected(); selected = null; return; }
+        selected = card;
+        card.classList.add('selected');
+    });
+}
+
+function clearSelected() {
+    if (selected) selected.classList.remove('selected');
+}
+
+function placeCard(card, slot, phase) {
+    if (!card) return;
+
+    if (slot.classList.contains('filled') && slot.firstElementChild) {
+        returnToTray(slot.firstElementChild, phase);
+    }
+
+    if (card.classList.contains('placed')) {
+        const oldSlot = card.parentElement;
+        if (oldSlot && oldSlot.classList.contains('slot')) {
+            oldSlot.classList.remove('filled');
+            placedCount[phase]--;
+        }
     }
 
     card.classList.add('placed');
-    card.draggable = false;
+    card.classList.remove('selected');
     slot.appendChild(card);
     slot.classList.add('filled');
+    placedCount[phase]++;
 
-    if (slot.dataset.phase === 'ci') {
-        ciPlaced++;
-        if (ciPlaced === 4) {
+    document.getElementById('ok-' + phase).classList.remove('show');
+
+    if (placedCount[phase] === 4) {
+        if (phase === 'sq') {
+            advanceToCircles();
+        } else {
             document.getElementById('ok-ci').classList.add('show');
         }
     }
 }
 
-function done(phase) {
-    // Called when squares phase is fully placed
-    document.getElementById('ok-' + phase).classList.add('show');
-    document.getElementById('tab-' + phase).className = 'phase-tab done';
+function returnToTray(card, phase) {
+    if (!card) return;
+    const trayEl = document.getElementById('tray-' + phase);
+
+    if (card.classList.contains('placed')) {
+        const oldSlot = card.parentElement;
+        if (oldSlot && oldSlot.classList.contains('slot')) {
+            oldSlot.classList.remove('filled');
+            placedCount[phase]--;
+        }
+    }
+
+    card.classList.remove('placed', 'selected');
+    trayEl.appendChild(card);
+    document.getElementById('ok-' + phase).classList.remove('show');
+}
+
+function advanceToCircles() {
+    document.getElementById('ok-sq').classList.add('show');
+    document.getElementById('tab-sq').className = 'phase-tab done';
     setTimeout(() => {
         document.getElementById('phase-sq').style.display = 'none';
         document.getElementById('phase-ci').style.display = 'block';
         document.getElementById('tab-ci').className = 'phase-tab active';
-        setup('tray-ci', 'slots-ci');
+        setupPhase('ci');
     }, 1500);
 }
 
+// ── Correctness check ──────────────────────────────────────────────────────
 function isCirclesCorrect() {
-    // Check each circle slot: the card inside must have data-size === slot number
     let correct = true;
     document.querySelectorAll('#slots-ci .slot').forEach(s => {
         const card = s.firstElementChild;
@@ -304,61 +539,50 @@ function isCirclesCorrect() {
     return correct;
 }
 
+// ── Next button handler ────────────────────────────────────────────────────
+function handleNext() {
+    if (isLocked) {
+        document.getElementById('lockedModal').classList.add('show');
+        return;
+    }
+
+    if (placedCount['ci'] < 4) {
+        alert('Please order all circles before continuing!');
+        return;
+    }
+
+    document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmSubmit() {
+    closeConfirmModal();
+    submitAnswer();
+}
+
 function submitAnswer() {
     document.getElementById('responseInput').value = isCirclesCorrect() ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }
 
-// Squares: auto-advance after all 4 placed
-let sqPlaced = 0;
-function setupSquares() {
-    document.querySelectorAll('#tray-sq .shape').forEach(c => {
-        c.addEventListener('dragstart', () => { dragged = c; c.classList.add('dragging'); });
-        c.addEventListener('dragend',   () => c.classList.remove('dragging'));
-        c.addEventListener('click', () => {
-            if (c.classList.contains('placed')) return;
-            if (selected) selected.classList.remove('selected');
-            selected = (selected === c) ? null : c;
-            if (selected) selected.classList.add('selected');
-        });
-    });
-
-    document.querySelectorAll('#slots-sq .slot').forEach(s => {
-        s.addEventListener('dragover',  e => { e.preventDefault(); if (!s.classList.contains('filled')) s.classList.add('over'); });
-        s.addEventListener('dragleave', () => s.classList.remove('over'));
-        s.addEventListener('drop', e => {
-            e.preventDefault(); s.classList.remove('over');
-            placeSqCard(dragged, s); dragged = null;
-        });
-        s.addEventListener('click', () => {
-            if (selected && !s.classList.contains('filled')) {
-                selected.classList.remove('selected'); placeSqCard(selected, s); selected = null;
-            }
-        });
-    });
+// ── Modals ─────────────────────────────────────────────────────────────────
+function closeConfirmModal() {
+    document.getElementById('confirmModal').classList.remove('show');
+}
+function closeLockedModal() {
+    document.getElementById('lockedModal').classList.remove('show');
 }
 
-function placeSqCard(card, slot) {
-    if (!card || card.classList.contains('placed') || slot.classList.contains('filled')) return;
+document.getElementById('confirmModal').addEventListener('click', function(e) {
+    if (e.target === this) closeConfirmModal();
+});
+document.getElementById('lockedModal').addEventListener('click', function(e) {
+    if (e.target === this) closeLockedModal();
+});
 
-    if (slot.firstElementChild) {
-        const existing = slot.firstElementChild;
-        existing.classList.remove('placed');
-        existing.draggable = true;
-        document.getElementById('tray-sq').appendChild(existing);
-        sqPlaced--;
-    }
-
-    card.classList.add('placed');
-    card.draggable = false;
-    slot.appendChild(card);
-    slot.classList.add('filled');
-    sqPlaced++;
-
-    if (sqPlaced === 4) done('sq');
-}
-
-setupSquares();
+// Dismiss selection when clicking outside
+document.addEventListener('click', () => {
+    if (selected) { clearSelected(); selected = null; }
+});
 </script>
 
 </body>

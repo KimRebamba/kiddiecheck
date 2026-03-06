@@ -429,9 +429,18 @@ foreach ($students as $s) {
 
         $questionText = $question->display_text ?? $question->text;
 
+                // Redirect: point to objects game
+        if ($currentDomain->domain_name === 'Receptive Language' && (int)$questionIndex === 5) {
+            return redirect()->route('family.tests.point.objects.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
         // Redirect: matching objects game
-        if (str_contains(strtolower($questionText), 'match objects that are the same')) {
-            return redirect()->route('family.tests.game', [
+        if (str_contains(strtolower($questionText), 'when looking at pictures, can your child name what they see')) {
+            return redirect()->route('family.tests.name.game', [
                 'test'   => $testId,
                 'domain' => $domainNumber,
                 'index'  => $questionIndex,
@@ -474,6 +483,56 @@ foreach ($students as $s) {
 
         if (str_contains(strtolower($questionText), 'line up objects from smallest to biggest')) {
         return redirect()->route('family.tests.size.order.game', [
+        'test'   => $testId,
+        'domain' => $domainNumber,
+        'index'  => $questionIndex,
+            ]);
+        }
+
+                // Redirect: puzzle game
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 12) {
+            return redirect()->route('family.tests.puzzle.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 15) {
+            return redirect()->route('family.tests.color.name.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 16) {
+            return redirect()->route('family.tests.animal.veggie.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+                // Redirect: uppercase/lowercase letter match game
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 21) {
+            return redirect()->route('family.tests.letter.match.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        if ($currentDomain->domain_name === 'Social-Emotional' && (int)$questionIndex === 11) {
+            return redirect()->route('family.tests.feelings.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+        if (str_contains(strtolower($questionText), 'name objects in pictures')) {
+        return redirect()->route('family.tests.name.game', [
         'test'   => $testId,
         'domain' => $domainNumber,
         'index'  => $questionIndex,
@@ -586,6 +645,34 @@ foreach ($students as $s) {
     ));
 }
 
+    public function showPointObjectsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.RL-5-Points-Objects', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
     public function showColorGame($testId, $domainNumber, $questionIndex)
     {
     $test           = $this->verifyTestOwnership($testId);
@@ -612,6 +699,90 @@ foreach ($students as $s) {
         'totalAnswered', 'totalQuestions',
         'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
     ));
+    }
+
+        public function showAnimalVeggieGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.C-16-Name-Animal-Vegetable', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+        public function showLetterMatchGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.C-21-UpperLower-Letters', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+        public function showPuzzleGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.C-12-Puzzle', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
     }
 
     public function showPictureGame($testId, $domainNumber, $questionIndex)
@@ -724,6 +895,90 @@ foreach ($students as $s) {
         'totalAnswered', 'totalQuestions',
         'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
     ));
+    }
+
+    public function showNameGame($testId, $domainNumber, $questionIndex)
+    {
+    $test           = $this->verifyTestOwnership($testId);
+    $scaleVersionId = $this->getScaleVersionId();
+    $domains        = $this->getDomains($scaleVersionId);
+    $currentDomain  = $domains[$domainNumber - 1];
+    $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+    $question       = $questions[$questionIndex - 1];
+
+    $existingResponse = DB::table('test_responses')
+        ->where('test_id', $testId)
+        ->where('question_id', $question->question_id)
+        ->value('response');
+
+    $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+    [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+    [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+    return view('family.EL-8-Name-Objects', compact(
+        'test', 'testId', 'currentDomain', 'question',
+        'domainNumber', 'questionIndex', 'existingResponse',
+        'totalAnswered', 'totalQuestions',
+        'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+    ));
+    }
+
+    public function showColorNameGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.C-15-Name-that-color', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+        public function showFeelingsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.SE011-Feeling-inOthers', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
     }
 
     public function submitQuestion(Request $request, $testId, $domainNumber, $questionIndex)

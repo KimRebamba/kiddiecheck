@@ -11,6 +11,21 @@ class DemoSeeder extends Seeder
     /**
      * Run the database seeds.
      */
+    public function run(): void
+    {
+        // Skip sections - they already exist
+        
+        // Create other data
+        $this->users_add();
+        $this->teachers_add();
+        $this->families_add();
+        $this->students_add();
+        $this->studentTeacher_add();
+        $this->assessmentPeriods_add();
+        $this->tests_add();
+        $this->testResponses_add();
+        $this->computedScores_add();
+    }
 
     public function users_add(): void
     {
@@ -102,21 +117,24 @@ class DemoSeeder extends Seeder
         $now = now();
 
         DB::table('sections')->insert([
-            [
-                'name' => 'Section A',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Section B',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'name' => 'Section C',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
+            'section_id' => 1,
+            'name' => 'Section A',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        
+        DB::table('sections')->insert([
+            'section_id' => 2,
+            'name' => 'Section B',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        
+        DB::table('sections')->insert([
+            'section_id' => 3,
+            'name' => 'Section C',
+            'created_at' => $now,
+            'updated_at' => $now,
         ]);
     }
 
@@ -210,7 +228,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Cruz',
                 'date_of_birth' => '2021-01-15',
                 'family_id' => 5,
-                'section_id' => 34, // Section A
+                'section_id' => 1, // Section A
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -221,7 +239,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Santos',
                 'date_of_birth' => '2020-06-10',
                 'family_id' => 6,
-                'section_id' => 34, // Section A
+                'section_id' => 2, // Section B
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -232,7 +250,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Reyes',
                 'date_of_birth' => '2019-03-20',
                 'family_id' => 7,
-                'section_id' => 34, // Section A
+                'section_id' => 3, // Section C
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -850,22 +868,5 @@ class DemoSeeder extends Seeder
                 'updated_at' => $now,
             ]);
         }
-    }
-
-    public function run(): void
-    {
-        // Basic demo graph that touches all main tables defined in testing.php
-        DB::transaction(function () {
-            $this->users_add();
-            $this->teachers_add();
-            $this->families_add();
-            $this->sections_add();
-            $this->students_add();
-            $this->studentTeacher_add();
-            $this->assessmentPeriods_add();
-            $this->tests_add();
-            $this->testResponses_add();
-            $this->computedScores_add();
-        });
-    }
+}
 }

@@ -20,24 +20,15 @@
     ->orderByDesc('test_date')
     ->limit(10)
     ->get();
-  
-  // Get assessment periods for upcoming and overdue assessments
-  $upcomingAssessments = \App\Models\AssessmentPeriod::with(['student'])
-    ->whereHas('student.teachers', function($q) {
-      $q->where('user_id', auth()->id());
-    })
+  $upcomingAssessments = \App\Models\Test::with(['student'])
+    ->where('examiner_id', auth()->id())
     ->where('status', 'scheduled')
-    ->where('end_date', '>=', now())
-    ->orderBy('end_date')
+    ->orderByDesc('test_date')
     ->get();
-    
-  $overdueAssessments = \App\Models\AssessmentPeriod::with(['student'])
-    ->whereHas('student.teachers', function($q) {
-      $q->where('user_id', auth()->id());
-    })
-    ->where('status', 'scheduled')
-    ->where('end_date', '<', now())
-    ->orderBy('end_date')
+  $overdueAssessments = \App\Models\Test::with(['student'])
+    ->where('examiner_id', auth()->id())
+    ->where('status', 'overdue')
+    ->orderByDesc('test_date')
     ->get();
 @endphp
 
@@ -74,157 +65,6 @@
         <div class="display-4 fs-1 fw-bold text-primary">{{ $students->count() }}</div>
         <div class="text-muted small">Active in your sections</div>
       </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <div class="text-info fs-2 mb-2">
-            <i class="fas fa-calendar-check"></i>
-          </div>
-          <h6 class="text-muted fw-semibold">Upcoming Assessments</h6>
-        </div>
-        <div class="display-4 fs-1 fw-bold text-info">{{ $upcomingAssessments->count() }}</div>
-        <div class="text-muted small">Status = scheduled</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <div class="text-danger fs-2 mb-2">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h6 class="text-muted fw-semibold">Overdue Assessments</h6>
-        </div>
-        <div class="display-4 fs-1 fw-bold text-danger">{{ $overdueAssessments->count() }}</div>
-        <div class="text-muted small">Past due date</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-md-6 col-lg-3">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body text-center">
-        <div class="mb-3">
-          <div class="text-success fs-2 mb-2">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <h6 class="text-muted fw-semibold">Recently Completed</h6>
-        </div>
-        <div class="display-4 fs-1 fw-bold text-success">{{ count($recentCompleted) }}</div>
-        <div class="text-muted small">Last 30 days</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Upcoming Assessments Table -->
-@if($upcomingAssessments->isNotEmpty())
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header">
-    <h5 class="card-title mb-0">
-      <i class="fas fa-calendar-check me-2"></i>Upcoming Assessments
-    </h5>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Period</th>
-            <th>Due Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($upcomingAssessments as $assessment)
-            <tr>
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="avatar me-3">
-                    {{ strtoupper(substr($assessment->student->first_name, 0, 1)) }}
-                  </div>
-                  <div>
-                    <div class="fw-semibold">{{ $assessment->student->first_name }} {{ $assessment->student->last_name }}</div>
-                    <div class="text-muted small">Age: {{ $assessment->student->date_of_birth->age }} years</div>
-                  </div>
-                </div>
-              </td>
-              <td>{{ $assessment->description }}</td>
-              <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
-              <td><span class="badge bg-info">{{ $assessment->status }}</span></td>
-              <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-play me-1"></i>Start Test
-                </a>
-              </td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-@endif
-
-<!-- Overdue Assessments -->
-@if($overdueAssessments->isNotEmpty())
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header">
-    <h5 class="card-title mb-0">
-      <i class="fas fa-exclamation-triangle me-2"></i>Overdue Assessments
-    </h5>
-  </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Period</th>
-            <th>Due Date</th>
-            <th>Days Overdue</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($overdueAssessments as $assessment)
-            <tr>
-              <td>
-                <div class="d-flex align-items-center">
-                  <div class="avatar me-3">
-                    {{ strtoupper(substr($assessment->student->first_name, 0, 1)) }}
-                  </div>
-                  <div>
-                    <div class="fw-semibold">{{ $assessment->student->first_name }} {{ $assessment->student->last_name }}</div>
-                    <div class="text-muted small">Age: {{ $assessment->student->date_of_birth->age }} years</div>
-                  </div>
-                </div>
-              </td>
-              <td>{{ $assessment->description }}</td>
-              <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
-              <td><span class="badge bg-danger">{{ \Carbon\Carbon::parse($assessment->end_date)->diffInDays(now()) }} days</span></td>
-              <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-danger">
-                  <i class="fas fa-exclamation me-1"></i>Start Now
-                </a>
-              </td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-@endif
-
-<!-- Students Table -->
-<div class="card border-0 shadow-sm mb-4">
-  <div class="card-header">
     <h5 class="card-title mb-0">
       <i class="fas fa-users me-2"></i>Assigned Students
     </h5>
@@ -468,17 +308,6 @@
   .btn-group-sm .btn {
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
-  }
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--teacher-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
   }
 </style>
 @endsection

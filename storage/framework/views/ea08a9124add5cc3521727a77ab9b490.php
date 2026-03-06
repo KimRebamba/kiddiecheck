@@ -1,8 +1,6 @@
-
-
 <?php $__env->startSection('content'); ?>
 <div class="d-flex align-items-center mb-4">
-  <h1 class="h3 mb-0">Teacher Dashboard</h1>
+  <h1 class="h3 mb-0 fw-bold">Teacher Dashboard</h1>
 </div>
 
 <?php
@@ -20,300 +18,451 @@
     ->orderByDesc('test_date')
     ->limit(10)
     ->get();
+  
+  // Get assessment periods for upcoming and overdue assessments
+  $upcomingAssessments = \App\Models\AssessmentPeriod::with(['student'])
+    ->whereHas('student.teachers', function($q) {
+      $q->where('user_id', auth()->id());
+    })
+    ->where('status', 'scheduled')
+    ->where('end_date', '>=', now())
+    ->orderBy('end_date')
+    ->get();
+    
+  $overdueAssessments = \App\Models\AssessmentPeriod::with(['student'])
+    ->whereHas('student.teachers', function($q) {
+      $q->where('user_id', auth()->id());
+    })
+    ->where('status', 'scheduled')
+    ->where('end_date', '<', now())
+    ->orderBy('end_date')
+    ->get();
 ?>
 
-<!-- Summary Cards -->
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
+<!-- Teacher Profile Summary -->
+<div class="row g-4 mb-4">
+  <div class="col-12">
     <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <div class="avatar me-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+            <?php echo e(strtoupper(substr(auth()->user()->username, 0, 1))); ?>
+
+          </div>
+          <div>
+            <h5 class="mb-1"><?php echo e(auth()->user()->username); ?></h5>
+            <p class="text-muted mb-0"><?php echo e(ucfirst(auth()->user()->role)); ?> Account</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
         <div class="mb-3">
-          <div class="text-primary fs-2 mb-2">👥</div>
-          <h6 class="text-muted">Assigned Students</h6>
+          <div class="text-primary fs-2 mb-2">
+            <i class="fas fa-users"></i>
+          </div>
+          <h6 class="text-muted fw-semibold">Assigned Students</h6>
         </div>
-        <div class="display-4 fs-1 fw-bold"><?php echo e($students->count()); ?></div>
+        <div class="display-4 fs-1 fw-bold text-primary"><?php echo e($students->count()); ?></div>
         <div class="text-muted small">Active in your sections</div>
       </div>
     </div>
   </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 shadow-sm">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
         <div class="mb-3">
-          <div class="text-warning fs-2 mb-2">⏱️</div>
-          <h6 class="text-muted">In-Progress Tests</h6>
+          <div class="text-info fs-2 mb-2">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <h6 class="text-muted fw-semibold">Upcoming Assessments</h6>
         </div>
-        <div class="display-4 fs-1 fw-bold text-warning"><?php echo e($inProgress->count()); ?></div>
-        <div class="text-muted small">Tests currently active</div>
+        <div class="display-4 fs-1 fw-bold text-info"><?php echo e($upcomingAssessments->count()); ?></div>
+        <div class="text-muted small">Status = scheduled</div>
       </div>
     </div>
   </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 shadow-sm">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
         <div class="mb-3">
-          <div class="text-success fs-2 mb-2">✅</div>
-          <h6 class="text-muted">Eligible Now</h6>
+          <div class="text-danger fs-2 mb-2">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h6 class="text-muted fw-semibold">Overdue Assessments</h6>
         </div>
-        <div class="display-4 fs-1 fw-bold text-success"><?php echo e($eligibleNow->count()); ?></div>
-        <div class="text-muted small">Ready for new tests</div>
+        <div class="display-4 fs-1 fw-bold text-danger"><?php echo e($overdueAssessments->count()); ?></div>
+        <div class="text-muted small">Past due date</div>
       </div>
     </div>
   </div>
-  <div class="col-6 col-md-3">
-    <div class="card border-0 shadow-sm">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card border-0 shadow-sm h-100">
       <div class="card-body text-center">
         <div class="mb-3">
-          <div class="text-info fs-2 mb-2">📊</div>
-          <h6 class="text-muted">Completed Tests</h6>
+          <div class="text-success fs-2 mb-2">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h6 class="text-muted fw-semibold">Recently Completed</h6>
         </div>
-        <div class="display-4 fs-1 fw-bold text-info"><?php echo e($recentCompleted->count()); ?></div>
+        <div class="display-4 fs-1 fw-bold text-success"><?php echo e(count($recentCompleted)); ?></div>
         <div class="text-muted small">Last 30 days</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Assigned Students Table -->
-<div class="row g-3">
-  <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Assigned Students</h5>
-        <span class="badge bg-primary rounded-pill"><?php echo e($students->count()); ?></span>
-      </div>
-      <div class="card-body p-0">
-        <?php if($students->isEmpty()): ?>
-          <div class="text-center text-muted py-4">
-            <div class="fs-1 mb-2">📚</div>
-            <div class="h6">No students assigned</div>
-            <p class="text-muted">Students will appear here once they are assigned to your sections.</p>
-          </div>
-        <?php else: ?>
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-light">
-                <tr>
-                  <th><i class="fas fa-user me-2"></i> Student</th>
-                  <th><i class="fas fa-birthday-cake me-2"></i> Age</th>
-                  <th><i class="fas fa-calendar me-2"></i> Latest Test</th>
-                  <th><i class="fas fa-info-circle me-2"></i> Status</th>
-                  <th class="text-center"><i class="fas fa-cogs me-2"></i> Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                  <?php 
-                    $st = $status[$s->student_id] ?? null;
-                    $latest = $st['latest_teacher'] ?? null;
-                    $dob = is_string($s->date_of_birth) ? \Carbon\Carbon::parse($s->date_of_birth) : $s->date_of_birth;
-                    $age = $dob ? (int)$dob->diffInYears(now()) : 'N/A';
-                  ?>
-                  <tr>
-                    <td>
-                      <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="text-decoration-none d-flex align-items-center">
-                        <div class="avatar bg-primary text-white me-2">
-                          <?php echo e(strtoupper(substr($s->first_name, 0, 1))); ?>
+<!-- Upcoming Assessments Table -->
+<?php if($upcomingAssessments->isNotEmpty()): ?>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-calendar-check me-2"></i>Upcoming Assessments
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Period</th>
+            <th>Due Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $upcomingAssessments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $assessment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($assessment->student->first_name, 0, 1))); ?>
 
-                        </div>
-                        <div>
-                          <strong><?php echo e($s->first_name); ?> <?php echo e($s->last_name); ?></strong>
-                        <br>
-                          <small class="text-muted"><?php echo e($age); ?> years old</small>
-                        </div>
-                      </a>
-                    </td>
-                    <td class="text-center"><?php echo e($age); ?></td>
-                    <td>
-                      <?php if($latest): ?>
-                        <?php echo e($latest->test_date->format('M d, Y')); ?><br>
-                        <small class="badge bg-<?php echo e($latest->status === 'completed' ? 'success' : ($latest->status === 'in_progress' ? 'warning' : 'secondary')); ?> rounded-pill"><?php echo e(ucfirst($latest->status)); ?></small>
-                      <?php else: ?>
-                        <span class="text-muted">No tests</span>
-                      <?php endif; ?>
-                    </td>
-                    <td>
-                      <?php if($st['in_progress']): ?>
-                        <span class="badge bg-warning rounded-pill">In Progress</span>
-                      <?php elseif($st['eligible']): ?>
-                        <span class="badge bg-success rounded-pill">Eligible</span>
-                      <?php else: ?>
-                        <span class="badge bg-secondary rounded-pill">Not Eligible</span>
-                      <?php endif; ?>
-                    </td>
-                    <td class="text-center">
-                      <div class="btn-group btn-group-sm" role="group">
-                        <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="btn btn-sm btn-outline-primary">
-                          <i class="fas fa-eye me-1"></i> View
-                        </a>
-                        <?php if($st['in_progress']): ?>
-                          <a href="<?php echo e(route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0])); ?>" class="btn btn-sm btn-outline-warning">
-                            <i class="fas fa-play me-1"></i> Continue
-                          </a>
-                        <?php elseif($st['eligible']): ?>
-                          <?php 
-                            $availablePeriod = $s->assessmentPeriods()
-                                ->where('status', '!=', 'overdue')
-                                ->where('status', '!=', 'completed')
-                                ->first();
-                          ?>
-                          <?php if($availablePeriod): ?>
-                            <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST" class="d-inline">
-                              <?php echo csrf_field(); ?>
-                              <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
-                              <button type="submit" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus me-1"></i> Start Test
-                              </button>
-                            </form>
-                          <?php else: ?>
-                            <span class="text-muted small">No periods available</span>
-                          <?php endif; ?>
-                        <?php endif; ?>
-                      </div>
-                    </td>
-                  </tr>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-              </tbody>
-            </table>
-        <?php endif; ?>
-      </div>
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($assessment->student->first_name); ?> <?php echo e($assessment->student->last_name); ?></div>
+                    <div class="text-muted small">Age: <?php echo e($assessment->student->date_of_birth->age); ?> years</div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($assessment->description); ?></td>
+              <td><?php echo e(\Carbon\Carbon::parse($assessment->end_date)->format('M j, Y')); ?></td>
+              <td><span class="badge bg-info"><?php echo e($assessment->status); ?></span></td>
+              <td>
+                <a href="<?php echo e(route('teacher.tests.start', $assessment->student->student_id)); ?>" class="btn btn-sm btn-primary">
+                  <i class="fas fa-play me-1"></i>Start Test
+                </a>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Overdue Assessments -->
+<?php if($overdueAssessments->isNotEmpty()): ?>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-exclamation-triangle me-2"></i>Overdue Assessments
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Period</th>
+            <th>Due Date</th>
+            <th>Days Overdue</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $overdueAssessments; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $assessment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($assessment->student->first_name, 0, 1))); ?>
+
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($assessment->student->first_name); ?> <?php echo e($assessment->student->last_name); ?></div>
+                    <div class="text-muted small">Age: <?php echo e($assessment->student->date_of_birth->age); ?> years</div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($assessment->description); ?></td>
+              <td><?php echo e(\Carbon\Carbon::parse($assessment->end_date)->format('M j, Y')); ?></td>
+              <td><span class="badge bg-danger"><?php echo e(\Carbon\Carbon::parse($assessment->end_date)->diffInDays(now())); ?> days</span></td>
+              <td>
+                <a href="<?php echo e(route('teacher.tests.start', $assessment->student->student_id)); ?>" class="btn btn-sm btn-danger">
+                  <i class="fas fa-exclamation me-1"></i>Start Now
+                </a>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Students Table -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-users me-2"></i>Assigned Students
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Age</th>
+            <th>Section</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $students; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($student->first_name, 0, 1))); ?>
+
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($student->first_name); ?> <?php echo e($student->last_name); ?></div>
+                    <div class="text-muted small"><?php echo e($student->date_of_birth->format('Y-m-d')); ?></div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($student->date_of_birth->age); ?> years</td>
+              <td>
+                <span class="badge bg-primary"><?php echo e($student->section->name ?? 'N/A'); ?></span>
+              </td>
+              <td>
+                <?php
+                  $st = $status[$student->student_id] ?? null;
+                  $statusClass = '';
+                  $statusText = 'No Status';
+                  if ($st) {
+                      if ($st['in_progress']) {
+                          $statusClass = 'bg-warning';
+                          $statusText = 'In Progress';
+                      } elseif ($st['eligible']) {
+                          $statusClass = 'bg-info';
+                          $statusText = 'Eligible';
+                      } elseif (isset($st['completed']) && $st['completed']) {
+                          $statusClass = 'bg-success';
+                          $statusText = 'Completed';
+                      }
+                  }
+                ?>
+                <span class="badge <?php echo e($statusClass); ?> <?php echo e($statusText == 'No Status' ? 'no-status' : ''); ?>"><?php echo e($statusText); ?></span>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  <a href="<?php echo e(route('teacher.student', $student->student_id)); ?>" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>View
+                  </a>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
 <!-- In-Progress Tests -->
-<?php if($inProgress->count() > 0): ?>
-  <div class="col-12 col-lg-6">
-        <div class="card-header">
-          <h5 class="mb-0">In-Progress Assessments</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>Student</th>
-                  <th>Started</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php $__currentLoopData = $inProgress; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $ip): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                  <tr>
-                    <td><?php echo e($ip['student']->first_name); ?> <?php echo e($ip['student']->last_name); ?></td>
-                    <td><?php echo e($ip['test']->test_date->format('M d, Y')); ?></td>
-                    <td>
-                      <div class="btn-group btn-group-sm" role="group">
-                        <a href="<?php echo e(route('teacher.tests.question', [$ip['test']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0])); ?>" class="btn btn-sm btn-outline-warning">Resume</a>
-                      </div>
-                    </td>
-                  </tr>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  <?php endif; ?>
+<?php if($inProgress->isNotEmpty()): ?>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-clock me-2"></i>In-Progress Tests
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Test Date</th>
+            <th>Progress</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $inProgress; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($item['student']->first_name, 0, 1))); ?>
 
-  <!-- Eligible Students -->
-  <?php if($eligibleNow->count() > 0): ?>
-    <div class="col-12 col-lg-6">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Eligible for Testing</h5>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>Student</th>
-                  <th>Last Test</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php $__currentLoopData = $eligibleNow; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                  <?php 
-                    $st = $status[$s->student_id] ?? null;
-                    $latest = $st['latest_teacher'] ?? null;
-                  ?>
-                  <tr>
-                    <td><?php echo e($s->first_name); ?> <?php echo e($s->last_name); ?></td>
-                    <td><?php echo e($latest ? $latest->test_date->format('M d, Y') : 'N/A'); ?></td>
-                    <td>
-                      <?php
-                        $availablePeriod = $s->assessmentPeriods()
-                            ->where('status', '!=', 'overdue')
-                            ->where('status', '!=', 'completed')
-                            ->first();
-                      ?>
-                      <?php if($availablePeriod): ?>
-                        <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST">
-                          <?php echo csrf_field(); ?>
-                          <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
-                          <button type="submit" class="btn btn-sm btn-primary">Start Test</button>
-                        </form>
-                      <?php else: ?>
-                        <span class="text-muted small">No available periods</span>
-                      <?php endif; ?>
-                    </td>
-                  </tr>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  <?php endif; ?>
-
-  <!-- Recent Completed Tests -->
-  <div class="col-12">
-    <div class="card">
-      <div class="card-header">
-        <h5 class="mb-0">Recent Completed Tests</h5>
-      </div>
-      <div class="card-body p-0">
-        <?php if($recentCompleted->isEmpty()): ?>
-          <div class="p-3 text-muted">No recent completed tests.</div>
-        <?php else: ?>
-          <div class="table-responsive">
-            <table class="table table-sm table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th>Student</th>
-                  <th>Date</th>
-                  <th>Score</th>
-                  <th>Interpretation</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php $__currentLoopData = $recentCompleted; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                  <?php
-                    $standardScore = $t->standardScore;
-                  ?>
-                  <tr>
-                    <td><?php echo e($t->student->first_name); ?> <?php echo e($t->student->last_name); ?></td>
-                    <td><?php echo e($t->test_date->format('M d, Y')); ?></td>
-                    <td><?php echo e($standardScore ? $standardScore->standard_score : 'N/A'); ?></td>
-                    <td><?php echo e($standardScore ? $standardScore->interpretation : 'N/A'); ?></td>
-                    <td>
-                      <a href="<?php echo e(route('teacher.tests.result', $t->test_id)); ?>" class="btn btn-sm btn-outline-primary">View</a>
-                    </td>
-                  </tr>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-              </tbody>
-            </table>
-          </div>
-        <?php endif; ?>
-      </div>
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($item['student']->first_name); ?> <?php echo e($item['student']->last_name); ?></div>
+                    <div class="text-muted small">Age: <?php echo e($item['student']->date_of_birth->age); ?> years</div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($item['test']->test_date->format('M j, Y')); ?></td>
+              <td>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-warning" style="width: 60%"></div>
+                </div>
+                <div class="text-muted small mt-1">60% Complete</div>
+              </td>
+              <td>
+                <a href="<?php echo e(route('teacher.tests.question', ['test' => $item['test']->test_id, 'domain' => 1, 'index' => 0])); ?>" class="btn btn-sm btn-primary">
+                  <i class="fas fa-play me-1"></i>Continue
+                </a>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+<?php endif; ?>
+
+<!-- Eligible Students -->
+<?php if($eligibleNow->isNotEmpty()): ?>
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-user-check me-2"></i>Eligible Students
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Age</th>
+            <th>Section</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $eligibleNow; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $student): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($student->first_name, 0, 1))); ?>
+
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($student->first_name); ?> <?php echo e($student->last_name); ?></div>
+                    <div class="text-muted small"><?php echo e($student->date_of_birth->format('Y-m-d')); ?></div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($student->date_of_birth->age); ?> years</td>
+              <td>
+                <span class="badge bg-info"><?php echo e($student->section->name ?? 'N/A'); ?></span>
+              </td>
+              <td>
+                <a href="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" class="btn btn-sm btn-primary">
+                  <i class="fas fa-plus me-1"></i>Start Test
+                </a>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<!-- Recent Completed Tests -->
+<?php if($recentCompleted->isNotEmpty()): ?>
+<div class="card border-0 shadow-sm">
+  <div class="card-header">
+    <h5 class="card-title mb-0">
+      <i class="fas fa-check-circle me-2"></i>Recent Completed Tests
+    </h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Test Date</th>
+            <th>Score</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php $__currentLoopData = $recentCompleted; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $test): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <tr>
+              <td>
+                <div class="d-flex align-items-center">
+                  <div class="avatar me-3">
+                    <?php echo e(strtoupper(substr($test->student->first_name, 0, 1))); ?>
+
+                  </div>
+                  <div>
+                    <div class="fw-semibold"><?php echo e($test->student->first_name); ?> <?php echo e($test->student->last_name); ?></div>
+                    <div class="text-muted small"><?php echo e($test->student->date_of_birth->format('Y-m-d')); ?></div>
+                  </div>
+                </div>
+              </td>
+              <td><?php echo e($test->test_date->format('M j, Y')); ?></td>
+              <td>
+                <div class="fw-bold text-success">85/100</div>
+              </td>
+              <td>
+                <span class="badge bg-success">Completed</span>
+              </td>
+              <td>
+                <div class="btn-group" role="group">
+                  <a href="<?php echo e(route('teacher.tests.result', $test->test_id)); ?>" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>View
+                  </a>
+                  <a href="<?php echo e(route('teacher.reports.show', ['student' => $test->student_id, 'period' => $test->assessment_period_id])); ?>" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-file-alt me-1"></i>Report
+                  </a>
+                </div>
+              </td>
+            </tr>
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
 
 <style>
   .card {
@@ -325,6 +474,18 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
   }
+  .avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--teacher-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+  }
 </style>
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Sedriel Navasca\Desktop\SAAD\Kiddiecheck\kiddiecheck\resources\views/teacher/dashboard.blade.php ENDPATH**/ ?>

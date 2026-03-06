@@ -5,167 +5,411 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Teacher · KiddieCheck</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    :root{
-      --bg:#f5f6fa;      
-      --pill:#e77a74;     
-      --text:#ffffff;     
-      --accent:#fce38a;  
-      --avatar:#ffb5ae;   
-      --hover:#e88f88;  
-      --success:#28a745;
-      --warning:#ffc107;
-      --info:#17a2b8;
-      --primary:#007bff;
+    :root {
+      --teacher-primary: #e77a74;
+      --teacher-secondary: #f8f9fa;
+      --teacher-accent: #fce38a;
+      --teacher-dark: #495057;
+      --teacher-light: #ffffff;
+      --teacher-success: #28a745;
+      --teacher-warning: #ffc107;
+      --teacher-info: #17a2b8;
+      --teacher-danger: #dc3545;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;background:var(--bg)!important;color:var(--text)!important;font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"}
-    .navbar{display:flex;align-items:center;gap:18px;padding:10px 16px;position:relative;z-index:10;background:var(--bg)!important;border-bottom:1px solid var(--accent)!important;box-shadow:0 2px 8px rgba(0,0,0,0.05)!important;}
-    .teacher-logo{height:44px;display:block}
-    .pill{display:inline-block;text-decoration:none; background:var(--pill)!important;color:var(--text)!important;padding:2px 16px; border-radius:12px; font-weight:700; letter-spacing:.025rem; font-size:1.55rem}
-    .pill:hover{opacity:.95; color:#fffaa1!important;}
-    .pill-italic{font-style:italic; color:var(--accent)!important;}
-    .check{margin-left:8px; opacity:.8}
-    .spacer{flex:1}
-    .avatar{width:40px;height:40px;border-radius:12px; background:var(--avatar)!important; display:inline-flex; align-items:center; justify-content:center; color:var(--text)!important; font-weight:800; text-decoration:none; overflow:hidden; border:none}
-    .profile{position:relative}
-    .menu{position:absolute; right:0; top:calc(100% + 8px); background:var(--bg)!important; color:var(--text)!important; border-radius:12px; padding:8px; min-width:200px; display:none; z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.15)!important;}
-    .profile.open .menu{display:block!important;}
-    .menu-item{display:block!important; width:100%!important; text-align:left!important; background:transparent!important; color:var(--text)!important; font-weight:700!important; border:0!important; padding:10px 12px!important; border-radius:10px!important; cursor:pointer!important; text-decoration:none!important; transition:all 0.2s!important;}
-    .menu-item:hover{background:var(--accent)!important;color:var(--text)!important;}
-    .main{padding:16px!important;}
-    /* DEBUG: Force color application */
-    .card { background: #fff !important; }
-    .card-header { background: #f8f9fa !important; }
-    .card-title { color: #495057 !important; }
-    .btn-primary { background: #007bff !important; }
-    .btn-primary:hover { background: #0056b3 !important; }
     
-    /* Enhanced card styling */
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--teacher-dark);
+    }
+    
+    .navbar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 12px 24px;
+      background: var(--teacher-light) !important;
+      border-bottom: 2px solid var(--teacher-primary) !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+    }
+    
+    .teacher-logo {
+      height: 48px;
+      display: block;
+    }
+    
+    .pill {
+      display: inline-block;
+      text-decoration: none;
+      background: var(--teacher-primary) !important;
+      color: var(--teacher-light) !important;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+    
+    .pill:hover {
+      background: #d63447 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(231, 122, 116, 0.3);
+    }
+    
+    .spacer {
+      flex: 1;
+    }
+    
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--teacher-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--teacher-light);
+      font-weight: 700;
+      text-decoration: none;
+      overflow: hidden;
+      border: 2px solid var(--teacher-primary);
+    }
+    
+    .profile {
+      position: relative;
+    }
+    
+    .menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      background: var(--teacher-light);
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 8px;
+      min-width: 220px;
+      display: none;
+      z-index: 9999;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .profile.open .menu {
+      display: block !important;
+    }
+    
+    .menu-item {
+      display: block !important;
+      width: 100% !important;
+      text-align: left !important;
+      background: transparent !important;
+      color: var(--teacher-dark) !important;
+      font-weight: 500 !important;
+      border: 0 !important;
+      padding: 12px 16px !important;
+      border-radius: 8px !important;
+      cursor: pointer !important;
+      text-decoration: none !important;
+      transition: all 0.2s ease !important;
+    }
+    
+    .menu-item:hover {
+      background: var(--teacher-secondary) !important;
+      color: var(--teacher-primary) !important;
+    }
+    
+    .main {
+      padding: 32px !important;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    /* Enhanced Card Styling */
     .card {
-      border: 1px solid #e9ecef !important;
-      box-shadow: 0 2px 8px rgba(0,0,0,0,0.1) !important;
-      transition: box-shadow 0.3s !important;
+      border: none !important;
+      border-radius: 16px !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08) !important;
+      transition: all 0.3s ease !important;
+      overflow: hidden !important;
     }
     
     .card:hover {
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+      transform: translateY(-4px) !important;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12) !important;
     }
     
-    /* Enhanced button styling */
+    .card-header {
+      background: var(--teacher-light) !important;
+      border-bottom: 2px solid var(--teacher-primary) !important;
+      font-weight: 600 !important;
+      color: var(--teacher-dark) !important;
+      padding: 16px 20px !important;
+    }
+    
+    .card-body {
+      padding: 32px !important;
+    }
+    
+    .card-title {
+      color: var(--teacher-dark) !important;
+      font-weight: 600 !important;
+      margin-bottom: 8px !important;
+    }
+    
+    /* Enhanced Button Styling */
     .btn {
-      border: 1px solid var(--primary) !important;
-      transition: all 0.2s !important;
+      border-radius: 10px !important;
+      font-weight: 500 !important;
+      padding: 10px 20px !important;
+      transition: all 0.3s ease !important;
+      border: none !important;
     }
     
-    .btn:hover {
+    .btn-primary {
+      background: var(--teacher-primary) !important;
+      border-color: var(--teacher-primary) !important;
+    }
+    
+    .btn-primary:hover {
+      background: #d63447 !important;
+      border-color: #d63447 !important;
       transform: translateY(-1px) !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+      box-shadow: 0 4px 12px rgba(231, 122, 116, 0.3) !important;
     }
     
-    /* Enhanced alert styling */
-    .alert {
-      border: 1px solid var(--success) !important;
+    .btn-outline-primary {
+      color: var(--teacher-primary) !important;
+      border-color: var(--teacher-primary) !important;
+      background: transparent !important;
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--teacher-primary) !important;
+      color: var(--teacher-light) !important;
+    }
+    
+    /* Enhanced Table Styling */
+    .table {
       border-radius: 12px !important;
+      overflow: hidden !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
     }
     
-    /* Debug styles */
-    .bg-test { background: #ff000 !important; }
-    .text-test { color: #ff000 !important; }
-    .border-test { border: 2px solid #ff0000 !important; }
-    .pill-test { background: #e77a74 !important; }
-    .btn-primary { background: #007bff !important; }
-    .btn-outline-primary{color:var(--primary)!important;border-color:var(--primary)!important;background:transparent!important;}
-    .btn-outline-secondary{color:var(--secondary)!important;border-color:var(--secondary)!important;background:transparent!important;}
-    .btn-outline-warning{color:var(--warning)!important;border-color:var(--warning)!important;background:transparent!important;}
-    .btn-outline-danger{color:#dc3545!important;border-color:#dc3545!important;background:transparent!important;}
-    .table{width:100%!important;border-collapse:collapse!important;}
-    .table th{border-top:1px solid #dee2e6!important;background:#f8f9fa!important;font-weight:500!important;}
-    .table td{border-top:1px solid #dee2e6!important;}
-    .table-hover tbody tr:hover{background:var(--bg)!important;}
-    .alert{padding:12px!important;border-radius:12px!important;margin-bottom:1.5rem!important;}
-    .alert-success{background:var(--success)!important;border-color:var(--success)!important;color:var(--success)!important;}
-    .alert-error{background:#dc3545!important;border-color:#dc3545!important;color:var(--error)!important;}
-    .alert-info{background:var(--info)!important;border-color:var(--info)!important;color:var(--info)!important;}
-    .badge{font-size:0.75rem!important;padding:4px 8px!important;border-radius:12px!important;font-weight:500!important;}
-    .bg-primary{background:var(--primary)!important;color:#fff!important;}
-    .bg-success{background:var(--success)!important;color:#fff!important;}
-    .bg-warning{background:var(--warning)!important;color:#fff!important;}
-    .bg-secondary{background:var(--secondary)!important;color:#fff!important;}
-    .text-muted{color:#6c757d!important;}
-    .text-primary{color:var(--primary)!important;}
-    .text-success{color:var(--success)!important;}
-    .text-warning{color:var(--warning)!important;}
-    .text-info{color:var(--info)!important;}
-    .display-4{font-size:2rem!important;font-weight:700!important;}
-    .display-6{font-size:1rem!important;font-weight:700!important;}
-    .fs-1{font-size:2.5rem!important;}
-    .fs-2{font-size:1rem!important;}
-    .fw-bold{font-weight:700!important;}
-    .fw-semibold{font-weight:600!important;}
-    .small{font-size:0.875rem!important;}
-    .shadow-sm{box-shadow:0 .125rem .25rem rgba(0,0,0,0.05)!important;}
-    .border-0{border:1px solid #e9ecef!important;}
-    .btn-group-sm .btn{padding:0.25rem 0.5rem!important;font-size:0.8rem!important;}
-    .btn-group-sm .btn i{margin-right:4px!important;}
-    .rounded-pill{border-radius:50rem!important;}
-    .me-1{margin-right:0.25rem!important;}
-    .me-2{margin-right:0.5rem!important;}
-    .py-1{padding-top:0.25rem!important;padding-bottom:0.25rem!important;}
-    .py-4{padding-top:0.25rem!important;padding-bottom:0.25rem!important;}
-    .mb-0{margin-bottom:0!important;}
-    .mb-1{margin-bottom:0.25rem!important;}
-    .mb-2{margin-bottom:0.5rem!important;}
-    .mb-3{margin-bottom:1rem!important;}
-    .mb-4{margin-bottom:1.5rem!important;}
-    .mt-0{margin-top:0!important;}
-    .mt-2{margin-top:0.25rem!important;}
-    .mt-3{margin-top:0.5rem!important;}
-    .mt-4{margin-top:1rem!important;}
+    .table th {
+      background: var(--teacher-secondary) !important;
+      color: var(--teacher-dark) !important;
+      font-weight: 600 !important;
+      border: none !important;
+      padding: 16px 12px !important;
+    }
+    
+    .table td {
+      padding: 12px !important;
+      vertical-align: middle !important;
+      border-top: 1px solid #e9ecef !important;
+    }
+    
+    .table-hover tbody tr:hover {
+      background: #f8f9fa !important;
+    }
+    
+    /* Enhanced Alert Styling */
+    .alert {
+      border: none !important;
+      border-radius: 12px !important;
+      padding: 16px 20px !important;
+      margin-bottom: 20px !important;
+    }
+    
+    .alert-success {
+      background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+      color: #155724 !important;
+      border-left: 4px solid var(--teacher-success) !important;
+    }
+    
+    .alert-danger {
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+      color: #721c24 !important;
+      border-left: 4px solid var(--teacher-danger) !important;
+    }
+    
+    .alert-info {
+      background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%) !important;
+      color: #0c5460 !important;
+      border-left: 4px solid var(--teacher-info) !important;
+    }
+    
+    /* Badge Styling */
+    .badge {
+      font-size: 0.8rem !important;
+      padding: 6px 12px !important;
+      border-radius: 20px !important;
+      font-weight: 500 !important;
+    }
+    
+    .no-status {
+      color: #6c757d !important;
+      font-weight: 600 !important;
+    }
+    
+    .bg-success {
+      background: var(--teacher-success) !important;
+      color: #ffffff !important;
+    }
+    
+    .bg-warning {
+      background: var(--teacher-warning) !important;
+      color: #000000 !important;
+    }
+    
+    .bg-info {
+      background: var(--teacher-info) !important;
+      color: #ffffff !important;
+    }
+    
+    .bg-primary {
+      background: var(--teacher-primary) !important;
+      color: #ffffff !important;
+    }
+    
+    .text-muted {
+      color: #6c757d !important;
+    }
+    
+    .text-primary {
+      color: var(--teacher-primary) !important;
+    }
+    
+    .text-success {
+      color: var(--teacher-success) !important;
+    }
+    
+    .text-warning {
+      color: var(--teacher-warning) !important;
+    }
+    
+    .text-info {
+      color: var(--teacher-info) !important;
+    }
+    
+    /* Utility Classes */
+    .display-4 {
+      font-size: 2.5rem !important;
+      font-weight: 700 !important;
+      line-height: 1.2 !important;
+    }
+    
+    .fs-1 {
+      font-size: 1.25rem !important;
+    }
+    
+    .fs-2 {
+      font-size: 2rem !important;
+    }
+    
+    .shadow-sm {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    }
+    
+    .border-0 {
+      border: none !important;
+    }
   </style>
 </head>
 <body>
-  <header class="teacher-header">
-    <a class="{{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}"><img class="teacher-logo" src="{{ asset('teacher-logo.svg') }}" alt="Kiddie Teacher"></a>
-    <a class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Home</a>
-    <a class="pill {{ request()->routeIs('teacher.family*') ? 'active' : '' }}" href="{{ route('teacher.family') }}">Family</a>
-    <a class="pill {{ request()->routeIs('teacher.reports*') ? 'active' : '' }}" href="{{ route('teacher.reports') }}">Report</a>
-    <a class="pill {{ request()->routeIs('teacher.sections*') ? 'active' : '' }}" href="{{ route('teacher.sections') }}">Section</a>
-    <a class="pill {{ request()->routeIs('teacher.help') ? 'active' : '' }}" href="{{ route('teacher.help') }}">Help</a>
+  <nav class="navbar">
+    <img src="{{ asset('teacher-logo.svg') }}" alt="KiddieCheck" class="teacher-logo">
     <div class="spacer"></div>
-    @php($initial = strtoupper(substr(optional(Auth::user())->name ?? 'U', 0, 1)))
-    <div class="profile" id="teacherProfileMenu">
-      <button type="button" class="avatar" aria-haspopup="true" aria-expanded="false" title="Profile">{{ $initial }}</button>
-      <div class="menu" role="menu" aria-labelledby="teacherProfileMenu">
-        <a href="{{ route('teacher.profile') }}" class="menu-item" role="menuitem">Profile Settings</a>
-        <form method="POST" action="{{ route('logout') }}" style="margin:0" role="none">
+    <a href="{{ route('teacher.index') }}" class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}">
+      <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+    </a>
+    <a href="{{ route('teacher.family') }}" class="pill {{ request()->routeIs('teacher.family*') ? 'active' : '' }}">
+      <i class="fas fa-home me-2"></i>Family
+    </a>
+    <a href="{{ route('teacher.sections') }}" class="pill {{ request()->routeIs('teacher.sections') ? 'active' : '' }}">
+      <i class="fas fa-users me-2"></i>Sections
+    </a>
+    <a href="{{ route('teacher.reports') }}" class="pill {{ request()->routeIs('teacher.reports') ? 'active' : '' }}">
+      <i class="fas fa-clipboard-list me-2"></i>Reports
+    </a>
+    <div class="profile">
+      <a href="#" class="avatar" onclick="toggleMenu()">
+        {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
+      </a>
+      <div class="menu" id="profileMenu">
+        <a href="{{ route('teacher.profile') }}" class="menu-item">
+          <i class="fas fa-user me-2"></i>Profile
+        </a>
+        <a href="{{ route('teacher.help') }}" class="menu-item">
+          <i class="fas fa-question-circle me-2"></i>Help
+        </a>
+        <div class="border-top my-2"></div>
+        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
           @csrf
-          <button type="submit" class="menu-item" role="menuitem">Logout</button>
+          <button type="submit" class="menu-item" style="background: none; border: none; width: 100%; text-align: left; padding: 8px 12px; cursor: pointer;">
+            <i class="fas fa-sign-out-alt me-2"></i>Logout
+          </button>
         </form>
       </div>
     </div>
-  </header>
+  </nav>
 
   <main class="main">
     @if(session('success'))
-      <div class="card" role="alert">{{ session('success') }}</div>
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     @endif
+
     @if(session('error'))
-      <div class="card" role="alert">{{ session('error') }}</div>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     @endif
+
+    @if($errors->any())
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <ul class="mb-0">
+          @foreach($errors->all() as $error)
+            <li>{{ $error }}</li>
+          @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
     @yield('content')
   </main>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    (function(){
-      const profile = document.querySelector('#teacherProfileMenu');
-      if(!profile) return;
-      const btn = profile.querySelector('.avatar');
-      btn.addEventListener('click', function(e){ e.preventDefault(); profile.classList.toggle('open'); });
-      document.addEventListener('click', function(e){ if(!profile.contains(e.target)) profile.classList.remove('open'); });
-      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') profile.classList.remove('open'); });
-    })();
+    function toggleMenu() {
+      const profile = document.querySelector('.profile');
+      const menu = document.getElementById('profileMenu');
+      profile.classList.toggle('open');
+      
+      // Close menu when clicking outside
+      document.addEventListener('click', function closeMenu(e) {
+        if (!profile.contains(e.target)) {
+          profile.classList.remove('open');
+          document.removeEventListener('click', closeMenu);
+        }
+      });
+    }
   </script>
 </body>
 </html>

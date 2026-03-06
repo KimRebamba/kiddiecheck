@@ -530,9 +530,9 @@ function advanceToCircles() {
 }
 
 // ── Correctness check ──────────────────────────────────────────────────────
-function isCirclesCorrect() {
+function isPhaseCorrect(phase) {
     let correct = true;
-    document.querySelectorAll('#slots-ci .slot').forEach(s => {
+    document.querySelectorAll(`#slots-${phase} .slot`).forEach(s => {
         const card = s.firstElementChild;
         if (!card || parseInt(card.dataset.size) !== parseInt(s.dataset.slot)) correct = false;
     });
@@ -560,10 +560,10 @@ function confirmSubmit() {
 }
 
 function submitAnswer() {
-    document.getElementById('responseInput').value = isCirclesCorrect() ? 'yes' : 'no';
+    const bothCorrect = isPhaseCorrect('sq') && isPhaseCorrect('ci');
+    document.getElementById('responseInput').value = bothCorrect ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }
-
 // ── Modals ─────────────────────────────────────────────────────────────────
 function closeConfirmModal() {
     document.getElementById('confirmModal').classList.remove('show');

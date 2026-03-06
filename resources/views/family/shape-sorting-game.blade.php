@@ -531,8 +531,7 @@ function confirmSubmit() {
 }
 
 function submitAnswer() {
-    const correctWhy = ['same_shape', 'same_color', 'they_match'];
-    const ok = isSortedCorrectly() && correctWhy.includes(whyValue);
+    const ok = isSortedCorrectly();
     document.getElementById('responseInput').value = ok ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }

@@ -25,34 +25,50 @@
 <!-- Summary Cards -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Assigned Students</div>
-        <div class="display-6">{{ $students->count() }}</div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-primary fs-2 mb-2">👥</div>
+          <h6 class="text-muted">Assigned Students</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold">{{ $students->count() }}</div>
+        <div class="text-muted small">Active in your sections</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">In-Progress Tests</div>
-        <div class="display-6">{{ $inProgress->count() }}</div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-warning fs-2 mb-2">⏱️</div>
+          <h6 class="text-muted">In-Progress Tests</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-warning">{{ $inProgress->count() }}</div>
+        <div class="text-muted small">Tests currently active</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Eligible Now</div>
-        <div class="display-6">{{ $eligibleNow->count() }}</div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-success fs-2 mb-2">✅</div>
+          <h6 class="text-muted">Eligible Now</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-success">{{ $eligibleNow->count() }}</div>
+        <div class="text-muted small">Ready for new tests</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Completed Tests</div>
-        <div class="display-6">{{ $recentCompleted->count() }}</div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-info fs-2 mb-2">📊</div>
+          <h6 class="text-muted">Completed Tests</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-info">{{ $recentCompleted->count() }}</div>
+        <div class="text-muted small">Last 30 days</div>
       </div>
     </div>
   </div>
@@ -61,23 +77,28 @@
 <!-- Assigned Students Table -->
 <div class="row g-3">
   <div class="col-12">
-    <div class="card">
-      <div class="card-header">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Assigned Students</h5>
+        <span class="badge bg-primary rounded-pill">{{ $students->count() }}</span>
       </div>
       <div class="card-body p-0">
         @if($students->isEmpty())
-          <div class="p-3 text-muted">No students assigned.</div>
+          <div class="text-center text-muted py-4">
+            <div class="fs-1 mb-2">📚</div>
+            <div class="h6">No students assigned</div>
+            <p class="text-muted">Students will appear here once they are assigned to your sections.</p>
+          </div>
         @else
           <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover">
               <thead class="table-light">
                 <tr>
-                  <th>Student</th>
-                  <th>Age</th>
-                  <th>Latest Test</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th><i class="fas fa-user me-2"></i> Student</th>
+                  <th><i class="fas fa-birthday-cake me-2"></i> Age</th>
+                  <th><i class="fas fa-calendar me-2"></i> Latest Test</th>
+                  <th><i class="fas fa-info-circle me-2"></i> Status</th>
+                  <th class="text-center"><i class="fas fa-cogs me-2"></i> Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,46 +111,61 @@
                   @endphp
                   <tr>
                     <td>
-                      <a href="{{ route('teacher.student', $s->student_id) }}" class="text-decoration-none">
-                        {{ $s->first_name }} {{ $s->last_name }}
+                      <a href="{{ route('teacher.student', $s->student_id) }}" class="text-decoration-none d-flex align-items-center">
+                        <div class="avatar bg-primary text-white me-2">
+                          {{ strtoupper(substr($s->first_name, 0, 1)) }}
+                        </div>
+                        <div>
+                          <strong>{{ $s->first_name }} {{ $s->last_name }}</strong>
+                        <br>
+                          <small class="text-muted">{{ $age }} years old</small>
+                        </div>
                       </a>
                     </td>
-                    <td>{{ $age }}</td>
+                    <td class="text-center">{{ $age }}</td>
                     <td>
                       @if($latest)
                         {{ $latest->test_date->format('M d, Y') }}<br>
-                        <small class="text-muted">{{ ucfirst($latest->status) }}</small>
+                        <small class="badge bg-{{ $latest->status === 'completed' ? 'success' : ($latest->status === 'in_progress' ? 'warning' : 'secondary') }} rounded-pill">{{ ucfirst($latest->status) }}</small>
                       @else
                         <span class="text-muted">No tests</span>
                       @endif
                     </td>
                     <td>
                       @if($st['in_progress'])
-                        <span class="badge bg-warning">In Progress</span>
+                        <span class="badge bg-warning rounded-pill">In Progress</span>
                       @elseif($st['eligible'])
-                        <span class="badge bg-success">Eligible</span>
+                        <span class="badge bg-success rounded-pill">Eligible</span>
                       @else
-                        <span class="badge bg-secondary">Not Eligible</span>
+                        <span class="badge bg-secondary rounded-pill">Not Eligible</span>
                       @endif
                     </td>
-                    <td>
+                    <td class="text-center">
                       <div class="btn-group btn-group-sm" role="group">
-                        <a href="{{ route('teacher.student', $s->student_id) }}" class="btn btn-outline-secondary">View</a>
+                        <a href="{{ route('teacher.student', $s->student_id) }}" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-eye me-1"></i> View
+                        </a>
                         @if($st['in_progress'])
-                          <a href="{{ route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0]) }}" class="btn btn-outline-warning">Continue</a>
+                          <a href="{{ route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0]) }}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-play me-1"></i> Continue
+                          </a>
                         @elseif($st['eligible'])
-                          @php
+                          @php 
                             $availablePeriod = $s->assessmentPeriods()
                                 ->where('status', '!=', 'overdue')
                                 ->where('status', '!=', 'completed')
                                 ->first();
                           @endphp
                           @if($availablePeriod)
-                            <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST" style="display: inline;">
+                            <form action="{{ route('teacher.tests.start', $s->student_id) }}" method="POST" class="d-inline">
                               @csrf
                               <input type="hidden" name="period_id" value="{{ $availablePeriod->period_id }}">
-                              <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
+                              <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Start Test
+                              </button>
                             </form>
+                          @else
+                            <span class="text-muted small">No periods available</span>
                           @endif
                         @endif
                       </div>
@@ -138,16 +174,15 @@
                 @endforeach
               </tbody>
             </table>
-          </div>
         @endif
       </div>
     </div>
   </div>
+</div>
 
-  <!-- In-Progress Tests -->
-  @if($inProgress->count() > 0)
-    <div class="col-12 col-lg-6">
-      <div class="card">
+<!-- In-Progress Tests -->
+@if($inProgress->count() > 0)
+  <div class="col-12 col-lg-6">
         <div class="card-header">
           <h5 class="mb-0">In-Progress Assessments</h5>
         </div>

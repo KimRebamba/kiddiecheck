@@ -25,34 +25,50 @@
 <!-- Summary Cards -->
 <div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Assigned Students</div>
-        <div class="display-6"><?php echo e($students->count()); ?></div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-primary fs-2 mb-2">👥</div>
+          <h6 class="text-muted">Assigned Students</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold"><?php echo e($students->count()); ?></div>
+        <div class="text-muted small">Active in your sections</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">In-Progress Tests</div>
-        <div class="display-6"><?php echo e($inProgress->count()); ?></div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-warning fs-2 mb-2">⏱️</div>
+          <h6 class="text-muted">In-Progress Tests</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-warning"><?php echo e($inProgress->count()); ?></div>
+        <div class="text-muted small">Tests currently active</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Eligible Now</div>
-        <div class="display-6"><?php echo e($eligibleNow->count()); ?></div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-success fs-2 mb-2">✅</div>
+          <h6 class="text-muted">Eligible Now</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-success"><?php echo e($eligibleNow->count()); ?></div>
+        <div class="text-muted small">Ready for new tests</div>
       </div>
     </div>
   </div>
   <div class="col-6 col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="text-muted">Completed Tests</div>
-        <div class="display-6"><?php echo e($recentCompleted->count()); ?></div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <div class="mb-3">
+          <div class="text-info fs-2 mb-2">📊</div>
+          <h6 class="text-muted">Completed Tests</h6>
+        </div>
+        <div class="display-4 fs-1 fw-bold text-info"><?php echo e($recentCompleted->count()); ?></div>
+        <div class="text-muted small">Last 30 days</div>
       </div>
     </div>
   </div>
@@ -61,23 +77,28 @@
 <!-- Assigned Students Table -->
 <div class="row g-3">
   <div class="col-12">
-    <div class="card">
-      <div class="card-header">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Assigned Students</h5>
+        <span class="badge bg-primary rounded-pill"><?php echo e($students->count()); ?></span>
       </div>
       <div class="card-body p-0">
         <?php if($students->isEmpty()): ?>
-          <div class="p-3 text-muted">No students assigned.</div>
+          <div class="text-center text-muted py-4">
+            <div class="fs-1 mb-2">📚</div>
+            <div class="h6">No students assigned</div>
+            <p class="text-muted">Students will appear here once they are assigned to your sections.</p>
+          </div>
         <?php else: ?>
           <div class="table-responsive">
-            <table class="table table-hover mb-0">
+            <table class="table table-hover">
               <thead class="table-light">
                 <tr>
-                  <th>Student</th>
-                  <th>Age</th>
-                  <th>Latest Test</th>
-                  <th>Status</th>
-                  <th>Actions</th>
+                  <th><i class="fas fa-user me-2"></i> Student</th>
+                  <th><i class="fas fa-birthday-cake me-2"></i> Age</th>
+                  <th><i class="fas fa-calendar me-2"></i> Latest Test</th>
+                  <th><i class="fas fa-info-circle me-2"></i> Status</th>
+                  <th class="text-center"><i class="fas fa-cogs me-2"></i> Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,47 +111,62 @@
                   ?>
                   <tr>
                     <td>
-                      <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="text-decoration-none">
-                        <?php echo e($s->first_name); ?> <?php echo e($s->last_name); ?>
+                      <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="text-decoration-none d-flex align-items-center">
+                        <div class="avatar bg-primary text-white me-2">
+                          <?php echo e(strtoupper(substr($s->first_name, 0, 1))); ?>
 
+                        </div>
+                        <div>
+                          <strong><?php echo e($s->first_name); ?> <?php echo e($s->last_name); ?></strong>
+                        <br>
+                          <small class="text-muted"><?php echo e($age); ?> years old</small>
+                        </div>
                       </a>
                     </td>
-                    <td><?php echo e($age); ?></td>
+                    <td class="text-center"><?php echo e($age); ?></td>
                     <td>
                       <?php if($latest): ?>
                         <?php echo e($latest->test_date->format('M d, Y')); ?><br>
-                        <small class="text-muted"><?php echo e(ucfirst($latest->status)); ?></small>
+                        <small class="badge bg-<?php echo e($latest->status === 'completed' ? 'success' : ($latest->status === 'in_progress' ? 'warning' : 'secondary')); ?> rounded-pill"><?php echo e(ucfirst($latest->status)); ?></small>
                       <?php else: ?>
                         <span class="text-muted">No tests</span>
                       <?php endif; ?>
                     </td>
                     <td>
                       <?php if($st['in_progress']): ?>
-                        <span class="badge bg-warning">In Progress</span>
+                        <span class="badge bg-warning rounded-pill">In Progress</span>
                       <?php elseif($st['eligible']): ?>
-                        <span class="badge bg-success">Eligible</span>
+                        <span class="badge bg-success rounded-pill">Eligible</span>
                       <?php else: ?>
-                        <span class="badge bg-secondary">Not Eligible</span>
+                        <span class="badge bg-secondary rounded-pill">Not Eligible</span>
                       <?php endif; ?>
                     </td>
-                    <td>
+                    <td class="text-center">
                       <div class="btn-group btn-group-sm" role="group">
-                        <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="btn btn-outline-secondary">View</a>
+                        <a href="<?php echo e(route('teacher.student', $s->student_id)); ?>" class="btn btn-sm btn-outline-primary">
+                          <i class="fas fa-eye me-1"></i> View
+                        </a>
                         <?php if($st['in_progress']): ?>
-                          <a href="<?php echo e(route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0])); ?>" class="btn btn-outline-warning">Continue</a>
+                          <a href="<?php echo e(route('teacher.tests.question', [$st['in_progress']->test_id, \App\Models\Domain::orderBy('domain_id')->first()->domain_id ?? 1, 0])); ?>" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-play me-1"></i> Continue
+                          </a>
                         <?php elseif($st['eligible']): ?>
-                          <?php
+                          <?php 
                             $availablePeriod = $s->assessmentPeriods()
                                 ->where('status', '!=', 'overdue')
                                 ->where('status', '!=', 'completed')
                                 ->first();
                           ?>
                           <?php if($availablePeriod): ?>
-                            <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST" style="display: inline;">
+                            <form action="<?php echo e(route('teacher.tests.start', $s->student_id)); ?>" method="POST" class="d-inline">
                               <?php echo csrf_field(); ?>
                               <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
-                              <button type="submit" class="btn btn-outline-primary" style="border-radius: 0 0.25rem 0.25rem 0;">Start Test</button>
+                              <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Start Test
+                              </button>
                             </form>
+                          <?php else: ?>
+                            <span class="text-muted small">No periods available</span>
                           <?php endif; ?>
                         <?php endif; ?>
                       </div>
@@ -139,16 +175,15 @@
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </tbody>
             </table>
-          </div>
         <?php endif; ?>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- In-Progress Tests -->
-  <?php if($inProgress->count() > 0): ?>
-    <div class="col-12 col-lg-6">
-      <div class="card">
+<!-- In-Progress Tests -->
+<?php if($inProgress->count() > 0): ?>
+  <div class="col-12 col-lg-6">
         <div class="card-header">
           <h5 class="mb-0">In-Progress Assessments</h5>
         </div>

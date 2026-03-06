@@ -240,51 +240,6 @@ public function firstUnansweredInDomain($testId, $domainId)
                 'text' => $question->display_text ?? $question->text,
                 'domain' => $domain->name,
                 'domain_icon' => $this->domainIcons[$domain->name] ?? '📋',
-                'order' => $question->order
-            ];
-        }
-    }
-    
-    // Calculate domain scores
-    $domains = DB::table('domains')->get();
-    $domainScores = [];
-    
-    foreach ($domains as $domain) {
-        $domainQuestions = DB::table('questions')
-            ->where('domain_id', $domain->domain_id)
-            ->pluck('question_id');
-        
-        $totalDomainQuestions = count($domainQuestions);
-        
-        $yesCount = DB::table('test_responses')
-            ->where('test_id', $testId)
-            ->whereIn('question_id', $domainQuestions)
-            ->where('response', 'yes')
-            ->count();
-        
-        $answeredDomainCount = DB::table('test_responses')
-            ->where('test_id', $testId)
-            ->whereIn('question_id', $domainQuestions)
-            ->count();
-        
-        $percentage = $totalDomainQuestions > 0 ? round(($yesCount / $totalDomainQuestions) * 100) : 0;
-        
-        $domainScores[] = [
-            'domain' => $domain->name,
-            'domain_id' => $domain->domain_id,  // ← Added this
-            'icon' => $this->domainIcons[$domain->name] ?? '📋',
-            'yes_count' => $yesCount,
-            'answered' => $answeredDomainCount,
-            'total' => $totalDomainQuestions,
-            'percentage' => $percentage
-        ];
-    }
-    
-    return view('test.review', [
-        'test' => $test,
-        'student' => $student,
-        'totalQuestions' => $totalQuestions,
-        'answeredCount' => $answeredCount,
         'unansweredQuestions' => $unansweredQuestions,
         'domainScores' => $domainScores,
         'canSubmit' => count($unansweredQuestions) === 0
@@ -356,10 +311,135 @@ public function firstUnansweredInDomain($testId, $domainId)
             ];
         }
         
+        // Calculate and store sum_scaled_scores and standard_score
+        $sumScaledScores = 0;
+        foreach ($domainScores as $domainScore) {
+            // Get scaled score for this domain based on age and raw score
+            $studentAge = $student->date_of_birth ? \Carbon\Carbon::parse($student->date_of_birth)->diffInMonths(now()) : 0;
+            $scaleVersionId = DB::table('scale_versions')
+                ->where('name', 'ECCD 2004')
+                ->value('scale_version_id');
+            
+            $domainScaledScore = DB::table('domain_scaled_scores')
+                ->where('scale_version_id', $scaleVersionId)
+                ->where('domain_id', $domainScore['domain'])
+                ->where('age_min_months', '<=', $studentAge)
+                ->where('age_max_months', '>=', $studentAge)
+                ->where('raw_min', '<=', $domainScore['yes_count'])
+                ->where('raw_max', '>=', $domainScore['yes_count'])
+                ->value('scaled_score');
+            
+            if ($domainScaledScore) {
+                $sumScaledScores += $domainScaledScore;
+                
+                // Store domain scaled score
+                DB::table('test_domain_scaled_scores')->updateOrInsert([
+                    'test_id' => $testId,
+                    'domain_id' => $domainScore['domain'],
+                    'scale_version_id' => $scaleVersionId,
+                    'raw_score' => $domainScore['yes_count'],
+                    'scaled_score' => $domainScaledScore,
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ], [
+                    'test_id' => $testId,
+                    'domain_id' => $domainScore['domain'],
+                    'scale_version_id' => $scaleVersionId,
+                    'raw_score' => $domainScore['yes_count'],
+                    'scaled_score' => $domainScaledScore,
+                ]);
+            }
+        }
+        
+        // Calculate and store standard score based on sum of scaled scores
+        $standardScore = $this->calculateStandardScore($sumScaledScores);
+        
+        // Store in test_standard_scores table
+        DB::table('test_standard_scores')->updateOrInsert([
+            'test_id' => $testId,
+            'scale_version_id' => $scaleVersionId,
+            'sum_scaled_scores' => $sumScaledScores,
+            'standard_score' => $standardScore,
+            'interpretation' => $this->getInterpretation($standardScore, $studentAge),
+            'updated_at' => now(),
+            'created_at' => now(),
+        ], [
+            'test_id' => $testId,
+            'scale_version_id' => $scaleVersionId,
+            'sum_scaled_scores' => $sumScaledScores,
+            'standard_score' => $standardScore,
+            'interpretation' => $this->getInterpretation($standardScore, $studentAge),
+        ]);
+        
+        // Calculate standard score
+        $sumScaledScores = array_sum(array_column($domainScores, 'score'));
+        $standardScore = $this->calculateStandardScore($sumScaledScores);
+        
+        // Get interpretation based on standard score and age
+        $studentAge = $student->age;
+        $interpretation = $this->getInterpretation($standardScore, $studentAge);
+        
         return view('test.complete', [
             'test' => $test,
             'student' => $student,
-            'domainScores' => $domainScores
+            'domainScores' => $domainScores,
+            'standardScore' => $standardScore,
+            'interpretation' => $interpretation
         ]);
+    }
+    
+    /**
+     * Calculate standard score from sum of scaled scores
+     */
+    private function calculateStandardScore($sumScaledScores)
+    {
+        $standardLookup = [
+            29 => 37, 30 => 38, 31 => 40, 32 => 41, 33 => 43, 34 => 44,
+            35 => 45, 36 => 47, 37 => 48, 38 => 50, 39 => 51, 40 => 53,
+            41 => 54, 42 => 56, 43 => 57, 44 => 59, 45 => 60, 46 => 62,
+            47 => 63, 48 => 65, 49 => 66, 50 => 67, 51 => 69, 52 => 70,
+            53 => 72, 54 => 73, 55 => 75, 56 => 76, 57 => 78, 58 => 79,
+            59 => 81, 60 => 82, 61 => 84, 62 => 85, 63 => 86, 64 => 88,
+            65 => 89, 66 => 91, 67 => 92, 68 => 94, 69 => 95, 70 => 97,
+            71 => 98, 72 => 100, 73 => 101, 74 => 103, 75 => 104, 76 => 105,
+            77 => 107, 78 => 108, 79 => 109, 80 => 110, 81 => 111, 82 => 113,
+            83 => 114, 84 => 115, 85 => 117, 86 => 118, 87 => 119, 88 => 120,
+            89 => 121, 90 => 123, 91 => 124, 92 => 126, 93 => 127, 94 => 129,
+            95 => 130, 96 => 132, 97 => 133, 98 => 135, 99 => 136, 100 => 137
+        ];
+        
+        return $standardLookup[$sumScaledScores] ?? null;
+    }
+    
+    /**
+     * Get interpretation based on standard score and age
+     */
+    private function getInterpretation($standardScore, $studentAge)
+    {
+        if ($studentAge >= 61 && $studentAge <= 71) {
+            // Ages 5.1 – 5.11 years
+            if ($standardScore >= 85) return 'Advanced Development';
+            if ($standardScore >= 70) return 'Average Development';
+            return 'Below Average Development';
+        }
+        
+        if ($studentAge >= 49 && $studentAge <= 60) {
+            // Ages 4.1 – 5.0 years
+            if ($standardScore >= 85) return 'Advanced Development';
+            if ($standardScore >= 70) return 'Average Development';
+            return 'Below Average Development';
+        }
+        
+        if ($studentAge >= 37 && $studentAge <= 48) {
+            // Ages 3.1 – 4.0 years
+            if ($standardScore >= 85) return 'Advanced Development';
+            if ($standardScore >= 70) return 'Average Development';
+            return 'Below Average Development';
+        }
+        
+        // Default for other ages or scores
+        if ($standardScore >= 85) return 'Advanced Development';
+        if ($standardScore >= 70) return 'Average Development';
+        return 'Below Average Development';
     }
 }

@@ -131,12 +131,16 @@ class TeacherController extends Controller
         $teacher = Auth::user();
         $teacherId = $teacher->id ?? $teacher->user_id;
         
-        // Get sections with correct column names based on actual database schema
+        // Get only sections where this teacher has assigned students
         $sections = DB::table('sections')
-            ->select('section_id', 'name', 'created_at', 'updated_at')
+            ->join('students', 'sections.section_id', '=', 'students.section_id')
+            ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
+            ->where('student_teacher.teacher_id', $teacherId)
+            ->select('sections.section_id', 'sections.name', 'sections.created_at', 'sections.updated_at')
+            ->distinct('sections.section_id')
             ->get();
 
-        // Add student count manually for each section - simple approach without whereExists
+        // Add student count manually for each section
         $sections = $sections->map(function($section) use ($teacherId) {
             // Count students in this section and assigned to this teacher
             $studentCount = DB::table('students')

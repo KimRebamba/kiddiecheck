@@ -210,7 +210,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Cruz',
                 'date_of_birth' => '2021-01-15',
                 'family_id' => 5,
-                'section_id' => 1,
+                'section_id' => 34, // Section A
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -221,7 +221,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Santos',
                 'date_of_birth' => '2020-06-10',
                 'family_id' => 6,
-                'section_id' => 2,
+                'section_id' => 34, // Section A
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -232,7 +232,7 @@ class DemoSeeder extends Seeder
                 'last_name' => 'Reyes',
                 'date_of_birth' => '2019-03-20',
                 'family_id' => 7,
-                'section_id' => 3,
+                'section_id' => 34, // Section A
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -243,20 +243,29 @@ class DemoSeeder extends Seeder
     protected function studentTeacher_add(): void
     {
         DB::table('student_teacher')->insert([
+            // Teacher A (ID 2) gets all students in Section 1
             [
-                'student_id' => 1,
+                'student_id' => 1, // Juan - Section 1
                 'teacher_id' => 2,
             ],
             [
-                'student_id' => 1,
+                'student_id' => 2, // Maria - Section 1  
+                'teacher_id' => 2,
+            ],
+            [
+                'student_id' => 3, // Pedro - Section 1
+                'teacher_id' => 2,
+            ],
+            
+            // Teacher B (ID 3) gets all students in Section 2
+            [
+                'student_id' => 2, // Maria - Section 2
                 'teacher_id' => 3,
             ],
+            
+            // Teacher C (ID 4) gets all students in Section 3
             [
-                'student_id' => 2,
-                'teacher_id' => 2,
-            ],
-            [
-                'student_id' => 3,
+                'student_id' => 3, // Pedro - Section 3
                 'teacher_id' => 4,
             ],
         ]);

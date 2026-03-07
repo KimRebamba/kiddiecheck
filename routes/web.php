@@ -109,6 +109,7 @@ Route::prefix('family')->middleware('auth')->group(function () {
 	// This alternate URL pattern uses a different name to avoid conflicts
 	// with the primary family.tests.game route above.
 	Route::get('/tests/{test}/domain/{domain}/game/{index}', [FamilyController::class, 'showGame'])->name('family.tests.game.alt');
+	Route::get('/family/help', function () { return view('family.help');})->name('family.help')->middleware('auth');
 });
 
 

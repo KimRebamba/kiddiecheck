@@ -196,9 +196,9 @@ class FamilyController extends Controller
                 ->where('end_date', '>=', now())
                 ->first();
 
-            $answered            = 0;
-            $hasActiveAssessment = (bool) $activePeriod;
-            $needsAction         = false;
+            $answered        = 0;
+            $periodCompleted = false;
+            $needsAction     = false;
 
             if ($activePeriod) {
                 // Only consider this family's test in the current period
@@ -214,6 +214,8 @@ class FamilyController extends Controller
                     $answered = DB::table('test_responses')
                         ->where('test_id', $familyTest->test_id)
                         ->count();
+
+                    $periodCompleted = in_array($familyTest->status, ['completed', 'finalized']);
 
                     if ($familyTest->status === 'in_progress' && $answered < $totalQuestions) {
                         $needsAction = true;
@@ -232,7 +234,8 @@ class FamilyController extends Controller
                 'profile_image'      => $s->feature_path,
                 'total_tests'        => $totalQuestions,
                 'completed'          => $answered,
-                'has_active_period'  => $hasActiveAssessment,
+                'active_period'     => $activePeriod,
+                'period_completed'  => $periodCompleted,
                 'needs_action'       => $needsAction,
             ];
         }
@@ -1449,5 +1452,10 @@ class FamilyController extends Controller
     {
         $this->updateTestStatus($testId, 'terminated');
         return redirect()->route('family.index')->with('success', 'Test terminated.');
+    }
+
+        public function help()
+    {
+        return view('family.help');
     }
 }

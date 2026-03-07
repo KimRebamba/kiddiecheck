@@ -244,8 +244,7 @@
         <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}#family-children">Children</a>
         <a class="nav-link {{ request()->routeIs('family.tests.*') ? 'active' : '' }}"
            href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Current Test</a>
-        <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}#family-help">Help</a>
-      </div>
+        <a class="nav-link {{ request()->routeIs('family.help') ? 'active' : '' }}" href="{{ route('family.help') }}">Help</a>
 
       {{-- Profile Dropdown --}}
       <div class="profile-section">

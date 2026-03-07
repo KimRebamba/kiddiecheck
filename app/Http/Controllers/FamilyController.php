@@ -500,6 +500,12 @@ class FamilyController extends Controller
         return response()->json($assessments);
     }
 
+    public function resultsIndex()
+    {
+    [$user, $family] = $this->getAuthFamily();
+    return view('family.results-history', compact('family'));
+    }
+
     // ──────────────────────────────────────────────
     //  TEST FLOW
     // ──────────────────────────────────────────────

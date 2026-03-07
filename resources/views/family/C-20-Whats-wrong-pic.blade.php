@@ -592,8 +592,13 @@ function updateHints() {
     document.getElementById('tapHint').textContent    = allDone ? 'All scenes done! Click Next →' : 'Tap what doesn\'t belong!';
 }
 
+const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) : route('family.tests.result', $testId) }}";
+
 function handleNext() {
-    if (isLocked) { document.getElementById('lockedModal').classList.add('show'); return; }
+    if (isLocked) {
+        window.location.href = nextUrl;
+        return;
+    }
     if (scores.some(s => s === null)) return;
     document.getElementById('confirmModal').classList.add('show');
 }

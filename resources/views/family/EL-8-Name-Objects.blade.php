@@ -477,20 +477,13 @@ function pickAnswer(choice) {
 
 
 // ── handleNext(): called when Next → is clicked ──────────────────────────
+const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) : route('family.tests.result', $testId) }}";
+
 function handleNext() {
-    // If question was already answered before (locked), show locked modal
-    if (isLocked) {
-        document.getElementById('lockedModal').classList.add('show');
-        return;
-    }
-
-    // If not all 5 are answered yet, do nothing (button is grayed out)
+    if (isLocked) { window.location.href = nextUrl; return; }
     if (answers.some(a => a === null)) return;
-
-    // All 5 answered — open confirm popup
     document.getElementById('confirmModal').classList.add('show');
 }
-
 
 // ── confirmSubmit(): runs after user clicks "Yes, Submit" ────────────────
 function confirmSubmit() {

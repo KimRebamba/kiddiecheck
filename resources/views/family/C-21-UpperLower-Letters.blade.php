@@ -743,9 +743,11 @@ function hexAlpha(hex, alpha) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
+const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) : route('family.tests.result', $testId) }}";
+
 function clickNext() {
-    if (isLocked)                      { openModal('lockedModal'); return; }
-    if (answers.some(a => a === null)) return;
+    if (isLocked) { window.location.href = nextUrl; return; }
+    if (boardState.some(p => p === null)) return;
     openModal('confirmModal');
 }
 function submitAnswer() {

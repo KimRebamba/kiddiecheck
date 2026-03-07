@@ -21,6 +21,30 @@
             min-height: 100vh;
         }
 
+        .btn-dashboard {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            color: #555;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .btn-dashboard:hover {
+            background: rgba(255,255,255,0.95);
+            color: #222;
+            text-decoration: none;
+        }
+
         .card {
             background: #fff;
             border-radius: 30px;
@@ -44,12 +68,7 @@
             margin-bottom: 1.5rem;
             position: relative;
         }
-
-        /* Locked overlay */
-        .game-box.locked {
-            background: #f8f8f8;
-            border-color: #ccc;
-        }
+        .game-box.locked { background: #f8f8f8; border-color: #ccc; }
 
         .locked-banner {
             display: none;
@@ -70,7 +89,6 @@
         .game-title    { text-align: center; font-size: 1.1rem; font-weight: 900; color: #e07b00; margin-bottom: 0.3rem; }
         .game-subtitle { text-align: center; font-size: 0.82rem; color: #aaa; margin-bottom: 2rem; }
 
-        /* ── Connect arena ── */
         .dots-arena {
             position: relative;
             display: flex;
@@ -96,7 +114,6 @@
             filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));
         }
 
-        /* ── Dot columns ── */
         .dots-col {
             display: flex;
             flex-direction: column;
@@ -116,7 +133,6 @@
             text-align: center;
         }
 
-        /* ── Each dot item ── */
         .dot-item {
             display: flex;
             flex-direction: column;
@@ -127,14 +143,9 @@
         }
         .dot-item:hover { transform: scale(1.06); }
 
-        /* Locked: disable interaction */
-        .dots-arena.is-locked .dot-item {
-            cursor: default;
-            pointer-events: none;
-        }
+        .dots-arena.is-locked .dot-item { cursor: default; pointer-events: none; }
         .dots-arena.is-locked .dot-item:hover { transform: none; }
 
-        /* ── Object card (the "dot") ── */
         .dot {
             width: 90px;
             height: 90px;
@@ -154,20 +165,17 @@
         .dot-emoji { font-size: 2.4rem; line-height: 1; pointer-events: none; }
         .dot-label { font-size: 0.68rem; font-weight: 800; color: #777; text-transform: uppercase; letter-spacing: 0.04em; pointer-events: none; }
 
-        /* Left card tints */
         .dot.tint-1 { background: #fff0f9; border-color: #ffb3d9; }
         .dot.tint-2 { background: #fff8ee; border-color: #ffd194; }
         .dot.tint-3 { background: #f0f8ff; border-color: #99d6ff; }
         .dot.tint-4 { background: #f5fff0; border-color: #a8e6a3; }
 
-        /* Locked tint override */
         .dots-arena.is-locked .dot.tint-1,
         .dots-arena.is-locked .dot.tint-2,
         .dots-arena.is-locked .dot.tint-3,
         .dots-arena.is-locked .dot.tint-4,
         .dots-arena.is-locked .dot { opacity: 0.75; }
 
-        /* States */
         .dot.selected {
             box-shadow: 0 0 0 5px #7C3AED, 0 4px 14px rgba(0,0,0,0.18);
             transform: scale(1.12);
@@ -192,12 +200,9 @@
             justify-content: center;
         }
 
-        /* Tap hint */
-        .tap-hint { text-align: center; font-size: 0.82rem; color: #bbb; margin-top: 1.2rem; }
-
+        .tap-hint    { text-align: center; font-size: 0.82rem; color: #bbb; margin-top: 1.2rem; }
         .answer-hint { text-align: center; font-size: 0.85rem; color: #aaa; margin-bottom: 0.8rem; }
 
-        /* Nav */
         .nav-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
         .nav-center { display: flex; gap: 10px; }
 
@@ -210,16 +215,15 @@
         .btn-prev       { background: #f5f5f5; border-color: #999; color: #666; }
         .btn-prev:hover { background: #e0e0e0; color: #333; }
 
-        /* Locked Next button */
         .btn-nav.btn-locked {
             background: #e9e9e9;
             border-color: #ccc;
             color: #999;
             cursor: not-allowed;
+            pointer-events: none;
         }
         .btn-nav.btn-locked:hover { transform: none; background: #e9e9e9; }
 
-        /* ── Modal overlay ── */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -251,7 +255,6 @@
         .modal-icon  { font-size: 3rem; margin-bottom: 12px; }
         .modal-title { font-size: 1.25rem; font-weight: 900; color: #1a1a2e; margin-bottom: 8px; }
         .modal-body  { font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 24px; }
-
         .modal-actions { display: flex; gap: 12px; justify-content: center; }
 
         .btn-modal-ok {
@@ -273,10 +276,16 @@
             .game-box { padding: 1.5rem 40px 1.5rem; }
             .dot { width: 72px; height: 72px; }
             .dot-emoji { font-size: 1.9rem; }
+            .btn-dashboard { font-size: 0.78rem; padding: 0.38rem 0.8rem; }
         }
     </style>
 </head>
 <body>
+
+<a href="{{ route('family.index') }}" class="btn-dashboard">
+    🏠 Dashboard
+</a>
+
 <div class="card">
 
     <div class="progress">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
@@ -286,7 +295,6 @@
 
     <div class="game-box" id="gameBox">
 
-        {{-- Already-answered banner --}}
         <div class="locked-banner" id="lockedBanner">
             🔒 This question has already been answered and cannot be changed.
         </div>
@@ -295,35 +303,28 @@
         <div class="game-subtitle">Tap an item on the left, then tap its match on the right</div>
 
         <div class="dots-arena" id="arena">
-
-            <!-- SVG lines layer -->
             <svg class="lines-svg" id="linesSvg"></svg>
 
-            <!-- LEFT column -->
             <div class="dots-col">
                 <div class="col-header">👈 Tap to start</div>
-
                 <div class="dot-item" data-side="left" data-item="spoon">
                     <div class="dot tint-1" id="dot-left-spoon">
                         <span class="dot-emoji">🥄</span>
                         <span class="dot-label">Spoon</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="left" data-item="block">
                     <div class="dot tint-2" id="dot-left-block">
                         <span class="dot-emoji">🧱</span>
                         <span class="dot-label">Block</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="left" data-item="ball">
                     <div class="dot tint-3" id="dot-left-ball">
                         <span class="dot-emoji">🔵</span>
                         <span class="dot-label">Ball</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="left" data-item="star">
                     <div class="dot tint-4" id="dot-left-star">
                         <span class="dot-emoji">⭐</span>
@@ -332,31 +333,26 @@
                 </div>
             </div>
 
-            <!-- RIGHT column (shuffled) -->
             <div class="dots-col">
                 <div class="col-header">Tap to match 👉</div>
-
                 <div class="dot-item" data-side="right" data-item="ball">
                     <div class="dot" id="dot-right-ball">
                         <span class="dot-emoji">🔵</span>
                         <span class="dot-label">Ball</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="right" data-item="spoon">
                     <div class="dot" id="dot-right-spoon">
                         <span class="dot-emoji">🥄</span>
                         <span class="dot-label">Spoon</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="right" data-item="star">
                     <div class="dot" id="dot-right-star">
                         <span class="dot-emoji">⭐</span>
                         <span class="dot-label">Star</span>
                     </div>
                 </div>
-
                 <div class="dot-item" data-side="right" data-item="block">
                     <div class="dot" id="dot-right-block">
                         <span class="dot-emoji">🧱</span>
@@ -364,7 +360,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
         <div class="tap-hint" id="tapHint">Tap a connected item again to remove its line</div>
@@ -387,12 +382,12 @@
             @endif
 
             <div class="nav-center">
-                {{-- Next button: behaviour depends on whether already answered --}}
-                <button type="button" id="btnNext" onclick="handleNext()" class="btn-nav">Next →</button>
+                <button type="button" id="btnNext" class="btn-nav btn-locked">Next →</button>
 
                 @if($nextDomain && $nextIndex)
-                    <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
-                       class="btn-nav">Skip (Answer Later)</a>
+                    {{-- Store the skip URL in a data attribute — read once in JS --}}
+                    <a href="#" data-skip-url="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
+                       class="btn-nav" id="btnSkip">Skip (Answer Later)</a>
                 @else
                     <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">Review →</a>
                 @endif
@@ -402,7 +397,7 @@
 
 </div>
 
-{{-- ── Confirm-submit modal (fresh question) ── --}}
+{{-- Confirm-submit modal --}}
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <div class="modal-icon">⚠️</div>
@@ -418,62 +413,77 @@
     </div>
 </div>
 
-{{-- ── Already-answered modal ── --}}
-<div class="modal-overlay" id="lockedModal">
+{{-- Skip warning modal --}}
+<div class="modal-overlay" id="skipModal">
     <div class="modal-box">
-        <div class="modal-icon">🔒</div>
-        <div class="modal-title">Answer Already Submitted</div>
+        <div class="modal-icon">⏭️</div>
+        <div class="modal-title">Skip This Question?</div>
         <div class="modal-body">
-            Clicking <strong>Next</strong> doesn't allow you to go back and answer it again.<br><br>
-            Your previous answer has been saved and is now locked.
+            This will skip the matching game and move to the next question.<br><br>
+            You can come back to it later.
         </div>
         <div class="modal-actions">
-            <button class="btn-modal-ok" onclick="closeLockedModal()">Got it!</button>
+            <button class="btn-modal-cancel" onclick="closeSkipModal()">Cancel</button>
+            <button class="btn-modal-ok" onclick="doSkip()">Yes, Skip</button>
         </div>
     </div>
 </div>
 
 <script>
-// ── Pass existing response from Blade ──
 const existingResponse = '<?php echo addslashes($existingResponse ?? ''); ?>';
 const isLocked = existingResponse !== '';
 
 const items       = ['spoon', 'block', 'ball', 'star'];
-// Pre-fill connections: if already answered, draw all correct lines (identity match)
 const connections = { spoon: null, block: null, ball: null, star: null };
 let selectedLeft  = null;
 
-const lineColors = { spoon: '#e91e8c', block: '#f5a623', ball: '#3498db', star: '#8bc34a' };
+const lineColors  = { spoon: '#e91e8c', block: '#f5a623', ball: '#3498db', star: '#8bc34a' };
 
 const svg   = document.getElementById('linesSvg');
 const arena = document.getElementById('arena');
 
-// ── On page load: apply locked state if already answered ──
+const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) : route('family.tests.result', $testId) }}";
+
+// ── Capture skip URL once from data attribute — never from event ──
+const btnSkip = document.getElementById('btnSkip');
+const skipUrl = btnSkip ? btnSkip.dataset.skipUrl : null;
+
 window.addEventListener('DOMContentLoaded', () => {
+    // Attach skip click listener once, reliably
+    if (btnSkip && skipUrl) {
+        btnSkip.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (btnSkip.classList.contains('btn-locked')) return;
+            openSkipModal();
+        });
+    }
+
     if (isLocked) {
         applyLockedUI();
     }
+
+    refreshDots();
 });
 
 function applyLockedUI() {
-    // Show banner inside game box
     document.getElementById('lockedBanner').classList.add('visible');
-
-    // Style the game box
     document.getElementById('gameBox').classList.add('locked');
-
-    // Disable all dot interactions
     arena.classList.add('is-locked');
-
-    // Hide tap hint; update answer hint
-    document.getElementById('tapHint').style.display   = 'none';
+    document.getElementById('tapHint').style.display    = 'none';
     document.getElementById('answerHint').style.display = 'none';
 
-    // Mark Next button as visually locked (still clickable to show modal)
-    document.getElementById('btnNext').classList.add('btn-locked');
+    // Next: navigate directly, no modal
+    const btnNext = document.getElementById('btnNext');
+    btnNext.classList.remove('btn-locked');
+    btnNext.addEventListener('click', function() {
+        window.location.href = nextUrl;
+    });
 
-    // Draw all connections as if the child matched everything correctly
-    // (we only store yes/no, so we always show the correct full matching)
+    // Skip: locked — already answered
+    if (btnSkip) {
+        btnSkip.classList.add('btn-locked');
+    }
+
     items.forEach(i => { connections[i] = i; });
     refreshDots();
     redrawLines();
@@ -504,6 +514,25 @@ function redrawLines() {
 }
 
 function refreshDots() {
+    const allDone = items.every(i => connections[i] !== null);
+    const btnNext = document.getElementById('btnNext');
+
+    if (!isLocked) {
+        if (allDone) {
+            // Unlock Next; Skip stays active
+            btnNext.classList.remove('btn-locked');
+            if (btnSkip) btnSkip.classList.remove('btn-locked');
+            document.getElementById('answerHint').textContent = 'All done! Click Next → to submit.';
+        } else {
+            // Lock Next; Skip stays active
+            btnNext.classList.add('btn-locked');
+            if (btnSkip) btnSkip.classList.remove('btn-locked');
+            const remaining = items.filter(i => connections[i] === null).length;
+            document.getElementById('answerHint').textContent =
+                `${remaining} item${remaining > 1 ? 's' : ''} left — connect all to unlock Next →`;
+        }
+    }
+
     items.forEach(i => {
         const ld = document.getElementById(`dot-left-${i}`);
         const rd = document.getElementById(`dot-right-${i}`);
@@ -513,7 +542,6 @@ function refreshDots() {
     });
 }
 
-// ── Interaction (disabled when locked via pointer-events: none on arena) ──
 document.querySelectorAll('.dot-item').forEach(item => {
     item.addEventListener('click', () => {
         if (isLocked) return;
@@ -533,7 +561,6 @@ document.querySelectorAll('.dot-item').forEach(item => {
             return;
         }
 
-        // right side
         const existingLeft = Object.keys(connections).find(lk => connections[lk] === key);
         if (existingLeft) {
             connections[existingLeft] = null;
@@ -556,45 +583,38 @@ document.querySelectorAll('.dot-item').forEach(item => {
 window.addEventListener('resize', redrawLines);
 
 // ── Next button handler ──
-function handleNext() {
-    if (isLocked) {
-        document.getElementById('lockedModal').classList.add('show');
-        return;
-    }
-    // Validate all connected first
-    if (!items.every(i => connections[i] !== null)) {
-        alert('Please connect all 4 items before continuing!');
-        return;
-    }
-    // Show confirmation modal
-    document.getElementById('confirmModal').classList.add('show');
-}
+document.getElementById('btnNext').addEventListener('click', function() {
+    if (this.classList.contains('btn-locked')) return;
+    if (isLocked) { window.location.href = nextUrl; return; }
+    openConfirmModal();
+});
+
+// ── Confirm modal ──
+function openConfirmModal()  { document.getElementById('confirmModal').classList.add('show'); }
+function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('show'); }
 
 function confirmSubmit() {
     closeConfirmModal();
-    submitAnswer();
-}
-
-function submitAnswer() {
     const isCorrect = items.every(i => connections[i] === i);
     document.getElementById('responseInput').value = isCorrect ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
 }
 
-// ── Modals ──
-function closeConfirmModal() {
-    document.getElementById('confirmModal').classList.remove('show');
-}
-function closeLockedModal() {
-    document.getElementById('lockedModal').classList.remove('show');
-}
-
-// Close on backdrop click
 document.getElementById('confirmModal').addEventListener('click', function(e) {
     if (e.target === this) closeConfirmModal();
 });
-document.getElementById('lockedModal').addEventListener('click', function(e) {
-    if (e.target === this) closeLockedModal();
+
+// ── Skip modal ──
+function openSkipModal()  { document.getElementById('skipModal').classList.add('show'); }
+function closeSkipModal() { document.getElementById('skipModal').classList.remove('show'); }
+
+function doSkip() {
+    closeSkipModal();
+    window.location.href = skipUrl;
+}
+
+document.getElementById('skipModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSkipModal();
 });
 </script>
 

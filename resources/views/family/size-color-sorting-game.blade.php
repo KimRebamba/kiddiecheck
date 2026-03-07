@@ -21,6 +21,31 @@
             min-height: 100vh;
         }
 
+        /* ── Dashboard button ── */
+        .btn-dashboard {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            color: #555;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .btn-dashboard:hover {
+            background: rgba(255,255,255,0.95);
+            color: #222;
+            text-decoration: none;
+        }
+
         .card {
             background: #fff;
             border-radius: 30px;
@@ -44,8 +69,6 @@
             margin-bottom: 1.5rem;
             position: relative;
         }
-
-        /* Locked state */
         .game-box.locked { background: #f8f8f8; border-color: #ccc; }
 
         .locked-banner {
@@ -82,7 +105,6 @@
             padding: 1.2rem; min-height: 120px; margin-bottom: 1.5rem;
         }
 
-        /* Locked: disable all interactions */
         .game-box.locked .unsorted-tray,
         .game-box.locked .sort-group { pointer-events: none; }
         .game-box.locked .shape-card { cursor: default; pointer-events: none; opacity: 0.72; }
@@ -96,7 +118,6 @@
             display: flex; flex-direction: column; align-items: center; gap: 6px;
             transition: border-color 0.2s, background 0.2s; position: relative;
         }
-
         .sort-group.drag-over { border-color: #7C3AED; background: #f0ebff; }
         .sort-group.has-cards { border-color: #94A3B8; border-style: solid; }
 
@@ -112,7 +133,6 @@
             gap: 5px; cursor: grab; transition: all 0.25s; user-select: none;
             position: relative; box-shadow: 0 3px 10px rgba(0,0,0,0.1); flex-shrink: 0; padding: 6px;
         }
-
         .shape-card.big   { width: 90px; height: 90px; }
         .shape-card.small { width: 60px; height: 60px; }
 
@@ -141,33 +161,24 @@
         .btn-prev       { background: #f5f5f5; border-color: #999; color: #666; }
         .btn-prev:hover { background: #e0e0e0; color: #333; }
 
-        /* Locked Next button */
         .btn-nav.btn-locked {
-            background: #e9e9e9; border-color: #ccc; color: #999; cursor: not-allowed;
+            background: #e9e9e9; border-color: #ccc; color: #999;
+            cursor: not-allowed; pointer-events: none;
         }
         .btn-nav.btn-locked:hover { transform: none; background: #e9e9e9; }
 
-        /* ── Modal overlay ── */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); z-index: 999;
+            align-items: center; justify-content: center;
         }
         .modal-overlay.show { display: flex; }
 
         .modal-box {
-            background: #fff;
-            border-radius: 24px;
-            padding: 36px 40px;
-            max-width: 420px;
-            width: 90%;
+            background: #fff; border-radius: 24px; padding: 36px 40px;
+            max-width: 420px; width: 90%;
             box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-            border: 3px solid #000;
-            text-align: center;
+            border: 3px solid #000; text-align: center;
             animation: modalPop 0.25s ease;
         }
 
@@ -200,10 +211,17 @@
             .groups-row { grid-template-columns: repeat(2, 1fr); }
             .shape-card.big   { width: 70px; height: 70px; }
             .shape-card.small { width: 50px; height: 50px; }
+            .btn-dashboard { font-size: 0.78rem; padding: 0.38rem 0.8rem; }
         }
     </style>
 </head>
 <body>
+
+{{-- Dashboard button fixed top right --}}
+<a href="{{ route('family.index') }}" class="btn-dashboard">
+    🏠 Dashboard
+</a>
+
 <div class="card">
 
     <div class="progress">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
@@ -213,7 +231,6 @@
 
     <div class="game-box" id="gameBox">
 
-        {{-- Already-answered banner --}}
         <div class="locked-banner" id="lockedBanner">
             🔒 This question has already been answered and cannot be changed.
         </div>
@@ -230,7 +247,6 @@
 
         <div class="tray-label">Drag from here</div>
         <div class="unsorted-tray" id="unsortedTray">
-
             <div class="shape-card big"   draggable="true" data-key="big-blue"   id="sh1">
                 <svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23" fill="#3B82F6"/></svg>
                 <span class="size-tag">Big</span>
@@ -263,33 +279,28 @@
                 <svg width="34" height="34" viewBox="0 0 52 52"><circle cx="26" cy="26" r="23" fill="#EF4444"/></svg>
                 <span class="size-tag">Small</span>
             </div>
-
         </div>
 
         <div class="tray-label">Drop into the matching group</div>
         <div class="groups-row">
-
             <div class="sort-group" data-group="big-red" id="group-big-red">
                 <div class="group-label" style="background:#EF4444;">🔴 Big Red</div>
                 <svg width="44" height="44" viewBox="0 0 52 52" style="opacity:0.18; margin-top:8px;"><circle cx="26" cy="26" r="23" fill="#EF4444"/></svg>
             </div>
-
             <div class="sort-group" data-group="small-red" id="group-small-red">
                 <div class="group-label" style="background:#F87171;">🔴 Small Red</div>
                 <svg width="28" height="28" viewBox="0 0 52 52" style="opacity:0.18; margin-top:8px;"><circle cx="26" cy="26" r="23" fill="#EF4444"/></svg>
             </div>
-
             <div class="sort-group" data-group="big-blue" id="group-big-blue">
                 <div class="group-label" style="background:#3B82F6;">🔵 Big Blue</div>
                 <svg width="44" height="44" viewBox="0 0 52 52" style="opacity:0.18; margin-top:8px;"><circle cx="26" cy="26" r="23" fill="#3B82F6"/></svg>
             </div>
-
             <div class="sort-group" data-group="small-blue" id="group-small-blue">
                 <div class="group-label" style="background:#60A5FA;">🔵 Small Blue</div>
                 <svg width="28" height="28" viewBox="0 0 52 52" style="opacity:0.18; margin-top:8px;"><circle cx="26" cy="26" r="23" fill="#3B82F6"/></svg>
             </div>
-
         </div>
+
     </div>
 
     <form method="POST"
@@ -309,11 +320,13 @@
             @endif
 
             <div class="nav-center">
-                <button type="button" id="btnNext" onclick="handleNext()" class="btn-nav">Next →</button>
+                {{-- Starts locked — unlocks when all 8 shapes are placed --}}
+                <button type="button" id="btnNext" class="btn-nav btn-locked">Next →</button>
 
                 @if($nextDomain && $nextIndex)
-                    <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
-                       class="btn-nav">Skip (Answer Later)</a>
+                    <a href="#"
+                       data-skip-url="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}"
+                       class="btn-nav" id="btnSkip">Skip (Answer Later)</a>
                 @else
                     <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">Review →</a>
                 @endif
@@ -323,7 +336,7 @@
 
 </div>
 
-{{-- ── Confirm-submit modal (fresh question) ── --}}
+{{-- Confirm-submit modal --}}
 <div class="modal-overlay" id="confirmModal">
     <div class="modal-box">
         <div class="modal-icon">⚠️</div>
@@ -339,23 +352,23 @@
     </div>
 </div>
 
-{{-- ── Already-answered modal ── --}}
-<div class="modal-overlay" id="lockedModal">
+{{-- Skip warning modal --}}
+<div class="modal-overlay" id="skipModal">
     <div class="modal-box">
-        <div class="modal-icon">🔒</div>
-        <div class="modal-title">Answer Already Submitted</div>
+        <div class="modal-icon">⏭️</div>
+        <div class="modal-title">Skip This Question?</div>
         <div class="modal-body">
-            Clicking <strong>Next</strong> doesn't allow you to go back and answer it again.<br><br>
-            Your previous answer has been saved and is now locked.
+            This will skip the sorting game and move to the next question.<br><br>
+            You can come back to it later.
         </div>
         <div class="modal-actions">
-            <button class="btn-modal-ok" onclick="closeLockedModal()">Got it!</button>
+            <button class="btn-modal-cancel" onclick="closeSkipModal()">Cancel</button>
+            <button class="btn-modal-ok"     onclick="doSkip()">Yes, Skip</button>
         </div>
     </div>
 </div>
 
 <script>
-// ── Pass existing response from Blade ──
 const existingResponse = '<?php echo addslashes($existingResponse ?? ''); ?>';
 const isLocked = existingResponse !== '';
 
@@ -369,8 +382,30 @@ const cardGroup = {
     sh5: null, sh6: null, sh7: null, sh8: null
 };
 
-// ── On page load: apply locked state if already answered ──
+const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) : route('family.tests.result', $testId) }}";
+
+// ── Capture skip URL once from data attribute ──
+const btnSkip = document.getElementById('btnSkip');
+const skipUrl = btnSkip ? btnSkip.dataset.skipUrl : null;
+
 window.addEventListener('DOMContentLoaded', () => {
+
+    // ── Attach skip listener once, reliably ──
+    if (btnSkip && skipUrl) {
+        btnSkip.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (btnSkip.classList.contains('btn-locked')) return;
+            openSkipModal();
+        });
+    }
+
+    // ── Attach next listener once ──
+    document.getElementById('btnNext').addEventListener('click', function() {
+        if (this.classList.contains('btn-locked')) return;
+        if (isLocked) { window.location.href = nextUrl; return; }
+        openConfirmModal();
+    });
+
     if (isLocked) applyLockedUI();
 });
 
@@ -378,14 +413,19 @@ function applyLockedUI() {
     document.getElementById('lockedBanner').classList.add('visible');
     document.getElementById('gameBox').classList.add('locked');
     document.getElementById('answerHint').style.display = 'none';
-    document.getElementById('btnNext').classList.add('btn-locked');
 
-    // Place every card into its correct group to show the completed state
+    // Next: unlock — navigates directly, no modal
+    document.getElementById('btnNext').classList.remove('btn-locked');
+
+    // Skip: lock — already answered
+    if (btnSkip) btnSkip.classList.add('btn-locked');
+
+    // Place all cards into correct groups to show completed state
     const correctMapping = {
-        sh1: 'big-blue',   sh2: 'small-red',
-        sh3: 'big-red',    sh4: 'small-blue',
-        sh5: 'big-red',    sh6: 'small-blue',
-        sh7: 'big-blue',   sh8: 'small-red'
+        sh1: 'big-blue',  sh2: 'small-red',
+        sh3: 'big-red',   sh4: 'small-blue',
+        sh5: 'big-red',   sh6: 'small-blue',
+        sh7: 'big-blue',  sh8: 'small-red'
     };
 
     const tray = document.getElementById('unsortedTray');
@@ -402,7 +442,7 @@ function applyLockedUI() {
     }
 }
 
-// ── Drag ───────────────────────────────────────────────────────────────────
+// ── Drag ──
 document.querySelectorAll('.shape-card').forEach(card => {
     card.addEventListener('dragstart', function () {
         if (isLocked) return;
@@ -422,7 +462,7 @@ document.querySelectorAll('.shape-card').forEach(card => {
     });
 });
 
-// ── Drop ───────────────────────────────────────────────────────────────────
+// ── Drop ──
 document.querySelectorAll('.sort-group').forEach(group => {
     group.addEventListener('dragover',  e => { if (isLocked) return; e.preventDefault(); group.classList.add('drag-over'); });
     group.addEventListener('dragleave', () => group.classList.remove('drag-over'));
@@ -439,7 +479,7 @@ document.querySelectorAll('.sort-group').forEach(group => {
     });
 });
 
-// ── Place card ─────────────────────────────────────────────────────────────
+// ── Place card ──
 function placeCard(card, group) {
     const cardId      = card.id;
     const groupId     = group.dataset.group;
@@ -461,9 +501,26 @@ function placeCard(card, group) {
     group.classList.add('has-cards');
     cardGroup[cardId] = groupId;
     placedCount++;
+
+    updateNextButton();
 }
 
-// ── Correctness check ──────────────────────────────────────────────────────
+// ── Update Next button lock state ──
+function updateNextButton() {
+    if (isLocked) return;
+    const btnNext = document.getElementById('btnNext');
+    if (placedCount === totalCards) {
+        btnNext.classList.remove('btn-locked');
+        document.getElementById('answerHint').textContent = 'All sorted! Click Next → to submit.';
+    } else {
+        btnNext.classList.add('btn-locked');
+        const rem = totalCards - placedCount;
+        document.getElementById('answerHint').textContent =
+            `${rem} shape${rem > 1 ? 's' : ''} left to sort — connect all to unlock Next →`;
+    }
+}
+
+// ── Correctness check ──
 function isSortedCorrectly() {
     for (const cardId in cardGroup) {
         const groupId = cardGroup[cardId];
@@ -473,44 +530,31 @@ function isSortedCorrectly() {
     return true;
 }
 
-// ── Next button handler ────────────────────────────────────────────────────
-function handleNext() {
-    if (isLocked) {
-        document.getElementById('lockedModal').classList.add('show');
-        return;
-    }
-
-    if (placedCount < totalCards) {
-        alert('Please sort all shapes before continuing!');
-        return;
-    }
-
-    document.getElementById('confirmModal').classList.add('show');
-}
+// ── Confirm modal ──
+function openConfirmModal()  { document.getElementById('confirmModal').classList.add('show'); }
+function closeConfirmModal() { document.getElementById('confirmModal').classList.remove('show'); }
 
 function confirmSubmit() {
     closeConfirmModal();
-    submitAnswer();
-}
-
-function submitAnswer() {
     document.getElementById('responseInput').value = isSortedCorrectly() ? 'yes' : 'no';
     document.getElementById('answerForm').submit();
-}
-
-// ── Modals ─────────────────────────────────────────────────────────────────
-function closeConfirmModal() {
-    document.getElementById('confirmModal').classList.remove('show');
-}
-function closeLockedModal() {
-    document.getElementById('lockedModal').classList.remove('show');
 }
 
 document.getElementById('confirmModal').addEventListener('click', function(e) {
     if (e.target === this) closeConfirmModal();
 });
-document.getElementById('lockedModal').addEventListener('click', function(e) {
-    if (e.target === this) closeLockedModal();
+
+// ── Skip modal ──
+function openSkipModal()  { document.getElementById('skipModal').classList.add('show'); }
+function closeSkipModal() { document.getElementById('skipModal').classList.remove('show'); }
+
+function doSkip() {
+    closeSkipModal();
+    window.location.href = skipUrl;
+}
+
+document.getElementById('skipModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSkipModal();
 });
 </script>
 

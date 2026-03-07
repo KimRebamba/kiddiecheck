@@ -154,6 +154,9 @@ class FamilyController extends Controller
     // ──────────────────────────────────────────────
     //  DASHBOARD
     // ──────────────────────────────────────────────
+    // Replace the index() method in FamilyController with this version:
+
+    // Replace the index() method in FamilyController with this version:
 
     public function index()
     {
@@ -407,6 +410,12 @@ class FamilyController extends Controller
         return view('family.student-profile', compact('student'));
     }
 
+    public function familyProfile()
+    {
+        [$user, $family] = $this->getAuthFamily();
+        return view('family.family-profile', compact('family'));
+    }
+
     // ──────────────────────────────────────────────
     //  AJAX ENDPOINTS
     // ──────────────────────────────────────────────
@@ -491,6 +500,11 @@ class FamilyController extends Controller
     // ──────────────────────────────────────────────
     //  TEST FLOW
     // ──────────────────────────────────────────────
+    public function testsIndex()
+    {
+        return view('family.tests');
+    }
+
     public function showStartTest($studentId)
     {
         $user = Auth::user();
@@ -657,6 +671,15 @@ class FamilyController extends Controller
         'test'   => $testId,
         'domain' => $domainNumber,
         'index'  => $questionIndex,
+            ]);
+        }
+
+                // Redirect: matches objects game (Cognitive Q7)
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 7) {
+            return redirect()->route('family.tests.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
             ]);
         }
 

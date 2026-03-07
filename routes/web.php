@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -79,6 +80,8 @@ Route::prefix('family')->middleware('auth')->group(function () {
     Route::get('/children/{student}', [FamilyController::class, 'child'])->name('family.child');
     Route::get('/tests/start/{student}', [FamilyController::class, 'showStartTest'])->name('family.tests.start.show');
 	Route::get('/students/{student}', [FamilyController::class, 'showStudentProfile'])->name('family.student.profile');
+	Route::get('/profile', [FamilyController::class, 'familyProfile'])->name('family.profile');
+	Route::get('/tests', [FamilyController::class, 'testsIndex'])->name('family.tests.index');
     Route::post('/tests/start/{student}', [FamilyController::class, 'startTest'])->name('family.tests.start');
     Route::get('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'showQuestion'])->name('family.tests.question');
     Route::post('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'submitQuestion'])->name('family.tests.question.submit');

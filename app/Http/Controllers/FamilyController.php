@@ -429,6 +429,15 @@ foreach ($students as $s) {
 
         $questionText = $question->display_text ?? $question->text;
 
+                // Redirect: follow instructions game
+        if ($currentDomain->domain_name === 'Receptive Language' && (int)$questionIndex === 3) {
+            return redirect()->route('family.tests.follow.instructions.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
                 // Redirect: point to objects game
         if ($currentDomain->domain_name === 'Receptive Language' && (int)$questionIndex === 5) {
             return redirect()->route('family.tests.point.objects.game', [
@@ -508,6 +517,15 @@ foreach ($students as $s) {
 
         if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 16) {
             return redirect()->route('family.tests.animal.veggie.game', [
+                'test'   => $testId,
+                'domain' => $domainNumber,
+                'index'  => $questionIndex,
+            ]);
+        }
+
+                // Redirect: what's wrong game
+        if ($currentDomain->domain_name === 'Cognitive' && (int)$questionIndex === 20) {
+            return redirect()->route('family.tests.whats.wrong.game', [
                 'test'   => $testId,
                 'domain' => $domainNumber,
                 'index'  => $questionIndex,
@@ -645,6 +663,33 @@ foreach ($students as $s) {
     ));
 }
 
+    public function showFollowInstructionsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.RL-3-One-step', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
     public function showPointObjectsGame($testId, $domainNumber, $questionIndex)
     {
         $test           = $this->verifyTestOwnership($testId);
@@ -722,6 +767,34 @@ foreach ($students as $s) {
         [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
 
         return view('family.C-16-Name-Animal-Vegetable', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+        public function showWhatsWrongGame($testId, $domainNumber, $questionIndex)
+    {
+        $test           = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains        = $this->getDomains($scaleVersionId);
+        $currentDomain  = $domains[$domainNumber - 1];
+        $questions      = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question       = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses')
+            ->where('test_id', $testId)
+            ->where('question_id', $question->question_id)
+            ->value('response');
+
+        $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('family.C-20-Whats-wrong-pic', compact(
             'test', 'testId', 'currentDomain', 'question',
             'domainNumber', 'questionIndex', 'existingResponse',
             'totalAnswered', 'totalQuestions',

@@ -21,7 +21,7 @@
           $dob = is_string($student->date_of_birth) ? \Carbon\Carbon::parse($student->date_of_birth) : $student->date_of_birth;
         ?>
         <p class="mb-2"><strong>Date of Birth:</strong> <?php echo e($dob ? $dob->format('M d, Y') : 'N/A'); ?></p>
-        <p class="mb-2"><strong>Age:</strong> <?php echo e($student->age ?? 'N/A'); ?> years</p>
+        <p class="mb-2"><strong>Age:</strong> <?php echo e($student->age ?? 'N/A'); ?></p>
         <p class="mb-2"><strong>Section:</strong> <?php echo e(optional($student->section)->name ?? 'N/A'); ?></p>
         <p class="mb-2"><strong>Family:</strong> <?php echo e(optional($student->family)->family_name ?? 'N/A'); ?></p>
       </div>
@@ -89,12 +89,24 @@
                     </td>
                     <td><?php echo e($tests->count()); ?></td>
                     <td>
+                      <?php
+                        $inProgressTest = $tests->firstWhere('status', 'in_progress');
+                        $completedTest = $tests->firstWhere('status', 'completed');
+                        $finalizedTest = $tests->firstWhere('status', 'finalized');
+                        $viewableTest = $finalizedTest ?: $completedTest;
+                      ?>
                       <?php if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue'): ?>
-                        <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display: inline;">
-                          <?php echo csrf_field(); ?>
-                          <input type="hidden" name="period_id" value="<?php echo e($period->period_id); ?>">
-                          <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
-                        </form>
+                        <?php if($inProgressTest): ?>
+                          <a href="<?php echo e(route('teacher.tests.form', $inProgressTest->test_id)); ?>" class="btn btn-sm btn-outline-primary">Continue Test</a>
+                        <?php elseif($viewableTest): ?>
+                          <a href="<?php echo e(route('teacher.tests.result', $viewableTest->test_id)); ?>" class="btn btn-sm btn-outline-secondary">View Result</a>
+                        <?php else: ?>
+                          <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display: inline;">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="period_id" value="<?php echo e($period->period_id); ?>">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
+                          </form>
+                        <?php endif; ?>
                       <?php else: ?>
                         <span class="text-muted small">
                           <?php if($period->status === 'overdue'): ?>

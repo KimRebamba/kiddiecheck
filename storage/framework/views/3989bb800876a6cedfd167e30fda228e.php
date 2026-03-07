@@ -81,7 +81,7 @@
         <?php
           $teacher = Auth::user()->teacher;
           $assignedStudents = $teacher ? $teacher->students()->count() : 0;
-          $userId = Auth::user()->id ?? Auth::user()->user_id;
+          $userId = Auth::user()->user_id;
           $totalTests = \App\Models\Test::where('examiner_id', $userId)->count();
           $completedTests = \App\Models\Test::where('examiner_id', $userId)->whereIn('status', ['completed', 'finalized'])->count();
           $inProgressTests = \App\Models\Test::where('examiner_id', $userId)->where('status', 'in_progress')->count();

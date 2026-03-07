@@ -1,10 +1,19 @@
 
 
 <?php $__env->startSection('content'); ?>
+<style>
+  .admin-page-title { margin-bottom: 0.15rem; }
+  .admin-page-intro { font-size: 0.9rem; }
+  .admin-alert-card h2.h6 { font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  .admin-filter-toggle { font-size: 0.8rem; }
+  .admin-filter-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+  .admin-table-caption { font-size: 0.8rem; color: #6B7280; margin-bottom: 0.35rem; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
-    <h1 class="h4 mb-1">Students</h1>
-    <p class="text-muted mb-0">Monitor enrollments, assignments, and assessment progress.</p>
+    <h1 class="h4 admin-page-title">Students</h1>
+    <p class="text-muted admin-page-intro mb-0">Overview of all enrolled children, their families, and assessment status.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <a href="<?php echo e(route('admin.students.create')); ?>" class="btn btn-primary btn-sm">Add New Student</a>
@@ -15,64 +24,41 @@
 
 <div class="row g-3 mb-3">
   <div class="col-12 col-lg-6">
-    <div class="card h-100">
-      <div class="card-header bg-white border-0 pb-0">
-        <h2 class="h6 mb-1">Overdue Assessments</h2>
+    <div class="card h-100 admin-alert-card">
+      <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+          <h2 class="h6 mb-1">Overdue Assessments</h2>
+          <p class="text-muted small mb-0">Students whose assessment windows have closed without completion.</p>
+        </div>
       </div>
       <div class="card-body small">
-        <?php if($alerts['overdue']->isEmpty()): ?>
-          <p class="text-muted mb-0">No students with overdue assessment periods.</p>
-        <?php else: ?>
-          <ul class="list-group list-group-flush">
-            <?php $__currentLoopData = $alerts['overdue']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-              <li class="list-group-item px-0 d-flex justify-content-between">
-                <span><?php echo e($item->last_name); ?>, <?php echo e($item->first_name); ?> · <?php echo e($item->period_description); ?></span>
-                <span class="text-muted">Ended <?php echo e($item->end_date); ?></span>
-              </li>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-          </ul>
-        <?php endif; ?>
-      </div>
-    </div>
-  </div>
-  <div class="col-12 col-lg-6">
-    <div class="card h-100">
-      <div class="card-header bg-white border-0 pb-0">
-        <h2 class="h6 mb-1">Assignment & Evaluation Alerts</h2>
-      </div>
-      <div class="card-body small">
-        <h3 class="h6">Students without assigned teachers</h3>
-        <?php if($alerts['no_teachers']->isEmpty()): ?>
-          <p class="text-muted">All students have at least one teacher assigned.</p>
-        <?php else: ?>
-          <ul class="list-group list-group-flush mb-2">
-            <?php $__currentLoopData = $alerts['no_teachers']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-              <li class="list-group-item px-0"><?php echo e($item->last_name); ?>, <?php echo e($item->first_name); ?></li>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-          </ul>
-        <?php endif; ?>
+        <?php $overdueCount = $alerts['overdue']->count(); ?>
+        <p class="mb-1">
+          <span class="fw-semibold"><?php echo e($overdueCount); ?></span>
+          <span class="text-muted">student<?php echo e($overdueCount === 1 ? '' : 's'); ?> with overdue assessment periods.</span>
 
-        <h3 class="h6 mt-3">Missing family evaluations</h3>
-        <?php if($alerts['missing_family_eval']->isEmpty()): ?>
-          <p class="text-muted">No missing family standard scores detected.</p>
-        <?php else: ?>
-          <ul class="list-group list-group-flush mb-2">
-            <?php $__currentLoopData = $alerts['missing_family_eval']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-              <li class="list-group-item px-0"><?php echo e($item->last_name); ?>, <?php echo e($item->first_name); ?> · <?php echo e($item->period_description); ?></li>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-          </ul>
-        <?php endif; ?>
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <div class="border rounded-3 p-2 h-100">
+              <div class="text-muted small mb-1">No assigned teacher</div>
+              <div class="h5 mb-0"><?php echo e($noTeacherCount); ?></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="border rounded-3 p-2 h-100">
+              <div class="text-muted small mb-1">Missing family score</div>
+              <div class="h5 mb-0"><?php echo e($missingFamilyCount); ?></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="border rounded-3 p-2 h-100">
+              <div class="text-muted small mb-1">Scheduled, no tests</div>
+              <div class="h5 mb-0"><?php echo e($scheduledNoTestsCount); ?></div>
+            </div>
+          </div>
+        </div>
 
-        <h3 class="h6 mt-3">Scheduled periods with no tests</h3>
-        <?php if($alerts['scheduled_no_tests']->isEmpty()): ?>
-          <p class="text-muted mb-0">All scheduled periods have tests started.</p>
-        <?php else: ?>
-          <ul class="list-group list-group-flush mb-0">
-            <?php $__currentLoopData = $alerts['scheduled_no_tests']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-              <li class="list-group-item px-0"><?php echo e($item->last_name); ?>, <?php echo e($item->first_name); ?> · <?php echo e($item->period_description); ?> (starts <?php echo e($item->start_date); ?>)</li>
-            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-          </ul>
-        <?php endif; ?>
+        <p class="text-muted small mt-3 mb-0">Use the Students and Assessments pages for full lists when you need to drill into individual cases.</p>
       </div>
     </div>
   </div>
@@ -80,7 +66,17 @@
 
 
 <div class="card mb-3">
-  <div class="card-body py-2">
+  <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+    <div>
+      <div class="admin-filter-label">Filters</div>
+      <p class="text-muted small mb-1">Narrow down students by section, age, teachers, and assessment status.</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm admin-filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#studentsFilter" aria-expanded="true" aria-controls="studentsFilter">
+      Show / Hide filters
+    </button>
+  </div>
+  <div id="studentsFilter" class="collapse show">
+    <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-12 col-md-3">
         <label class="form-label form-label-sm">Section</label>
@@ -151,6 +147,7 @@
         <button type="submit" class="btn btn-outline-secondary btn-sm">Apply Filters</button>
       </div>
     </form>
+    </div>
   </div>
 </div>
 
@@ -175,6 +172,7 @@
   <div class="card">
     <div class="card-body p-0">
       <div class="table-responsive">
+        <div class="admin-table-caption">Showing <?php echo e($students->count()); ?> of <?php echo e($students->total()); ?> students (paginated).</div>
         <table class="table table-sm mb-0 align-middle">
           <thead class="table-light">
             <tr>
@@ -198,7 +196,7 @@
                 <td><input type="checkbox" class="student-check" name="student_ids[]" value="<?php echo e($s->student_id); ?>"></td>
                 <td>
                   <?php if($s->feature_path): ?>
-                    <img src="<?php echo e(asset($s->feature_path)); ?>" alt="" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
+                    <img src="<?php echo e(asset('storage/' . $s->feature_path)); ?>" alt="" class="rounded-circle" style="width:36px;height:36px;object-fit:cover;">
                   <?php else: ?>
                     <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;font-size:0.8rem;">
                       <?php echo e(strtoupper(substr($s->first_name, 0, 1))); ?>

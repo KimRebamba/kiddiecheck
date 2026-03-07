@@ -31,7 +31,7 @@ class DemoSeeder extends Seeder
     {
         $now = now();
        
-        DB::table('users')->insert([
+        $users = [
             [
                 'user_id' => 1,
                 'username' => 'Admin_A',
@@ -109,7 +109,18 @@ class DemoSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-        ]);
+        ];
+
+        foreach ($users as $user) {
+            $id = $user['user_id'];
+            $data = $user;
+            unset($data['user_id']);
+
+            DB::table('users')->updateOrInsert(
+                ['user_id' => $id],
+                $data
+            );
+        }
     }
 
     protected function sections_add(): void
@@ -141,8 +152,7 @@ class DemoSeeder extends Seeder
     protected function teachers_add(): void
     {
         $now = now();
-
-        DB::table('teachers')->insert([
+        $teachers = [
             [
                 'user_id' => 2,
                 'first_name' => 'Teacher',
@@ -176,7 +186,18 @@ class DemoSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-        ]);
+        ];
+
+        foreach ($teachers as $teacher) {
+            $id = $teacher['user_id'];
+            $data = $teacher;
+            unset($data['user_id']);
+
+            DB::table('teachers')->updateOrInsert(
+                ['user_id' => $id],
+                $data
+            );
+        }
     }
 
     protected function families_add(): void
@@ -220,8 +241,7 @@ class DemoSeeder extends Seeder
     protected function students_add(): void
     {
         $now = now();
-
-        DB::table('students')->insert([
+        $students = [
             [
                 'student_id' => 1,
                 'first_name' => 'Juan',
@@ -255,46 +275,51 @@ class DemoSeeder extends Seeder
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
-        ]);
+        ];
+
+        foreach ($students as $student) {
+            $id = $student['student_id'];
+            $data = $student;
+            unset($data['student_id']);
+
+            DB::table('students')->updateOrInsert(
+                ['student_id' => $id],
+                $data
+            );
+        }
     }
 
     protected function studentTeacher_add(): void
     {
-        DB::table('student_teacher')->insert([
+        $rows = [
             // Teacher A (ID 2) gets all students in Section 1
-            [
-                'student_id' => 1, // Juan - Section 1
-                'teacher_id' => 2,
-            ],
-            [
-                'student_id' => 2, // Maria - Section 1  
-                'teacher_id' => 2,
-            ],
-            [
-                'student_id' => 3, // Pedro - Section 1
-                'teacher_id' => 2,
-            ],
-            
+            ['student_id' => 1, 'teacher_id' => 2],
+            ['student_id' => 2, 'teacher_id' => 2],
+            ['student_id' => 3, 'teacher_id' => 2],
+
             // Teacher B (ID 3) gets all students in Section 2
-            [
-                'student_id' => 2, // Maria - Section 2
-                'teacher_id' => 3,
-            ],
-            
+            ['student_id' => 2, 'teacher_id' => 3],
+
             // Teacher C (ID 4) gets all students in Section 3
-            [
-                'student_id' => 3, // Pedro - Section 3
-                'teacher_id' => 4,
-            ],
-        ]);
+            ['student_id' => 3, 'teacher_id' => 4],
+        ];
+
+        foreach ($rows as $row) {
+            DB::table('student_teacher')->updateOrInsert(
+                [
+                    'student_id' => $row['student_id'],
+                    'teacher_id' => $row['teacher_id'],
+                ],
+                []
+            );
+        }
     }
 
     protected function assessmentPeriods_add(): void
     {
         $now = now();
         // Each enrolled student gets three assessment periods
-        // representing 6th, 12th, and 18th months (6 months apart)
-        DB::table('assessment_periods')->insert([
+        $periods = [
             // Juan (student 1)
             [
                 'period_id' => 1,
@@ -303,8 +328,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2025-01-01',
                 'end_date' => '2025-06-30',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 2,
@@ -313,8 +336,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2025-07-01',
                 'end_date' => '2025-12-31',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 3,
@@ -323,8 +344,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2026-01-01',
                 'end_date' => '2026-06-30',
                 'status' => 'scheduled',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
 
             // Maria (student 2)
@@ -335,8 +354,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2025-03-01',
                 'end_date' => '2025-08-31',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 5,
@@ -345,8 +362,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2025-09-01',
                 'end_date' => '2026-02-28',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 6,
@@ -355,8 +370,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2026-03-01',
                 'end_date' => '2026-08-31',
                 'status' => 'overdue',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
 
             // Pedro (student 3)
@@ -367,8 +380,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2024-01-01',
                 'end_date' => '2024-06-30',
                 'status' => 'overdue',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 8,
@@ -377,8 +388,6 @@ class DemoSeeder extends Seeder
                 'start_date' => '2024-07-01',
                 'end_date' => '2024-12-31',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'period_id' => 9,
@@ -387,17 +396,28 @@ class DemoSeeder extends Seeder
                 'start_date' => '2025-01-01',
                 'end_date' => '2025-06-30',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
-        ]);
+        ];
+
+        foreach ($periods as $period) {
+            $id = $period['period_id'];
+            $data = $period;
+            unset($data['period_id']);
+
+            DB::table('assessment_periods')->updateOrInsert(
+                ['period_id' => $id],
+                array_merge($data, [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+            );
+        }
     }
 
     protected function tests_add(): void
     {
         $now = now();
-
-        DB::table('tests')->insert([
+        $tests = [
             [
                 'test_id' => 1,
                 'period_id' => 1,
@@ -406,8 +426,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-03-05',
                 'notes' => 'Juan 6th month - Teacher A (finalized)',
                 'status' => 'finalized',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 2,
@@ -417,8 +435,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-03-10',
                 'notes' => 'Juan 6th month - Teacher B (completed)',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 3,
@@ -428,8 +444,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-03-12',
                 'notes' => 'Juan 6th month - Family canceled initial test',
                 'status' => 'canceled',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 4,
@@ -439,8 +453,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-03-20',
                 'notes' => 'Juan 6th month - Family re-test finalized',
                 'status' => 'finalized',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 5,
@@ -450,8 +462,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-09-10',
                 'notes' => 'Juan 12th month - Teacher A completed',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 6,
@@ -461,8 +471,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-09-15',
                 'notes' => 'Juan 12th month - Family completed',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 7,
@@ -472,8 +480,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-04-10',
                 'notes' => 'Maria 6th month - Teacher canceled test',
                 'status' => 'canceled',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 8,
@@ -483,8 +489,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-04-12',
                 'notes' => 'Maria 6th month - Teacher terminated mid-test',
                 'status' => 'terminated',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 9,
@@ -494,8 +498,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-04-20',
                 'notes' => 'Maria 6th month - Teacher B in-progress',
                 'status' => 'in_progress',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 10,
@@ -505,8 +507,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-11-05',
                 'notes' => 'Maria 12th month - Teacher A completed',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 11,
@@ -516,8 +516,6 @@ class DemoSeeder extends Seeder
                 'test_date' => '2025-11-10',
                 'notes' => 'Maria 12th month - Family completed',
                 'status' => 'completed',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
             [
                 'test_id' => 12,
@@ -527,10 +525,22 @@ class DemoSeeder extends Seeder
                 'test_date' => '2024-08-20',
                 'notes' => 'Pedro 12th month - Teacher C finalized',
                 'status' => 'finalized',
-                'created_at' => $now,
-                'updated_at' => $now,
             ],
-        ]);
+        ];
+
+        foreach ($tests as $test) {
+            $id = $test['test_id'];
+            $data = $test;
+            unset($data['test_id']);
+
+            DB::table('tests')->updateOrInsert(
+                ['test_id' => $id],
+                array_merge($data, [
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+            );
+        }
     }
 
     protected function testResponses_add(): void
@@ -638,7 +648,18 @@ class DemoSeeder extends Seeder
             ];
         }
 
-        DB::table('test_responses')->insert($rows);
+        foreach ($rows as $row) {
+            DB::table('test_responses')->updateOrInsert(
+                [
+                    'test_id' => $row['test_id'],
+                    'question_id' => $row['question_id'],
+                ],
+                [
+                    'is_assumed' => $row['is_assumed'],
+                    'response' => $row['response'],
+                ]
+            );
+        }
     }
 
     protected function computedScores_add(): void
@@ -768,15 +789,19 @@ class DemoSeeder extends Seeder
                     continue;
                 }
 
-                DB::table('test_domain_scaled_scores')->insert([
-                    'test_id' => $testId,
-                    'domain_id' => $domainIds[$domainName],
-                    'scale_version_id' => $scaleVersionId,
-                    'raw_score' => $scores['raw'],
-                    'scaled_score' => $scores['scaled'],
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
+                DB::table('test_domain_scaled_scores')->updateOrInsert(
+                    [
+                        'test_id' => $testId,
+                        'domain_id' => $domainIds[$domainName],
+                        'scale_version_id' => $scaleVersionId,
+                    ],
+                    [
+                        'raw_score' => $scores['raw'],
+                        'scaled_score' => $scores['scaled'],
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]
+                );
             }
         }
 
@@ -801,15 +826,19 @@ class DemoSeeder extends Seeder
         ];
 
         foreach ($testStandard as $testId => $row) {
-            DB::table('test_standard_scores')->insert([
-                'test_id' => $testId,
-                'scale_version_id' => $scaleVersionId,
-                'sum_scaled_scores' => $row['sum_scaled'],
-                'standard_score' => $row['standard'],
-                'interpretation' => $row['interpretation'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            DB::table('test_standard_scores')->updateOrInsert(
+                [
+                    'test_id' => $testId,
+                    'scale_version_id' => $scaleVersionId,
+                ],
+                [
+                    'sum_scaled_scores' => $row['sum_scaled'],
+                    'standard_score' => $row['standard'],
+                    'interpretation' => $row['interpretation'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
         }
 
         // Period-level summary scores (steps 7–11 of the flow)
@@ -856,17 +885,19 @@ class DemoSeeder extends Seeder
         ];
 
         foreach ($periodSummaries as $periodId => $row) {
-            DB::table('period_summary_scores')->insert([
-                'period_id' => $periodId,
-                'teachers_standard_score_avg' => $row['teachers_standard_score_avg'],
-                'family_standard_score' => $row['family_standard_score'],
-                'final_standard_score' => $row['final_standard_score'],
-                'final_interpretation' => $row['final_interpretation'],
-                'teacher_discrepancy' => $row['teacher_discrepancy'],
-                'teacher_family_discrepancy' => $row['teacher_family_discrepancy'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            DB::table('period_summary_scores')->updateOrInsert(
+                ['period_id' => $periodId],
+                [
+                    'teachers_standard_score_avg' => $row['teachers_standard_score_avg'],
+                    'family_standard_score' => $row['family_standard_score'],
+                    'final_standard_score' => $row['final_standard_score'],
+                    'final_interpretation' => $row['final_interpretation'],
+                    'teacher_discrepancy' => $row['teacher_discrepancy'],
+                    'teacher_family_discrepancy' => $row['teacher_family_discrepancy'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
         }
-}
+    }
 }

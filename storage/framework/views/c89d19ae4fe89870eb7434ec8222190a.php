@@ -2,31 +2,20 @@
 
 <?php $__env->startSection('content'); ?>
 <style>
-  .dashboard-title {
-    font-weight: 600;
-  }
-  .summary-card {
-    border-radius: 0.75rem;
-  }
-  .summary-card .card-title {
-    font-size: 0.95rem;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-  }
-  .summary-card .display-6 {
-    font-weight: 600;
-  }
-  .status-chip {
-    border-radius: 999px;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.85rem;
-  }
+  .dashboard-title { font-weight: 800; letter-spacing: -0.03em; }
+  .dashboard-subtitle { font-size: 0.9rem; }
+  .summary-card { border-radius: 1.1rem; border: 1px solid #E5E7EB; box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+  .summary-card .card-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: .09em; color: #6B7280; }
+  .summary-card .display-6 { font-weight: 700; color: #111827; }
+  .status-chip { border-radius: 999px; padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+  .dashboard-section-title { font-size: 0.85rem; letter-spacing: .08em; text-transform: uppercase; color: #6B7280; }
+  .dashboard-section-subtitle { font-size: 0.85rem; color: #9CA3AF; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
   <div>
     <h1 class="h3 dashboard-title mb-1">Admin Dashboard</h1>
-    <p class="text-muted mb-0">High-level overview of school assessments and activity.</p>
+    <p class="text-muted dashboard-subtitle mb-0">High-level overview of assessments, users, and students across the school.</p>
   </div>
 </div>
 
@@ -83,69 +72,36 @@
 </div>
 
 <div class="row g-4 mb-4">
-  
-  <div class="col-12 col-lg-6">
+  <div class="col-12">
     <div class="card h-100 shadow-sm">
       <div class="card-header bg-white border-0 pb-0">
         <h2 class="h6 mb-1">Assessment Status Overview</h2>
-        <p class="text-muted small mb-0">Monitor scheduled, ongoing, completed, and overdue assessments.</p>
+        <p class="text-muted small mb-0">Scheduled, ongoing, completed, and overdue assessments at a glance.</p>
       </div>
       <div class="card-body">
         <div class="row text-center g-3">
-          <div class="col-6">
+          <div class="col-6 col-md-3">
             <div class="border rounded-3 p-3 h-100">
-              <div class="text-muted small mb-1">Scheduled Assessments</div>
+              <div class="text-muted small mb-1">Scheduled</div>
               <div class="h4 mb-0"><?php echo e($scheduledAssessments); ?></div>
             </div>
           </div>
-          <div class="col-6">
+          <div class="col-6 col-md-3">
             <div class="border rounded-3 p-3 h-100">
-              <div class="text-muted small mb-1">Ongoing Tests</div>
+              <div class="text-muted small mb-1">Ongoing</div>
               <div class="h4 mb-0"><?php echo e($ongoingTests); ?></div>
             </div>
           </div>
-          <div class="col-6">
+          <div class="col-6 col-md-3">
             <div class="border rounded-3 p-3 h-100">
-              <div class="text-muted small mb-1">Completed Tests</div>
+              <div class="text-muted small mb-1">Completed</div>
               <div class="h4 mb-0"><?php echo e($completedTests); ?></div>
             </div>
           </div>
-          <div class="col-6">
+          <div class="col-6 col-md-3">
             <div class="border rounded-3 p-3 h-100">
-              <div class="text-muted small mb-1">Overdue Assessments</div>
+              <div class="text-muted small mb-1">Overdue</div>
               <div class="h4 mb-0 text-danger"><?php echo e($overdueAssessments); ?></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-  <div class="col-12 col-lg-6">
-    <div class="card h-100 shadow-sm">
-      <div class="card-header bg-white border-0 pb-0">
-        <h2 class="h6 mb-1">Development Summary Snapshot</h2>
-        <p class="text-muted small mb-0">Aggregate outcomes across completed assessment periods.</p>
-      </div>
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-12 col-md-4">
-            <div class="border rounded-3 p-3 h-100 text-center">
-              <div class="text-muted small mb-1">Advanced Development</div>
-              <div class="h4 mb-0 text-success"><?php echo e($developmentSnapshot['advanced']); ?></div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="border rounded-3 p-3 h-100 text-center">
-              <div class="text-muted small mb-1">Average Development</div>
-              <div class="h4 mb-0"><?php echo e($developmentSnapshot['average']); ?></div>
-            </div>
-          </div>
-          <div class="col-12 col-md-4">
-            <div class="border rounded-3 p-3 h-100 text-center">
-              <div class="text-muted small mb-1">Needs Monitoring / Retest</div>
-              <div class="h4 mb-0 text-warning"><?php echo e($developmentSnapshot['monitor']); ?></div>
             </div>
           </div>
         </div>
@@ -155,32 +111,7 @@
 </div>
 
 <div class="row g-4 mb-4">
-  
-  <div class="col-12 col-lg-6">
-    <div class="card h-100 shadow-sm">
-      <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
-        <div>
-          <h2 class="h6 mb-1">Recent Activity</h2>
-          <p class="text-muted small mb-0">Latest teacher, family, and system events.</p>
-        </div>
-      </div>
-      <div class="card-body">
-        <ul class="list-group list-group-flush small">
-          <?php $__empty_1 = true; $__currentLoopData = $recentActivities; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-            <li class="list-group-item px-0 d-flex justify-content-between align-items-start">
-              <span><?php echo e($item['label']); ?></span>
-              <span class="text-muted ms-3"><?php echo e(\Illuminate\Support\Carbon::parse($item['time'])->diffForHumans()); ?></span>
-            </li>
-          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-            <li class="list-group-item px-0 text-muted">No recent activity to display.</li>
-          <?php endif; ?>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  
-  <div class="col-12 col-lg-6">
+  <div class="col-12">
     <div class="card h-100 shadow-sm">
       <div class="card-header bg-white border-0 pb-0">
         <h2 class="h6 mb-1">Students Requiring Attention</h2>

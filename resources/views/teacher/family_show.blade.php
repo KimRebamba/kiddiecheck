@@ -84,7 +84,7 @@
                         <a href="{{ route('teacher.student', $student->student_id) }}" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-eye me-1"></i>View
                         </a>
-                        <a href="{{ route('teacher.reports.show', ['student' => $student->student_id, 'period' => 1]) }}" class="btn btn-sm btn-outline-primary">
+                        <a href="{{ route('teacher.reports') }}" class="btn btn-sm btn-outline-primary">
                           <i class="fas fa-file-alt me-1"></i>Reports
                         </a>
                       </div>

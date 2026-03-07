@@ -1,10 +1,17 @@
 @extends('admin.layout')
 
 @section('content')
+<style>
+  .admin-page-title { font-weight: 800; letter-spacing: -0.03em; }
+  .admin-page-intro { font-size: 0.9rem; }
+  .admin-filter-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6B7280; }
+  .admin-filter-toggle { font-size: 0.8rem; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
-    <h1 class="h4 mb-1">Reports</h1>
-    <p class="text-muted mb-0">High-level insights, risk detection, and consistency monitoring.</p>
+    <h1 class="h4 admin-page-title mb-1">Reports</h1>
+    <p class="text-muted admin-page-intro mb-0">School-wide insights, risk detection, and consistency monitoring.</p>
   </div>
   <div class="d-flex flex-wrap gap-2">
     <a href="{{ route('admin.reports.export', ['format' => 'excel'] + request()->query()) }}" class="btn btn-outline-secondary btn-sm">Export Red Flags (Excel)</a>
@@ -14,6 +21,16 @@
 
 {{-- Global filters --}}
 <div class="card mb-3">
+  <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+    <div>
+      <div class="admin-filter-label">Filters</div>
+      <p class="text-muted small mb-1">Limit reports by age, teacher, domain, interpretation, and scale.</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm admin-filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#reportsFilter" aria-expanded="true" aria-controls="reportsFilter">
+      Show / Hide filters
+    </button>
+  </div>
+  <div id="reportsFilter" class="collapse show">
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-6 col-md-2">
@@ -75,6 +92,7 @@
         <button type="submit" class="btn btn-outline-secondary btn-sm">Apply Filters</button>
       </div>
     </form>
+  </div>
   </div>
 </div>
 

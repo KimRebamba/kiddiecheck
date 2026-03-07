@@ -14,9 +14,10 @@
     $st = $status[$s->student_id] ?? null;
     return $st && ($st['eligible'] ?? false);
   });
-  $recentCompleted = \App\Models\Test::with(['student'])
+  $recentCompleted = \App\Models\Test::with(['student','standardScore'])
     ->where('examiner_id', auth()->id())
-    ->where('status', 'completed')
+    ->whereIn('status', ['completed', 'finalized'])
+    ->where('test_date', '>=', now()->subDays(30))
     ->orderByDesc('test_date')
     ->limit(10)
     ->get();
@@ -158,9 +159,37 @@
               <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
               <td><span class="badge bg-info">{{ $assessment->status }}</span></td>
               <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-play me-1"></i>Start Test
-                </a>
+                @php
+                  $tests = \App\Models\Test::where('student_id', $assessment->student->student_id)
+                    ->where('period_id', $assessment->period_id)
+                    ->where('examiner_id', auth()->id())
+                    ->get();
+                  $inProgressTest = $tests->firstWhere('status', 'in_progress');
+                  $completedTest = $tests->firstWhere('status', 'completed');
+                  $finalizedTest = $tests->firstWhere('status', 'finalized');
+                  $viewableTest = $finalizedTest ?: $completedTest;
+                  $st = $status[$assessment->student->student_id] ?? null;
+                  $eligible = $st['eligible'] ?? false;
+                @endphp
+                @if($inProgressTest)
+                  <a href="{{ route('teacher.tests.form', $inProgressTest->test_id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-play me-1"></i>Continue Test
+                  </a>
+                @elseif($viewableTest)
+                  <a href="{{ route('teacher.tests.result', $viewableTest->test_id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-eye me-1"></i>View Result
+                  </a>
+                @elseif(!$eligible)
+                  <span class="text-muted small">Not eligible for new test yet.</span>
+                @else
+                  <form action="{{ route('teacher.tests.start', $assessment->student->student_id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    <input type="hidden" name="period_id" value="{{ $assessment->period_id }}">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      <i class="fas fa-play me-1"></i>Start Test
+                    </button>
+                  </form>
+                @endif
               </td>
             </tr>
           @endforeach
@@ -209,9 +238,7 @@
               <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
               <td><span class="badge bg-danger">{{ \Carbon\Carbon::parse($assessment->end_date)->diffInDays(now()) }} days</span></td>
               <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-danger">
-                  <i class="fas fa-exclamation me-1"></i>Start Now
-                </a>
+                <span class="text-muted small">Period overdue. New tests cannot be started.</span>
               </td>
             </tr>
           @endforeach
@@ -329,13 +356,22 @@
               </td>
               <td>{{ $item['test']->test_date->format('M j, Y') }}</td>
               <td>
+                @php
+                  $totalQuestions = \DB::table('questions')
+                    ->join('domains', 'questions.domain_id', '=', 'domains.domain_id')
+                    ->count();
+                  $answered = \DB::table('test_responses')
+                    ->where('test_id', $item['test']->test_id)
+                    ->count();
+                  $pct = $totalQuestions ? round(($answered / max(1,$totalQuestions)) * 100) : 0;
+                @endphp
                 <div class="progress" style="height: 6px;">
-                  <div class="progress-bar bg-warning" style="width: 60%"></div>
+                  <div class="progress-bar bg-warning" style="width: {{ $pct }}%"></div>
                 </div>
-                <div class="text-muted small mt-1">60% Complete</div>
+                <div class="text-muted small mt-1">{{ $answered }} / {{ $totalQuestions }} ({{ $pct }}%)</div>
               </td>
               <td>
-                <a href="{{ route('teacher.tests.question', ['test' => $item['test']->test_id, 'domain' => 1, 'index' => 0]) }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('teacher.tests.form', $item['test']->test_id) }}" class="btn btn-sm btn-primary">
                   <i class="fas fa-play me-1"></i>Continue
                 </a>
               </td>
@@ -386,9 +422,31 @@
                 <span class="badge bg-info">{{ $student->section->name ?? 'N/A' }}</span>
               </td>
               <td>
-                <a href="{{ route('teacher.tests.start', $student->student_id) }}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-plus me-1"></i>Start Test
-                </a>
+                @php
+                  $activeTest = \App\Models\Test::where('student_id', $student->student_id)
+                    ->where('examiner_id', auth()->id())
+                    ->whereHas('assessmentPeriod', function ($q) {
+                      $q->where('status', 'scheduled');
+                    })
+                    ->orderByDesc('test_date')
+                    ->first();
+                @endphp
+                @if($activeTest && $activeTest->status === 'in_progress')
+                  <a href="{{ route('teacher.tests.form', $activeTest->test_id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-play me-1"></i>Continue Test
+                  </a>
+                @elseif($activeTest && in_array($activeTest->status, ['completed', 'finalized']))
+                  <a href="{{ route('teacher.tests.result', $activeTest->test_id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-eye me-1"></i>View Result
+                  </a>
+                @else
+                  <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      <i class="fas fa-plus me-1"></i>Start Test
+                    </button>
+                  </form>
+                @endif
               </td>
             </tr>
           @endforeach
@@ -435,19 +493,26 @@
               </td>
               <td>{{ $test->test_date->format('M j, Y') }}</td>
               <td>
-                <div class="fw-bold text-success">85/100</div>
+                @php
+                  $score = optional($test->standardScore)->standard_score;
+                @endphp
+                <div class="fw-bold {{ $score !== null ? 'text-success' : 'text-muted' }}">
+                  {{ $score !== null ? $score : 'Not scored' }}
+                </div>
               </td>
               <td>
-                <span class="badge bg-success">Completed</span>
+                @php
+                  $statusLabel = ucfirst($test->status);
+                  $badgeClass = $test->status === 'finalized' ? 'bg-success' : 'bg-info';
+                @endphp
+                <span class="badge {{ $badgeClass }}">{{ $statusLabel }}</span>
               </td>
               <td>
                 <div class="btn-group" role="group">
                   <a href="{{ route('teacher.tests.result', $test->test_id) }}" class="btn btn-sm btn-outline-primary">
                     <i class="fas fa-eye me-1"></i>View
                   </a>
-                  <a href="{{ route('teacher.reports.show', ['student' => $test->student_id, 'period' => $test->assessment_period_id]) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-file-alt me-1"></i>Report
-                  </a>
+                  
                 </div>
               </td>
             </tr>
@@ -459,26 +524,268 @@
 </div>
 @endif
 
+
+
 <style>
-  .card {
-    border: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 1.5rem;
-  }
-  .btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-  }
-  .avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--teacher-primary);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-  }
+/* ── FONTS ── */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* ── TOKENS ── */
+:root {
+  --violet:       #845EC2;
+  --violet-soft:  #EDE4FF;
+  --violet-bg:    #F8F4FF;
+  --teal:         #2EC4B6;
+  --teal-soft:    #C8F4F1;
+  --coral:        #FF6B8A;
+  --coral-soft:   #FFE0E8;
+  --mint:         #52C27B;
+  --mint-soft:    #D4F5E2;
+  --lemon:        #F9C74F;
+  --lemon-soft:   #FFF6CC;
+  --sky:          #4EA8DE;
+  --sky-soft:     #D6EEFF;
+  --peach:        #FF9A76;
+  --text:         #2D2040;
+  --text-muted:   #8A7A99;
+  --radius:       14px;
+  --shadow:       0 4px 20px rgba(100,60,160,0.09);
+}
+
+/* ── BASE ── */
+body { font-family: 'Nunito', sans-serif !important; color: var(--text); background: var(--violet-bg); }
+
+/* ── PAGE TITLE ── */
+.h3.fw-bold {
+  font-family: 'Baloo 2', cursive !important;
+  font-size: 1.7rem !important;
+  background: linear-gradient(135deg, var(--violet), var(--coral));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── CARDS ── */
+.card {
+  border: none !important;
+  border-radius: var(--radius) !important;
+  box-shadow: var(--shadow) !important;
+  margin-bottom: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+  animation: fadeUp 0.4s ease both;
+}
+.card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(100,60,160,0.13) !important; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── PROFILE CARD ── */
+.row.g-4.mb-4:first-of-type .card {
+  background: linear-gradient(135deg, #EDE4FF 0%, #D6EEFF 100%) !important;
+  border-left: 4px solid var(--violet) !important;
+}
+.row.g-4.mb-4:first-of-type .card h5 {
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+}
+.row.g-4.mb-4:first-of-type .avatar {
+  width: 60px !important; height: 60px !important;
+  font-size: 1.4rem !important;
+  background: linear-gradient(135deg, var(--violet), var(--coral)) !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 14px rgba(132,94,194,0.3);
+}
+
+/* ── STAT CARDS ── */
+.row.g-4.mb-4:nth-of-type(2) .card {
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.row.g-4.mb-4:nth-of-type(2) .card::before {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  opacity: 0.10;
+}
+.row.g-4.mb-4:nth-of-type(2) .col-12:nth-child(1) .card::before { background: var(--violet); }
+.row.g-4.mb-4:nth-of-type(2) .col-12:nth-child(2) .card::before { background: var(--teal); }
+.row.g-4.mb-4:nth-of-type(2) .col-12:nth-child(3) .card::before { background: var(--coral); }
+.row.g-4.mb-4:nth-of-type(2) .col-12:nth-child(4) .card::before { background: var(--mint); }
+
+.row.g-4.mb-4:nth-of-type(2) .display-4 {
+  font-family: 'Baloo 2', cursive !important;
+  font-size: 2.6rem !important;
+  font-weight: 800 !important;
+  line-height: 1;
+}
+.row.g-4.mb-4:nth-of-type(2) h6.text-muted {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 800 !important;
+}
+
+/* recolor stat icons */
+.text-primary.fs-2 { color: var(--violet) !important; }
+.text-info.fs-2    { color: var(--teal)   !important; }
+.text-danger.fs-2  { color: var(--coral)  !important; }
+.text-success.fs-2 { color: var(--mint)   !important; }
+.text-primary.fs-1.fw-bold { color: var(--violet) !important; }
+.text-info.fs-1.fw-bold    { color: var(--teal)   !important; }
+.text-danger.fs-1.fw-bold  { color: var(--coral)  !important; }
+.text-success.fs-1.fw-bold { color: var(--mint)   !important; }
+
+/* ── CARD HEADERS ── */
+.card-header {
+  background: #FDFBFF !important;
+  border-bottom: 2px solid #F0E8FF !important;
+  padding: 14px 20px !important;
+}
+.card-header .card-title {
+  font-family: 'Baloo 2', cursive !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+}
+.card-header .fas.fa-calendar-check { color: var(--teal); }
+.card-header .fas.fa-exclamation-triangle { color: var(--coral); }
+.card-header .fas.fa-users           { color: var(--violet); }
+.card-header .fas.fa-clock           { color: var(--lemon); }
+.card-header .fas.fa-user-check      { color: var(--sky); }
+.card-header .fas.fa-check-circle    { color: var(--mint); }
+
+/* ── TABLES ── */
+.table { margin-bottom: 0 !important; }
+.table thead th {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted) !important;
+  background: #FDFBFF !important;
+  border-bottom: 2px solid #F0E8FF !important;
+  padding: 11px 16px !important;
+  white-space: nowrap;
+}
+.table tbody tr {
+  border-bottom: 1px solid #F9F5FF !important;
+  transition: background 0.15s;
+}
+.table tbody tr:last-child { border-bottom: none !important; }
+.table-hover tbody tr:hover { background: #FDFBFF !important; }
+.table tbody td {
+  padding: 13px 16px !important;
+  font-size: 0.875rem;
+  vertical-align: middle !important;
+  border: none !important;
+}
+
+/* ── AVATARS (table rows) ── */
+.avatar {
+  border-radius: 50% !important;
+  font-weight: 900 !important;
+  color: white !important;
+  flex-shrink: 0;
+}
+/* cycle gradient colors by nth-child */
+tbody tr:nth-child(5n+1) .avatar { background: linear-gradient(135deg, var(--coral), var(--peach)) !important; }
+tbody tr:nth-child(5n+2) .avatar { background: linear-gradient(135deg, var(--teal),  var(--sky))   !important; }
+tbody tr:nth-child(5n+3) .avatar { background: linear-gradient(135deg, var(--violet),var(--coral)) !important; }
+tbody tr:nth-child(5n+4) .avatar { background: linear-gradient(135deg, var(--mint),  var(--teal))  !important; }
+tbody tr:nth-child(5n+5) .avatar { background: linear-gradient(135deg, var(--lemon), var(--peach)) !important; }
+
+.fw-semibold { font-weight: 800 !important; font-size: 0.88rem; color: var(--text); }
+.text-muted.small { font-size: 0.75rem !important; font-weight: 600; color: var(--text-muted) !important; }
+
+/* ── BADGES ── */
+.badge {
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  padding: 4px 12px !important;
+  border-radius: 20px !important;
+}
+.badge.bg-primary   { background: var(--violet-soft) !important; color: #5a3e8a !important; }
+.badge.bg-info      { background: var(--sky-soft)    !important; color: #2260a0 !important; }
+.badge.bg-warning   { background: var(--lemon-soft)  !important; color: #9a6800 !important; }
+.badge.bg-success   { background: var(--mint-soft)   !important; color: #2a7a50 !important; }
+.badge.bg-danger    { background: var(--coral-soft)  !important; color: #c0294a !important; }
+.badge.no-status    { background: #F0E8FF             !important; color: var(--text-muted)  !important; }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 800 !important;
+  border-radius: 10px !important;
+  transition: all 0.18s !important;
+  font-size: 0.78rem !important;
+}
+.btn-primary, .btn-sm.btn-primary {
+  background: linear-gradient(135deg, var(--violet), var(--coral)) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 3px 10px rgba(132,94,194,0.25) !important;
+}
+.btn-primary:hover, .btn-sm.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 16px rgba(132,94,194,0.35) !important;
+}
+.btn-outline-primary, .btn-sm.btn-outline-primary {
+  background: white !important;
+  color: var(--violet) !important;
+  border: 1.5px solid var(--violet-soft) !important;
+}
+.btn-outline-primary:hover, .btn-sm.btn-outline-primary:hover {
+  background: var(--violet-soft) !important;
+}
+.btn-outline-secondary, .btn-sm.btn-outline-secondary {
+  background: white !important;
+  color: var(--text-muted) !important;
+  border: 1.5px solid #E8E0F0 !important;
+}
+
+/* ── PROGRESS BAR ── */
+.progress {
+  background: #F0E8FF !important;
+  border-radius: 10px !important;
+  height: 7px !important;
+}
+.progress-bar {
+  background: linear-gradient(90deg, var(--violet), var(--coral)) !important;
+  border-radius: 10px !important;
+}
+.progress-bar.bg-warning {
+  background: linear-gradient(90deg, var(--lemon), var(--peach)) !important;
+}
+
+/* ── SCORE VALUE IN COMPLETED TABLE ── */
+.fw-bold.text-success {
+  font-family: 'Baloo 2', cursive !important;
+  font-size: 1.2rem !important;
+  color: var(--mint) !important;
+}
+
+/* ── "NOT ELIGIBLE" MUTED TEXT ── */
+.text-muted.small:not(.student-sub) {
+  font-style: italic;
+}
+
+/* ── STAGGER CARD ANIMATIONS ── */
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.10s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.20s; }
+.card:nth-child(5) { animation-delay: 0.25s; }
+.card:nth-child(6) { animation-delay: 0.30s; }
+.card:nth-child(7) { animation-delay: 0.35s; }
+
+/* ── PAGE FADE IN ── */
+.container-fluid, .container {
+  animation: fadeDown 0.35s ease;
+}
+@keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
 </style>
 @endsection

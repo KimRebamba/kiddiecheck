@@ -16,10 +16,8 @@
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <span class="badge bg-primary text-capitalize"><?php echo e($user->role); ?></span>
         <?php $status = $user->status ?? 'active'; ?>
-        <?php if($status === 'disabled'): ?>
-          <span class="badge bg-secondary">Disabled</span>
-        <?php elseif($status === 'reset_required'): ?>
-          <span class="badge bg-warning text-dark">Reset Required</span>
+        <?php if($status === 'inactive'): ?>
+          <span class="badge bg-secondary">Inactive</span>
         <?php else: ?>
           <span class="badge bg-success">Active</span>
         <?php endif; ?>
@@ -30,8 +28,8 @@
     <a href="<?php echo e(route('admin.users.edit', $user->user_id)); ?>" class="btn btn-outline-secondary btn-sm">Edit</a>
     <form method="post" action="<?php echo e(route('admin.users.status', $user->user_id)); ?>" class="d-inline">
       <?php echo csrf_field(); ?>
-      <input type="hidden" name="status" value="<?php echo e(($status === 'disabled') ? 'active' : 'disabled'); ?>">
-      <button type="submit" class="btn btn-outline-secondary btn-sm"><?php echo e($status === 'disabled' ? 'Enable' : 'Disable'); ?></button>
+      <input type="hidden" name="status" value="<?php echo e(($status === 'inactive') ? 'active' : 'inactive'); ?>">
+      <button type="submit" class="btn btn-outline-secondary btn-sm"><?php echo e($status === 'inactive' ? 'Enable' : 'Disable'); ?></button>
     </form>
     <form method="post" action="<?php echo e(route('admin.users.reset_password', $user->user_id)); ?>" class="d-inline">
       <?php echo csrf_field(); ?>

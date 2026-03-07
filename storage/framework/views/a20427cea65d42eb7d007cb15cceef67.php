@@ -1,10 +1,17 @@
 
 
 <?php $__env->startSection('content'); ?>
+<style>
+  .admin-page-title { font-weight: 800; letter-spacing: -0.03em; }
+  .admin-page-intro { font-size: 0.9rem; }
+  .admin-filter-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6B7280; }
+  .admin-filter-toggle { font-size: 0.8rem; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
-    <h1 class="h4 mb-1">Users</h1>
-    <p class="text-muted mb-0">Manage system accounts, roles, and access.</p>
+    <h1 class="h4 admin-page-title mb-1">Users</h1>
+    <p class="text-muted admin-page-intro mb-0">Manage system accounts, roles, and access in one place.</p>
   </div>
   <a href="<?php echo e(route('admin.users.create')); ?>" class="btn btn-primary btn-sm">Create New User</a>
 </div>
@@ -45,6 +52,16 @@
 </div>
 
 <div class="card mb-3">
+  <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+    <div>
+      <div class="admin-filter-label">Filters</div>
+      <p class="text-muted small mb-1">Search and filter users by role, contact, and completeness.</p>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm admin-filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#usersFilter" aria-expanded="true" aria-controls="usersFilter">
+      Show / Hide filters
+    </button>
+  </div>
+  <div id="usersFilter" class="collapse show">
   <div class="card-body py-2">
     <form method="get" class="row g-2 align-items-end">
       <div class="col-6 col-md-2">
@@ -87,6 +104,7 @@
       </div>
     </form>
   </div>
+  </div>
 </div>
 
 <div class="card">
@@ -125,10 +143,8 @@
                 <?php
                   $status = $user->status ?? 'active';
                 ?>
-                <?php if($status === 'disabled'): ?>
-                  <span class="badge bg-secondary">Disabled</span>
-                <?php elseif($status === 'reset_required'): ?>
-                  <span class="badge bg-warning text-dark">Reset Required</span>
+                <?php if($status === 'inactive'): ?>
+                  <span class="badge bg-secondary">Inactive</span>
                 <?php else: ?>
                   <span class="badge bg-success">Active</span>
                 <?php endif; ?>
@@ -141,8 +157,8 @@
                   <a href="<?php echo e(route('admin.users.edit', $user->user_id)); ?>" class="btn btn-outline-secondary">Edit</a>
                   <form method="post" action="<?php echo e(route('admin.users.status', $user->user_id)); ?>" class="d-inline">
                     <?php echo csrf_field(); ?>
-                    <input type="hidden" name="status" value="<?php echo e(($status === 'disabled') ? 'active' : 'disabled'); ?>">
-                    <button type="submit" class="btn btn-outline-secondary"><?php echo e($status === 'disabled' ? 'Enable' : 'Disable'); ?></button>
+                    <input type="hidden" name="status" value="<?php echo e(($status === 'inactive') ? 'active' : 'inactive'); ?>">
+                    <button type="submit" class="btn btn-outline-secondary"><?php echo e($status === 'inactive' ? 'Enable' : 'Disable'); ?></button>
                   </form>
                 </div>
               </td>

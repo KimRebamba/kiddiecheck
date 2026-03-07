@@ -7,6 +7,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Student;
+use App\Models\Test;
+use App\Models\AssessmentPeriod;
+use App\Models\PeriodSummaryScore;
+use App\Services\EccdScoring;
 
 class FamilyController extends Controller
 {
@@ -154,211 +159,204 @@ class FamilyController extends Controller
     // Replace the index() method in FamilyController with this version:
 
     public function index()
-{
-    $user = Auth::user();
+    {
+        $user = Auth::user();
 
-    if ($user->role !== 'family') abort(403, 'Unauthorized access');
+        if ($user->role !== 'family') {
+            abort(403, 'Unauthorized access');
+        }
 
-    $family = DB::table('families as f')
-        ->where('f.user_id', $user->user_id)
-        ->first();
-
-    if (!$family) abort(404, 'Family profile not found');
-
-    $students = DB::table('students as s')
-        ->where('s.family_id', $family->user_id)
-        ->orderBy('s.date_of_birth', 'desc')
-        ->get();
-
-    $scaleVersionId = $this->getScaleVersionId();
-    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
-
-    $children = [];
-    foreach ($students as $s) {
-        $inProgressTest = DB::table('tests')
-            ->where('student_id', $s->student_id)
-            ->where('examiner_id', $user->user_id)
-            ->where('status', 'in_progress')
-            ->orderBy('created_at', 'desc')
+        $family = DB::table('families as f')
+            ->where('f.user_id', $user->user_id)
             ->first();
 
-        $answered = $inProgressTest
-            ? DB::table('test_responses')->where('test_id', $inProgressTest->test_id)->count()
-            : 0;
+        if (!$family) {
+            abort(404, 'Family profile not found');
+        }
 
-        // Check if current period is completed by this family
-        $activePeriod = DB::table('assessment_periods')
-            ->where('student_id', $s->student_id)
-            ->where('status', 'scheduled')
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
-            ->first();
+        $students = DB::table('students as s')
+            ->where('s.family_id', $family->user_id)
+            ->orderBy('s.date_of_birth', 'desc')
+            ->get();
 
-        // Check if a completed test exists for ANY period (past or active)
-         // Check if a completed test exists for ANY period (past or active)
-        $periodCompleted = DB::table('tests')
-            ->where('student_id', $s->student_id)
-            ->where('examiner_id', $user->user_id)
-            ->where('status', 'completed')
-            ->exists();
+        $scaleVersionId = $this->getScaleVersionId();
+        $totalQuestions  = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
 
-        // If there IS an active period, narrow it down: only mark completed
-        // if the test for this specific active period is completed
-        if ($activePeriod) {
-            $periodCompleted = DB::table('tests')
+        $children   = [];
+        $studentIds = [];
+
+        foreach ($students as $s) {
+            $studentIds[] = $s->student_id;
+
+            // Look for an active (current) assessment period for this child
+            $activePeriod = DB::table('assessment_periods')
                 ->where('student_id', $s->student_id)
-                ->where('examiner_id', $user->user_id)
-                ->where('period_id', $activePeriod->period_id)
-                ->where('status', 'completed')
-                ->exists();
-        }
+                ->where('status', '!=', 'completed')
+                ->where('start_date', '<=', now())
+                ->where('end_date', '>=', now())
+                ->first();
 
-        $latestTest = DB::table('tests')
-            ->where('student_id', $s->student_id)
-            ->orderBy('created_at', 'desc')
-            ->first();
+            $answered        = 0;
+            $periodCompleted = false;
+            $needsAction     = false;
 
-        $children[] = [
-            'student_id'       => $s->student_id,
-            'name'             => $s->first_name . ' ' . $s->last_name,
-            'first_name'       => $s->first_name,
-            'age'              => $this->calculateAge($s->date_of_birth),
-            'profile_image'    => $s->feature_path,
-            'total_tests'      => $totalQuestions,
-            'completed'        => $answered,
-            'test_id'          => $inProgressTest?->test_id,
-            'test_status'      => $inProgressTest ? 'in_progress' : ($latestTest?->status ?? null),
-            'period_completed' => $periodCompleted,
-            'active_period'    => $activePeriod,
-        ];
-    }
+            if ($activePeriod) {
+                // Only consider this family's test in the current period
+                $familyTest = DB::table('tests')
+                    ->where('student_id', $s->student_id)
+                    ->where('examiner_id', $user->user_id)
+                    ->where('period_id', $activePeriod->period_id)
+                    ->whereIn('status', ['in_progress', 'completed', 'finalized'])
+                    ->orderBy('test_date', 'desc')
+                    ->first();
 
-    $studentIds = array_column($children, 'student_id');
+                if ($familyTest) {
+                    $answered = DB::table('test_responses')
+                        ->where('test_id', $familyTest->test_id)
+                        ->count();
 
-    // Only show assessments that haven't started yet (upcoming only)
-    $assessments = DB::table('assessment_periods as ap')
-        ->join('students as s', 's.student_id', '=', 'ap.student_id')
-        ->whereIn('ap.student_id', $studentIds)
-        ->where('ap.start_date', '>', now())  // strictly future
-        ->where('ap.status', 'scheduled')
-        ->orderBy('ap.start_date')
-        ->select('ap.period_id', 'ap.student_id', 'ap.start_date', 'ap.end_date', 'ap.status',
-                 's.first_name', 's.last_name')
-        ->get();
+                    $periodCompleted = in_array($familyTest->status, ['completed', 'finalized']);
 
-    $inProgressStudentIds = array_column(
-        array_filter($children, fn($c) => $c['test_status'] === 'in_progress'),
-        'student_id'
-    );
+                    if ($familyTest->status === 'in_progress' && $answered < $totalQuestions) {
+                        $needsAction = true;
+                    }
+                } else {
+                    // Assessment window is active but the family has not started the test yet
+                    $needsAction = true;
+                }
+            }
 
-    $rawResults = DB::table('tests as t')
-        ->join('test_standard_scores as ss', 'ss.test_id', '=', 't.test_id')
-        ->join('students as s', 's.student_id', '=', 't.student_id')
-        ->whereIn('t.student_id', $studentIds)
-        ->whereIn('t.status', ['completed', 'finalized'])
-        ->whereNotIn('t.student_id', $inProgressStudentIds)
-        ->orderBy('t.test_date', 'desc')
-        ->select('t.student_id', 't.test_date', 'ss.standard_score', 'ss.interpretation',
-                 's.first_name', 's.last_name', 's.feature_path')
-        ->get();
-
-    $latestResults = [];
-    $seen = [];
-    foreach ($rawResults as $r) {
-        if (in_array($r->student_id, $seen)) continue;
-        $seen[] = $r->student_id;
-        $latestResults[] = [
-            'student_id'     => $r->student_id,
-            'child_name'     => $r->first_name . ' ' . $r->last_name,
-            'first_name'     => $r->first_name,
-            'score'          => $r->standard_score,
-            'interpretation' => $r->interpretation,
-            'date'           => $r->test_date,
-            'profile_image'  => $r->feature_path,
-        ];
-    }
-
-    $notifications = [];
-    $colorCycle = ['pink', 'green', 'yellow'];
-    $ci = 0;
-
-    // Assessment notification — only if child has an active period AND no answers yet
-    foreach ($children as $child) {
-        if (!$child['active_period'] || $child['period_completed']) continue;
-
-        $hasAnswers = DB::table('tests as t')
-            ->join('test_responses as tr', 'tr.test_id', '=', 't.test_id')
-            ->where('t.student_id', $child['student_id'])
-            ->where('t.examiner_id', $user->user_id)
-            ->where('t.period_id', $child['active_period']->period_id)
-            ->exists();
-
-        if (!$hasAnswers) {
-            $notifications[] = [
-                'type'       => 'assessment',
-                'first_name' => $child['first_name'],
-                'student_id' => $child['student_id'],
-                'color'      => $colorCycle[$ci++ % 3],
-                'icon'       => '📅',
-                'title'      => 'Assessment Scheduled (' . $child['first_name'] . ')',
-                'text'       => 'An assessment is open and ready.',
-                'cta'        => 'TAP TO START',
-                'link'       => route('family.tests.start.show', $child['student_id']),
+            $children[] = [
+                'student_id'         => $s->student_id,
+                'name'               => $s->first_name . ' ' . $s->last_name,
+                'first_name'         => $s->first_name,
+                'age'                => $this->calculateAge($s->date_of_birth),
+                'profile_image'      => $s->feature_path,
+                'total_tests'        => $totalQuestions,
+                'completed'          => $answered,
+                'active_period'     => $activePeriod,
+                'period_completed'  => $periodCompleted,
+                'needs_action'       => $needsAction,
             ];
         }
-    }
 
-    // Unfinished test notification
-    foreach ($children as $child) {
-        if (
-            $child['test_status'] === 'in_progress' &&
-            $child['completed'] > 0 &&
-            $child['completed'] < $child['total_tests']
-        ) {
-            $notifications[] = [
-                'type'       => 'unfinished',
-                'first_name' => $child['first_name'],
-                'student_id' => $child['student_id'],
-                'color'      => $colorCycle[$ci++ % 3],
-                'icon'       => '📝',
-                'title'      => 'Unfinished Test (' . $child['first_name'] . ')',
-                'text'       => $child['completed'] . '/' . $child['total_tests'] . ' questions answered.',
-                'cta'        => 'CONTINUE TEST',
-                'link'       => $child['test_id']
-                    ? route('family.tests.question', ['test' => $child['test_id'], 'domain' => 1, 'index' => 1])
-                    : null,
+        // Upcoming/active assessment windows for these children
+        $assessments = collect();
+        $testsByPeriod = [];
+
+        if (!empty($studentIds)) {
+            $assessments = DB::table('assessment_periods as ap')
+                ->join('students as s', 's.student_id', '=', 'ap.student_id')
+                ->whereIn('ap.student_id', $studentIds)
+                ->where('ap.end_date', '>=', now())
+                ->orderBy('ap.start_date')
+                ->limit(5)
+                ->select('ap.period_id', 'ap.student_id', 'ap.start_date', 'ap.end_date', 'ap.status',
+                         's.first_name', 's.last_name')
+                ->get();
+
+            $periodIds = $assessments->pluck('period_id')->all();
+
+            if (!empty($periodIds)) {
+                $familyTests = DB::table('tests')
+                    ->whereIn('period_id', $periodIds)
+                    ->where('examiner_id', $user->user_id)
+                    ->whereIn('status', ['in_progress', 'completed', 'finalized'])
+                    ->orderBy('test_date', 'desc')
+                    ->get(['test_id', 'period_id', 'student_id', 'status', 'test_date']);
+
+                foreach ($familyTests as $t) {
+                    // First (latest) per period wins
+                    if (!isset($testsByPeriod[$t->period_id])) {
+                        $testsByPeriod[$t->period_id] = $t;
+                    }
+                }
+
+                foreach ($assessments as $ap) {
+                    $ap->family_test = $testsByPeriod[$ap->period_id] ?? null;
+                }
+
+                // For the family dashboard, hide assessment periods that this
+                // family has already finished (completed/finalized). This keeps
+                // the "Upcoming Assessments" card from listing periods that are
+                // fully done from the family's point of view.
+                $assessments = $assessments->filter(function ($ap) {
+                    $familyTest = $ap->family_test ?? null;
+                    return !($familyTest && in_array($familyTest->status, ['completed', 'finalized']));
+                })->values();
+            }
+        }
+
+        // Latest family-side results (multiple tests per child, newest first)
+        $rawResults = collect();
+        if (!empty($studentIds)) {
+            $rawResults = DB::table('tests as t')
+                ->join('test_standard_scores as ss', 'ss.test_id', '=', 't.test_id')
+                ->join('students as s', 's.student_id', '=', 't.student_id')
+                ->whereIn('t.student_id', $studentIds)
+                ->where('t.examiner_id', $user->user_id)
+                ->whereIn('t.status', ['completed', 'finalized'])
+                ->orderBy('t.test_date', 'desc')
+                ->limit(20)
+                ->select('t.test_id', 't.student_id', 't.test_date', 'ss.standard_score', 'ss.interpretation',
+                         's.first_name', 's.last_name', 's.feature_path')
+                ->get();
+        }
+
+        $latestResults = [];
+        foreach ($rawResults as $r) {
+            $latestResults[] = [
+                'test_id'        => $r->test_id,
+                'child_name'     => $r->first_name . ' ' . $r->last_name,
+                'score'          => $r->standard_score,
+                'interpretation' => $r->interpretation,
+                'date'           => $r->test_date,
+                'profile_image'  => $r->feature_path,
             ];
         }
-    }
 
-    // Result notification
-    $unfinishedStudentIds = array_column(
-        array_filter($notifications, fn($n) => $n['type'] === 'unfinished'),
-        'student_id'
-    );
-    foreach ($latestResults as $result) {
-        if (in_array($result['student_id'], $unfinishedStudentIds)) continue;
-        $notifications[] = [
-            'type'       => 'result',
-            'first_name' => $result['first_name'],
-            'student_id' => $result['student_id'],
-            'color'      => $colorCycle[$ci++ % 3],
-            'icon'       => '🏆',
-            'title'      => 'Result Available (' . $result['first_name'] . ')',
-            'text'       => 'Score: ' . $result['score'] . ' — ' . $result['interpretation'],
-            'cta'        => null,
-            'link'       => null,
-        ];
-    }
+        // Period-level monitoring data per child (only periods where a family
+        // score exists, to stay aligned with admin "missing family eval" logic).
+        $monitoring = [];
+        if (!empty($studentIds)) {
+            $periodSummaries = PeriodSummaryScore::query()
+                ->join('assessment_periods as ap', 'ap.period_id', '=', 'period_summary_scores.period_id')
+                ->join('students as s', 's.student_id', '=', 'ap.student_id')
+                ->whereIn('ap.student_id', $studentIds)
+                ->whereIn('ap.status', ['completed'])
+                ->whereNotNull('period_summary_scores.family_standard_score')
+                ->orderBy('ap.student_id')
+                ->orderBy('ap.start_date')
+                ->get([
+                    'ap.student_id',
+                    'ap.description',
+                    'ap.start_date',
+                    'ap.end_date',
+                    'period_summary_scores.final_standard_score',
+                    'period_summary_scores.final_interpretation',
+                ]);
 
-    return view('family.index', [
-        'family_name'    => $family->family_name ?? 'Family',
-        'children'       => $children,
-        'assessments'    => $assessments,
-        'latest_results' => $latestResults,
-        'notifications'  => $notifications,
-    ]);
-}
+            foreach ($periodSummaries->groupBy('student_id') as $studentId => $rows) {
+                $monitoring[$studentId] = $rows->map(function ($row) {
+                    return [
+                        'label'          => $row->description,
+                        'start_date'     => $row->start_date,
+                        'end_date'       => $row->end_date,
+                        'score'          => $row->final_standard_score,
+                        'interpretation' => $row->final_interpretation,
+                    ];
+                })->values()->all();
+            }
+        }
+
+        return view('family.index', [
+            'family_name'    => $family->family_name ?? 'Family',
+            'children'       => $children,
+            'assessments'    => $assessments,
+            'latest_results' => $latestResults,
+            'monitoring'     => $monitoring,
+        ]);
+    }
 
     // ──────────────────────────────────────────────
     //  PROFILE IMAGE
@@ -401,11 +399,11 @@ class FamilyController extends Controller
             ->with('success', 'Profile image updated successfully!');
     }
 
-        public function showStudentProfile($studentId)
+    public function showStudentProfile($studentId)
     {
         [$user, $family] = $this->getAuthFamily();
 
-        $student = DB::table('students')
+        $student = Student::with(['section', 'family'])
             ->where('student_id', $studentId)
             ->where('family_id', $family->user_id)
             ->first();
@@ -440,6 +438,7 @@ class FamilyController extends Controller
         $tests = DB::table('tests as t')
             ->leftJoin('test_standard_scores as ss', 'ss.test_id', 't.test_id')
             ->where('t.student_id', $studentId)
+            ->where('t.examiner_id', $user->user_id)
             ->whereIn('t.status', ['completed', 'finalized'])
             ->orderBy('t.test_date', 'desc')
             ->select('t.test_id', 't.test_date', 't.status', 't.notes', 'ss.standard_score', 'ss.interpretation')
@@ -462,10 +461,41 @@ class FamilyController extends Controller
         $assessments = DB::table('assessment_periods as ap')
             ->join('students as s', 's.student_id', 'ap.student_id')
             ->whereIn('ap.student_id', $studentIds)
-            ->where('ap.start_date', '>=', now())
+            ->where('ap.end_date', '>=', now())
             ->orderBy('ap.start_date')
-            ->select('ap.*', 's.first_name', 's.last_name')
+            ->select('ap.period_id', 'ap.student_id', 'ap.start_date', 'ap.end_date', 'ap.status',
+                     's.first_name', 's.last_name')
             ->get();
+
+        // Attach this family's test per period and hide periods where their
+        // test is already completed/finalized, to stay consistent with the
+        // main dashboard's Upcoming Assessments card.
+        $periodIds    = $assessments->pluck('period_id')->all();
+        $testsByPeriod = [];
+
+        if (!empty($periodIds)) {
+            $familyTests = DB::table('tests')
+                ->whereIn('period_id', $periodIds)
+                ->where('examiner_id', $user->user_id)
+                ->whereIn('status', ['in_progress', 'completed', 'finalized'])
+                ->orderBy('test_date', 'desc')
+                ->get(['test_id', 'period_id', 'student_id', 'status', 'test_date']);
+
+            foreach ($familyTests as $t) {
+                if (!isset($testsByPeriod[$t->period_id])) {
+                    $testsByPeriod[$t->period_id] = $t;
+                }
+            }
+
+            foreach ($assessments as $ap) {
+                $ap->family_test = $testsByPeriod[$ap->period_id] ?? null;
+            }
+
+            $assessments = $assessments->filter(function ($ap) {
+                $familyTest = $ap->family_test ?? null;
+                return !($familyTest && in_array($familyTest->status, ['completed', 'finalized']));
+            })->values();
+        }
 
         return response()->json($assessments);
     }
@@ -486,52 +516,68 @@ class FamilyController extends Controller
 
     public function showStartTest($studentId)
     {
-    $user = Auth::user();
+        $user = Auth::user();
 
-    $student = DB::table('students')
-        ->where('student_id', $studentId)
-        ->where('family_id', $user->user_id)
-        ->first();
+        $student = DB::table('students')
+            ->where('student_id', $studentId)
+            ->where('family_id', $user->user_id)
+            ->first();
 
-    if (!$student) {
-        return redirect()->route('family.index')
-            ->with('error', 'Student not found.');
-    }
+        if (!$student) {
+            return redirect()->route('family.index')
+                ->with('error', 'Student not found.');
+        }
 
-    $period = DB::table('assessment_periods')
-        ->where('student_id', $studentId)
-        ->where('status', '!=', 'completed')
-        ->where('start_date', '<=', now())
-        ->where('end_date', '>=', now())
-        ->first();
+        $period = DB::table('assessment_periods')
+            ->where('student_id', $studentId)
+            ->where('status', '!=', 'completed')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
-    if (!$period) {
-        return redirect()->route('family.index')
-            ->with('error', 'No active assessment period found.');
-    }
+        if (!$period) {
+            return redirect()->route('family.index')
+                ->with('error', 'No active assessment period found.');
+        }
 
-    $scaleVersionId = $this->getScaleVersionId();
-    $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+        $scaleVersionId = $this->getScaleVersionId();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
 
-    $existingTest = DB::table('tests')
-        ->where('student_id', $studentId)
-        ->where('examiner_id', $user->user_id)
-        ->where('status', 'in_progress')
-        ->first();
+        // Look for this family's test in the current period
+        $existingTest = DB::table('tests')
+            ->where('student_id', $studentId)
+            ->where('examiner_id', $user->user_id)
+            ->where('period_id', $period->period_id)
+            ->whereIn('status', ['in_progress', 'completed', 'finalized'])
+            ->orderBy('test_date', 'desc')
+            ->first();
 
-    $answeredCount = $existingTest
-        ? DB::table('test_responses')->where('test_id', $existingTest->test_id)->count()
-        : 0;
+        if ($existingTest && in_array($existingTest->status, ['completed', 'finalized'], true)) {
+            // Family test for this period is already done – send them to the result
+            return redirect()->route('family.tests.result', $existingTest->test_id);
+        }
 
-    // If all questions answered, no need to continue — treat as no existing test
-    if ($answeredCount >= $totalQuestions) {
-        $existingTest  = null;
         $answeredCount = 0;
-    }
 
-    return view('family.start-test', compact(
-        'student', 'period', 'existingTest', 'answeredCount', 'totalQuestions'
-    ));
+        if ($existingTest && $existingTest->status === 'in_progress') {
+            $answeredCount = DB::table('test_responses')
+                ->where('test_id', $existingTest->test_id)
+                ->count();
+
+            // If all questions are already answered but status is still in_progress,
+            // align it with the completed state and treat it as done.
+            if ($answeredCount >= $totalQuestions) {
+                DB::table('tests')
+                    ->where('test_id', $existingTest->test_id)
+                    ->update(['status' => 'completed', 'updated_at' => now()]);
+
+                return redirect()->route('family.tests.result', $existingTest->test_id);
+            }
+        }
+
+        return view('family.start-test', compact(
+            'student', 'period', 'existingTest', 'answeredCount', 'totalQuestions'
+        ));
     }
 
    public function showQuestion($testId, $domainNumber, $questionIndex)
@@ -717,70 +763,76 @@ class FamilyController extends Controller
 
     public function startTest($studentId)
     {
-    $user = Auth::user();
+        $user = Auth::user();
 
-    if ($user->role !== 'family') {
-        abort(403, 'Unauthorized access');
-    }
+        if ($user->role !== 'family') {
+            abort(403, 'Unauthorized access');
+        }
 
-    // Verify student belongs to this family
-    $student = DB::table('students')
-        ->where('student_id', $studentId)
-        ->where('family_id', $user->user_id)
-        ->first();
+        // Verify student belongs to this family
+        $student = DB::table('students')
+            ->where('student_id', $studentId)
+            ->where('family_id', $user->user_id)
+            ->first();
 
-    if (!$student) {
-        return redirect()->route('family.index')
-            ->with('error', 'Student not found or does not belong to your family.');
-    }
+        if (!$student) {
+            return redirect()->route('family.index')
+                ->with('error', 'Student not found or does not belong to your family.');
+        }
 
-    // Find an active assessment period for this student
-    $period = DB::table('assessment_periods')
-        ->where('student_id', $studentId)
-        ->where('status', '!=', 'completed')
-        ->where('start_date', '<=', now())
-        ->where('end_date', '>=', now())
-        ->first();
+        // Find an active assessment period for this student
+        $period = DB::table('assessment_periods')
+            ->where('student_id', $studentId)
+            ->where('status', '!=', 'completed')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
-    if (!$period) {
-        return redirect()->route('family.index')
-            ->with('error', 'No active assessment period found for this student.');
-    }
+        if (!$period) {
+            return redirect()->route('family.index')
+                ->with('error', 'No active assessment period found for this student.');
+        }
 
-    // Check if there's already an in-progress test
-    $existingTest = DB::table('tests')
-        ->where('student_id', $studentId)
-        ->where('examiner_id', $user->user_id)
-        ->where('status', 'in_progress')
-        ->first();
+        // Check if there's already a family test for this period
+        $existingTest = DB::table('tests')
+            ->where('student_id', $studentId)
+            ->where('examiner_id', $user->user_id)
+            ->where('period_id', $period->period_id)
+            ->whereIn('status', ['in_progress', 'completed', 'finalized'])
+            ->orderBy('test_date', 'desc')
+            ->first();
 
-    if ($existingTest) {
-        // If test exists, redirect to first question
+        if ($existingTest) {
+            if ($existingTest->status === 'in_progress') {
+                return redirect()->route('family.tests.question', [
+                    'test'   => $existingTest->test_id,
+                    'domain' => 1,
+                    'index'  => 1,
+                ]);
+            }
+
+            // Already completed/finalized – go to result instead of creating a new test
+            return redirect()->route('family.tests.result', $existingTest->test_id);
+        }
+
+        // Create a new test for this family and period
+        $testId = DB::table('tests')->insertGetId([
+            'period_id'    => $period->period_id,
+            'student_id'   => $studentId,
+            'examiner_id'  => $user->user_id,
+            'test_date'    => now(),
+            'notes'        => null,
+            'status'       => 'in_progress',
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
+
+        // Redirect to first domain, first question
         return redirect()->route('family.tests.question', [
-            'test'   => $existingTest->test_id,
+            'test'   => $testId,
             'domain' => 1,
             'index'  => 1,
         ]);
-    }
-
-    // Create a new test
-    $testId = DB::table('tests')->insertGetId([
-        'period_id'    => $period->period_id,
-        'student_id'   => $studentId,
-        'examiner_id'  => $user->user_id,
-        'test_date'    => now(),
-        'notes'        => null,
-        'status'       => 'in_progress',
-        'created_at'   => now(),
-        'updated_at'   => now(),
-    ]);
-
-    // Redirect to first domain, first question
-    return redirect()->route('family.tests.question', [
-        'test'   => $testId,
-        'domain' => 1,
-        'index'  => 1,
-    ]);
     }
 
     public function showGame($testId, $domainNumber, $questionIndex)
@@ -1208,7 +1260,7 @@ class FamilyController extends Controller
 
         $test = $this->verifyTestOwnership($testId);
 
-        if (in_array($test->status, ['finalized', 'canceled', 'terminated'])) {
+        if (in_array($test->status, ['completed', 'finalized', 'canceled', 'terminated'], true)) {
             return redirect()->route('family.index')->with('error', 'This test cannot be modified.');
         }
 
@@ -1246,6 +1298,7 @@ class FamilyController extends Controller
 
         DB::table('tests')
             ->where('test_id', $testId)
+            ->where('examiner_id', Auth::id())
             ->update(['status' => 'in_progress', 'updated_at' => now()]);
 
         [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questionIds), count($domains));
@@ -1323,6 +1376,14 @@ class FamilyController extends Controller
 
     public function finalize($testId)
     {
+        $test = $this->verifyTestOwnership($testId);
+
+        // Do not allow re-finalizing or changing non-active tests.
+        if (in_array($test->status, ['completed', 'finalized', 'canceled', 'terminated'], true)) {
+            return redirect()->route('family.tests.result', $testId)
+                ->with('info', 'This test has already been submitted.');
+        }
+
         $scaleVersionId = $this->getScaleVersionId();
 
         $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
@@ -1336,7 +1397,14 @@ class FamilyController extends Controller
 
         DB::table('tests')
             ->where('test_id', $testId)
+            ->where('examiner_id', Auth::id())
             ->update(['status' => 'completed', 'updated_at' => now()]);
+
+        // Compute scores and update period summary so admin/family see consistent data.
+        $freshTest = Test::with('assessmentPeriod', 'student')->find($testId);
+        if ($freshTest) {
+            app(EccdScoring::class)->scoreTestAndRecompute($freshTest);
+        }
 
         return redirect()->route('family.index')
             ->with('success', 'Test completed successfully!');
@@ -1346,9 +1414,39 @@ class FamilyController extends Controller
     //  PLACEHOLDER ROUTES
     // ──────────────────────────────────────────────
 
-    public function child($studentId)       { return redirect()->route('family.index'); }
-    public function markIncomplete($testId) { return redirect()->route('family.tests.result', $testId); }
-    public function pause($testId)          { return redirect()->route('family.tests.result', $testId); }
+    public function child($studentId)
+    {
+        return redirect()->route('family.index');
+    }
+
+    public function markIncomplete($testId)
+    {
+        $test = $this->verifyTestOwnership($testId);
+
+        // Only allow moving back to in_progress from in_progress or completed,
+        // mirroring the teacher-side rules and keeping admin views consistent.
+        if (!in_array($test->status, ['in_progress', 'completed'], true)) {
+            return redirect()->route('family.tests.result', $testId)
+                ->with('error', 'This test cannot be marked incomplete.');
+        }
+
+        $this->updateTestStatus($testId, 'in_progress');
+
+        return redirect()->route('family.tests.result', $testId)
+            ->with('info', 'Test marked as incomplete. You can continue answering later.');
+    }
+
+    public function pause($testId)
+    {
+        // Keep status as-is, just update timestamp so activity is reflected.
+        DB::table('tests')
+            ->where('test_id', $testId)
+            ->where('examiner_id', Auth::id())
+            ->update(['updated_at' => now()]);
+
+        return redirect()->route('family.index')
+            ->with('success', 'Test paused. You can resume it later.');
+    }
 
     public function cancel($testId)
     {
@@ -1360,5 +1458,10 @@ class FamilyController extends Controller
     {
         $this->updateTestStatus($testId, 'terminated');
         return redirect()->route('family.index')->with('success', 'Test terminated.');
+    }
+
+        public function help()
+    {
+        return view('family.help');
     }
 }

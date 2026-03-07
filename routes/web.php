@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Support\Facades\Route;
@@ -13,7 +14,8 @@ Route::get('/', [UserController::class, 'index'])->name('index');
 
 Route::get('/login', [UserController::class,'showLoginForm'])->name('login');
 Route::post('/login',[UserController::class, 'login']);
-Route::post('/logout',[UserController::class, 'logout'])->name('logout');
+//Route::post('/logout',[UserController::class, 'logout'])->name('logout');
+Route::get('/logout',[UserController::class, 'logout'])->name('logout');
 
 // Admin routes
 Route::prefix('admin')->middleware('auth')->group(function () {
@@ -105,7 +107,10 @@ Route::prefix('family')->middleware('auth')->group(function () {
     Route::post('/tests/{test}/cancel', [FamilyController::class, 'cancel'])->name('family.tests.cancel');
     Route::post('/tests/{test}/terminate', [FamilyController::class, 'terminate'])->name('family.tests.terminate');
     Route::post('/tests/{test}/pause', [FamilyController::class, 'pause'])->name('family.tests.pause');
-Route::post('/tests/{test}/domain/{domain}/question/{index}/game', [FamilyController::class, 'submitQuestion'])->name('family.tests.game.submit');
+	// This alternate URL pattern uses a different name to avoid conflicts
+	// with the primary family.tests.game route above.
+	Route::get('/tests/{test}/domain/{domain}/game/{index}', [FamilyController::class, 'showGame'])->name('family.tests.game.alt');
+	Route::get('/family/help', function () { return view('family.help');})->name('family.help')->middleware('auth');
 });
 
 
@@ -129,8 +134,8 @@ Route::prefix('teacher')->middleware('auth')->group(function () {
 	Route::get('/profile', [TeacherController::class, 'profile'])->name('teacher.profile');
 	Route::get('/students/{student}', [TeacherController::class, 'student'])->name('teacher.student');
 	Route::post('/tests/start/{student}', [TeacherController::class, 'startTest'])->name('teacher.tests.start');
-	Route::get('/tests/{test}/domain/{domain}/question/{index}', [TeacherController::class, 'showQuestion'])->name('teacher.tests.question');
-	Route::post('/tests/{test}/domain/{domain}/question/{index}', [TeacherController::class, 'submitQuestion'])->name('teacher.tests.question.submit');
+	Route::get('/tests/{test}/form', [TeacherController::class, 'showForm'])->name('teacher.tests.form');
+	Route::post('/tests/{test}/form', [TeacherController::class, 'submitForm'])->name('teacher.tests.form.submit');
 	Route::get('/tests/{test}/result', [TeacherController::class, 'result'])->name('teacher.tests.result');
 	Route::post('/tests/{test}/finalize', [TeacherController::class, 'finalize'])->name('teacher.tests.finalize');
 	Route::post('/tests/{test}/mark-incomplete', [TeacherController::class, 'markIncomplete'])->name('teacher.tests.incomplete');

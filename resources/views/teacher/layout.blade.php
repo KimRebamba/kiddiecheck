@@ -30,48 +30,77 @@
     }
     
     body {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      background: #f5f5f5;
       color: var(--teacher-dark);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
     }
-    
-    .navbar {
+
+    /* Header styled to match family layout */
+    .teacher-header {
+      background: #ffffff;
+      border-bottom: 2px solid #e5e5e5;
+      padding: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
       display: flex;
       align-items: center;
-      gap: 18px;
-      padding: 12px 24px;
-      background: var(--teacher-light) !important;
-      border-bottom: 2px solid var(--teacher-primary) !important;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+      padding: 0 20px;
+      height: 70px;
     }
-    
-    .teacher-logo {
-      height: 48px;
-      display: block;
-    }
-    
-    .pill {
-      display: inline-block;
+
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 800;
       text-decoration: none;
-      background: var(--teacher-primary) !important;
-      color: var(--teacher-light) !important;
-      padding: 8px 20px;
-      border-radius: 20px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      transition: all 0.3s ease;
+      margin-right: 3rem;
+      letter-spacing: -0.02em;
     }
-    
-    .pill:hover {
-      background: #d63447 !important;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(231, 122, 116, 0.3);
-    }
-    
-    .spacer {
+
+    .brand span:nth-child(4n+1) { color: #3B82F6; }
+    .brand span:nth-child(4n+2) { color: #F59E0B; }
+    .brand span:nth-child(4n+3) { color: #EF4444; }
+    .brand span:nth-child(4n+0) { color: #10B981; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       flex: 1;
     }
-    
+
+    .nav-link {
+      text-decoration: none;
+      color: #6b7280;
+      font-weight: 600;
+      font-size: 0.95rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      color: #667eea;
+      background: #f3f4f6;
+    }
+
+    .nav-link.active {
+      color: #667eea;
+      background: transparent;
+      font-weight: 700;
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-left: auto;
+    }
+
     .avatar {
       width: 42px;
       height: 42px;
@@ -86,47 +115,74 @@
       overflow: hidden;
       border: 2px solid var(--teacher-primary);
     }
-    
-    .profile {
-      position: relative;
+
+    .profile-menu { position: relative; }
+
+    .profile-button {
+      background: transparent;
+      border: 2px solid #e5e5e5;
+      color: #6b7280;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
     }
-    
-    .menu {
+
+    .profile-button:hover {
+      border-color: #667eea;
+      color: #667eea;
+      background: #f9fafb;
+    }
+
+    .dropdown-menu {
       position: absolute;
       right: 0;
-      top: calc(100% + 12px);
-      background: var(--teacher-light);
-      border: 1px solid #e9ecef;
+      top: calc(100% + 8px);
+      background: #ffffff;
+      border: 2px solid #e5e5e5;
       border-radius: 12px;
-      padding: 8px;
-      min-width: 220px;
-      display: none;
-      z-index: 9999;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      padding: 0.5rem;
+      min-width: 200px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.2s;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      z-index: 1000;
     }
-    
-    .profile.open .menu {
-      display: block !important;
+
+    .profile-menu:hover .dropdown-menu,
+    .profile-menu:focus-within .dropdown-menu {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
-    
-    .menu-item {
-      display: block !important;
-      width: 100% !important;
-      text-align: left !important;
-      background: transparent !important;
-      color: var(--teacher-dark) !important;
-      font-weight: 500 !important;
-      border: 0 !important;
-      padding: 12px 16px !important;
-      border-radius: 8px !important;
-      cursor: pointer !important;
-      text-decoration: none !important;
-      transition: all 0.2s ease !important;
+
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border: none;
+      color: #6b7280;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.7rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
     }
-    
-    .menu-item:hover {
-      background: var(--teacher-secondary) !important;
-      color: var(--teacher-primary) !important;
+
+    .dropdown-item:hover {
+      background: #f3f4f6;
+      color: #667eea;
     }
     
     .main {
@@ -325,45 +381,75 @@
     .border-0 {
       border: none !important;
     }
+    @media (max-width: 768px) {
+      .header-container {
+        padding: 15px;
+        height: auto;
+        flex-wrap: wrap;
+      }
+      .brand {
+        margin-right: auto;
+        font-size: 1.2rem;
+      }
+      .nav-links {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 10px;
+        gap: 0.3rem;
+        overflow-x: auto;
+      }
+      .nav-link {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.9rem;
+        white-space: nowrap;
+      }
+      .profile-section {
+        margin-left: auto;
+      }
+      .profile-button {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <nav class="navbar">
-    <img src="{{ asset('teacher-logo.svg') }}" alt="KiddieCheck" class="teacher-logo">
-    <div class="spacer"></div>
-    <a href="{{ route('teacher.index') }}" class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}">
-      <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-    </a>
-    <a href="{{ route('teacher.family') }}" class="pill {{ request()->routeIs('teacher.family*') ? 'active' : '' }}">
-      <i class="fas fa-home me-2"></i>Family
-    </a>
-    <a href="{{ route('teacher.sections') }}" class="pill {{ request()->routeIs('teacher.sections') ? 'active' : '' }}">
-      <i class="fas fa-users me-2"></i>Sections
-    </a>
-    <a href="{{ route('teacher.reports') }}" class="pill {{ request()->routeIs('teacher.reports') ? 'active' : '' }}">
-      <i class="fas fa-clipboard-list me-2"></i>Reports
-    </a>
-    <div class="profile">
-      <a href="#" class="avatar" onclick="toggleMenu()">
-        {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
+  <header class="teacher-header">
+    <div class="header-container">
+      <a class="brand" href="{{ route('teacher.index') }}">
+        @foreach(str_split('KiddieCheck') as $l)<span>{{ $l }}</span>@endforeach
       </a>
-      <div class="menu" id="profileMenu">
-        <a href="{{ route('teacher.profile') }}" class="menu-item">
-          <i class="fas fa-user me-2"></i>Profile
-        </a>
-        <a href="{{ route('teacher.help') }}" class="menu-item">
-          <i class="fas fa-question-circle me-2"></i>Help
-        </a>
-        <div class="border-top my-2"></div>
-        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
-          @csrf
-          <button type="submit" class="menu-item" style="background: none; border: none; width: 100%; text-align: left; padding: 8px 12px; cursor: pointer;">
-            <i class="fas fa-sign-out-alt me-2"></i>Logout
-          </button>
-        </form>
+
+      <div class="nav-links">
+        <a class="nav-link {{ request()->routeIs('teacher.index') ? 'active' : '' }}" href="{{ route('teacher.index') }}">Dashboard</a>
+        <a class="nav-link {{ request()->routeIs('teacher.sections*') ? 'active' : '' }}" href="{{ route('teacher.sections') }}">Sections</a>
+        <a class="nav-link {{ request()->routeIs('teacher.family*') ? 'active' : '' }}" href="{{ route('teacher.family') }}">Families</a>
+        <a class="nav-link {{ request()->routeIs('teacher.eccd') ? 'active' : '' }}" href="{{ route('teacher.eccd') }}">ECCD</a>
+        <a class="nav-link {{ request()->routeIs('teacher.reports*') ? 'active' : '' }}" href="{{ route('teacher.reports') }}">Reports</a>
+        <a class="nav-link {{ request()->routeIs('teacher.help') ? 'active' : '' }}" href="{{ route('teacher.help') }}">Help</a>
       </div>
+
+      <div class="profile-section">
+        <div class="profile-menu">
+          <a href="{{ route('teacher.profile') }}" class="profile-button" tabindex="0">
+            <span>{{ optional(Auth::user())->username ?? 'Account' }}</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </a>
+          <div class="dropdown-menu">
+            <a href="{{ route('teacher.profile') }}" class="dropdown-item">Profile Settings</a>
+            <a href="{{ route('teacher.help') }}" class="dropdown-item">Help</a>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0">
+              @csrf
+              <button type="submit" class="dropdown-item">Logout</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
-  </nav>
+  </header>
 
   <main class="main">
     @if(session('success'))
@@ -396,20 +482,5 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    function toggleMenu() {
-      const profile = document.querySelector('.profile');
-      const menu = document.getElementById('profileMenu');
-      profile.classList.toggle('open');
-      
-      // Close menu when clicking outside
-      document.addEventListener('click', function closeMenu(e) {
-        if (!profile.contains(e.target)) {
-          profile.classList.remove('open');
-          document.removeEventListener('click', closeMenu);
-        }
-      });
-    }
-  </script>
 </body>
 </html>

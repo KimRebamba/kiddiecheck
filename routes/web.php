@@ -98,6 +98,7 @@ Route::prefix('family')->middleware('auth')->group(function () {
 	Route::get('/tests/{test}/domain/{domain}/question/{index}/feelings-game', [FamilyController::class, 'showFeelingsGame'])->name('family.tests.feelings.game');
 	Route::get('/tests/{test}/domain/{domain}/question/{index}/point-objects-game', [FamilyController::class, 'showPointObjectsGame'])->name('family.tests.point.objects.game');
 	Route::get('/tests/{test}/domain/{domain}/question/{index}/follow-instructions-game', [FamilyController::class, 'showFollowInstructionsGame'])->name('family.tests.follow.instructions.game');
+	Route::get('/results', [FamilyController::class, 'resultsIndex'])->name('family.results.index');
     Route::get('/tests/{test}/result', [FamilyController::class, 'result'])->name('family.tests.result');
     Route::post('/tests/{test}/finalize', [FamilyController::class, 'finalize'])->name('family.tests.finalize');
     Route::post('/tests/{test}/mark-incomplete', [FamilyController::class, 'markIncomplete'])->name('family.tests.incomplete');

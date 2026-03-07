@@ -20,12 +20,41 @@
         margin-bottom: 1.2rem;
     }
 
-    /* ── Bottom Row ── FIX 1: was missing grid definition */
+    /* ── Bottom Row ── */
     .bottom-row {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         gap: 1.2rem;
-        margin-bottom: 1.2rem;
+    }
+
+    /* ── Welcome Banner ── */
+    .welcome-banner {
+        background: white;
+        border-radius: 24px;
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+        border: 3px solid #ffe0ec;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-banner::before {
+        content: '🌟';
+        position: absolute;
+        font-size: 6rem;
+        opacity: 0.08;
+        right: 120px;
+        top: -5px;
+    }
+
+    .welcome-banner h1 {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: #7a4f00;
+        margin-bottom: 0.3rem;
     }
 
     .welcome-banner p {
@@ -333,8 +362,6 @@
     .notif-item.pink   { background: linear-gradient(135deg, #ff6b9d, #ffb3d1); }
     .notif-item.green  { background: linear-gradient(135deg, #6bcf7f, #a3e4a1); }
     .notif-item.yellow { background: linear-gradient(135deg, #ff9f43, #ffdd57); }
-    /* FIX 2: Added missing .blue notification color (was .light which was undefined) */
-    .notif-item.blue   { background: linear-gradient(135deg, #60a5fa, #93c5fd); }
 
     .notif-icon {
         font-size: 1.5rem;
@@ -418,60 +445,63 @@
         </div>
 
         {{-- Your Children --}}
-        <div class="card" id="family-children">
+        <div class="card">
             <div class="card-title">🧒 Your Children</div>
             <div class="card-scroll children-scroll">
                 @forelse($children as $child)
-                    @php
-                        $pct = $child['total_tests'] > 0
-                            ? round(($child['completed'] / $child['total_tests']) * 100)
-                            : 0;
-                    @endphp
-                    <div class="child-item {{ $child['period_completed'] ? 'completed' : '' }}">
-                        <div class="child-avatar">
-                            @if($child['profile_image'])
-                                <img src="{{ asset('storage/' . $child['profile_image']) }}" alt="{{ $child['name'] }}">
-                            @else
-                                🐣
-                            @endif
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div class="child-name">{{ $child['first_name'] }}</div>
-                            <div class="child-age">🎂 Age: {{ $child['age'] }}</div>
+    @php
+        $pct = $child['total_tests'] > 0
+            ? round(($child['completed'] / $child['total_tests']) * 100)
+            : 0;
+    @endphp
+    <div class="child-item {{ $child['period_completed'] ? 'completed' : '' }}">
+        <div class="child-avatar">
+            @if($child['profile_image'])
+                <img src="{{ asset('storage/' . $child['profile_image']) }}" alt="{{ $child['name'] }}">
+            @else
+                🐣
+            @endif
+        </div>
+        <div style="flex:1; min-width:0;">
+            <div class="child-name">{{ $child['first_name'] }}</div>
+            <div class="child-age">🎂 Age: {{ $child['age'] }}</div>
 
-                            @if($child['period_completed'])
-                                <div class="prog-bar">
-                                    <div class="prog-fill" style="width: 100%"></div>
-                                </div>
-                                <div class="prog-text">
-                                    <span class="prog-pct" style="background:rgba(255,255,255,0.5);">✅ Test Completed</span>
-                                </div>
+            @if($child['period_completed'])
+                {{-- Test is done — green card, 100% bar, completed badge --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: 100%"></div>
+                </div>
+                <div class="prog-text">
+                    <span class="prog-pct" style="background:rgba(255,255,255,0.5);">✅ Test Completed</span>
+                </div>
 
-                            @elseif($child['active_period'])
-                                <div class="prog-bar">
-                                    <div class="prog-fill" style="width: {{ $pct }}%"></div>
-                                </div>
-                                <div class="prog-text">
-                                    <span class="prog-pct">{{ $pct }}% complete</span>
-                                    <span style="opacity:0.8;">({{ $child['completed'] }}/{{ $child['total_tests'] }})</span>
-                                </div>
+            @elseif($child['active_period'])
+                {{-- Active period exists — show real progress bar --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: {{ $pct }}%"></div>
+                </div>
+                <div class="prog-text">
+                    <span class="prog-pct">{{ $pct }}% complete</span>
+                    <span style="opacity:0.8;">({{ $child['completed'] }}/{{ $child['total_tests'] }})</span>
+                </div>
 
-                            @else
-                                <div class="prog-bar">
-                                    <div class="prog-fill" style="width: 0%"></div>
-                                </div>
-                                <div class="prog-text">
-                                    <span class="prog-pct" style="opacity:0.6;">No active assessment</span>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                @empty
-                    <div class="empty">
-                        <span>🐣</span>
-                        <p>No children registered yet.</p>
-                    </div>
-                @endforelse
+            @else
+                {{-- No active period, not completed — empty bar as placeholder --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: 0%"></div>
+                </div>
+                <div class="prog-text">
+                    <span class="prog-pct" style="opacity:0.6;">No active assessment</span>
+                </div>
+            @endif
+        </div>
+    </div>
+@empty
+    <div class="empty">
+        <span>🐣</span>
+        <p>No children registered yet.</p>
+    </div>
+@endforelse
             </div>
         </div>
 
@@ -480,52 +510,34 @@
     {{-- ── Bottom Row ── --}}
     <div class="bottom-row">
 
-        {{-- Overall Progress (per-period summaries) --}}
+        {{-- Latest Result --}}
         <div class="card">
-            <div class="card-title">📈 Overall Progress</div>
+            <div class="card-title">⭐ Latest Test Result</div>
 
-            @php
-                $progressItems = collect();
-                foreach ($children as $child) {
-                    $sid = $child['student_id'];
-                    if (!empty($monitoring[$sid])) {
-                        $childPeriods = collect($monitoring[$sid])->sortBy('start_date');
-                        $latest       = $childPeriods->last();
-                        if ($latest) {
-                            $progressItems->push([
-                                'name'           => $child['first_name'],
-                                'label'          => $latest['label'],
-                                'score'          => $latest['score'],
-                                'interpretation' => $latest['interpretation'],
-                                'start_date'     => $latest['start_date'],
-                                'end_date'       => $latest['end_date'],
-                            ]);
-                        }
-                    }
-                }
-            @endphp
-
-            @if($progressItems->count() > 0)
-                @foreach($progressItems as $item)
-                    <div class="child-item" style="background:linear-gradient(135deg,#ff9f43,#ffdd57); margin-bottom:0.6rem;">
-                        <div class="child-avatar">📈</div>
-                        <div style="flex:1; min-width:0;">
-                            <div class="child-name">{{ $item['name'] }}</div>
-                            <div class="child-age">Period: {{ $item['label'] ?? 'Assessment' }}</div>
-                            <div class="prog-text" style="margin-top:0.15rem;">
-                                <span class="prog-pct">{{ $item['score'] ?? '—' }}</span>
-                                <span style="opacity:0.9;">{{ $item['interpretation'] ?? 'No summary yet' }}</span>
-                            </div>
-                            <div class="prog-text" style="margin-top:0.1rem;">
-                                <span style="opacity:0.8;">📅 {{ \Carbon\Carbon::parse($item['start_date'])->format('M d') }} – {{ \Carbon\Carbon::parse($item['end_date'])->format('M d, Y') }}</span>
-                            </div>
+            @if(count($latest_results) > 0)
+                @php $r = $latest_results[0]; @endphp
+                <div class="score-card">
+                    <div class="score-header">
+                        <div class="score-avatar">
+                            @if($r['profile_image'])
+                                <img src="{{ asset('storage/' . $r['profile_image']) }}" alt="">
+                            @else
+                                🌟
+                            @endif
+                        </div>
+                        <div>
+                            <div class="score-child-name">{{ $r['child_name'] }}</div>
+                            <div class="score-label">Most Recent Assessment</div>
                         </div>
                     </div>
-                @endforeach
+                    <div class="score-number">{{ $r['score'] }}</div>
+                    <div class="score-interp">{{ $r['interpretation'] }}</div>
+                    <div class="score-date">📅 {{ \Carbon\Carbon::parse($r['date'])->format('M d, Y') }}</div>
+                </div>
             @else
                 <div class="empty">
-                    <span>📈</span>
-                    <p>No completed assessment periods yet.</p>
+                    <span>📋</span>
+                    <p>No results yet.</p>
                 </div>
             @endif
         </div>
@@ -534,7 +546,6 @@
         <div class="card">
             <div class="card-title">📅 Upcoming Assessments</div>
 
-            {{-- FIX 3: Added missing opening div for card-scroll assess-scroll --}}
             <div class="card-scroll assess-scroll">
                 @forelse($assessments as $a)
                     @php
@@ -551,31 +562,9 @@
                         <div class="assess-dates">
                             📆 {{ $start->format('M d') }} – {{ $end->format('M d, Y') }}
                         </div>
-                        @if($daysLeft >= 0)
-                            <div class="days-remaining">
-                                ⏳ Starts in {{ $daysLeft }} day{{ $daysLeft !== 1 ? 's' : '' }}
-                            </div>
-                        @else
-                            <div class="days-remaining" style="background:rgba(180,0,0,0.25);">
-                                ⚠️ {{ abs($daysLeft) }} day{{ abs($daysLeft) !== 1 ? 's' : '' }} overdue
-                            </div>
-                        @endif
-
-                        @php
-                            $familyTest = $a->family_test ?? null;
-                        @endphp
-
-                        @if($now->between($start, $end))
-                            @if($familyTest && in_array($familyTest->status, ['completed', 'finalized']))
-                                <div class="start-btn" style="background:#e5e7eb;color:#16a34a;cursor:default;box-shadow:none;">
-                                    ✔ Done for this period
-                                </div>
-                            @else
-                                <a href="{{ route('family.tests.start.show', $a->student_id) }}" class="start-btn">
-                                    {{ $familyTest && $familyTest->status === 'in_progress' ? '▶ Continue Test' : '▶ Start Now' }}
-                                </a>
-                            @endif
-                        @endif
+                        <div class="days-remaining">
+                            ⏳ Starts in {{ $daysLeft }} day{{ $daysLeft !== 1 ? 's' : '' }}
+                        </div>
                     </div>
                 @empty
                     <div class="empty">
@@ -583,131 +572,47 @@
                         <p>No upcoming assessments.</p>
                     </div>
                 @endforelse
-            </div>{{-- FIX 3: closes card-scroll assess-scroll --}}
-        </div>
-
-        {{-- Results History --}}
-        <div class="card" id="family-results">
-            <div class="card-title">📊 Previous Results</div>
-
-            @php
-                $history = collect($latest_results);
-            @endphp
-
-            @if($history->count() > 0)
-                @foreach($history as $item)
-                    <div class="child-item" style="background:linear-gradient(135deg,#6366f1,#a855f7); margin-bottom:0.6rem;">
-                        <div class="child-avatar">
-                            @if($item['profile_image'])
-                                <img src="{{ asset('storage/' . $item['profile_image']) }}" alt="{{ $item['child_name'] }}">
-                            @else
-                                🎯
-                            @endif
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div class="child-name">{{ $item['child_name'] }}</div>
-                            <div class="child-age">Score: {{ $item['score'] }} • {{ $item['interpretation'] }}</div>
-                            <div class="prog-text" style="margin-top:0.15rem;">
-                                <span style="opacity:0.9;">📅 {{ \Carbon\Carbon::parse($item['date'])->format('M d, Y') }}</span>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            @else
-                <div class="empty">
-                    <span>📊</span>
-                    <p>No previous results yet.</p>
-                </div>
-            @endif
+            </div>
         </div>
 
         {{-- Notifications --}}
         <div class="card">
             <div class="card-title">🔔 Notifications</div>
 
-            @php
-                use Carbon\Carbon;
-
-                $incomplete = 0;
-                foreach ($children as $c) {
-                    if (!empty($c['needs_action'])) {
-                        $incomplete++;
-                    }
-                }
-
-                $pendingAssessments = 0;
-                $now = Carbon::now();
-                foreach ($assessments as $a) {
-                    $start      = Carbon::parse($a->start_date);
-                    $end        = Carbon::parse($a->end_date);
-                    $familyTest = $a->family_test ?? null;
-                    $done       = $familyTest && in_array($familyTest->status, ['completed', 'finalized']);
-
-                    if ($end->gte($now) && !$done) {
-                        $pendingAssessments++;
-                    }
-                }
-            @endphp
-
-            {{-- FIX 4: Added missing card-scroll notif-scroll wrapper --}}
             <div class="card-scroll notif-scroll">
-                @if($incomplete > 0)
-                    <div class="notif-item green">
-                        <div class="notif-icon">📝</div>
-                        <div class="notif-body">
-                            <div class="notif-title">Unfinished Test</div>
-                            <div class="notif-text">{{ $incomplete }} test(s) still need to be completed.</div>
+                @forelse($notifications as $n)
+                    @if($n['link'])
+                        <a href="{{ $n['link'] }}" class="notif-item {{ $n['color'] }}">
+                            <div class="notif-icon">{{ $n['icon'] }}</div>
+                            <div class="notif-body">
+                                <div class="notif-title">{{ $n['title'] }}</div>
+                                <div class="notif-text">{{ $n['text'] }}</div>
+                                @if($n['cta'])
+                                    <div class="notif-cta">{{ $n['cta'] }}</div>
+                                @endif
+                            </div>
+                        </a>
+                    @else
+                        <div class="notif-item {{ $n['color'] }}">
+                            <div class="notif-icon">{{ $n['icon'] }}</div>
+                            <div class="notif-body">
+                                <div class="notif-title">{{ $n['title'] }}</div>
+                                <div class="notif-text">{{ $n['text'] }}</div>
+                                @if($n['cta'])
+                                    <div class="notif-cta">{{ $n['cta'] }}</div>
+                                @endif
+                            </div>
                         </div>
-                    </div>
-                @endif
-
-                @if(count($latest_results) > 0)
-                    <div class="notif-item yellow">
-                        <div class="notif-icon">🏆</div>
-                        <div class="notif-body">
-                            <div class="notif-title">Results Available</div>
-                            <div class="notif-text">Check your child's latest score!</div>
-                        </div>
-                    </div>
-                @endif
-
-                @if($pendingAssessments > 0)
-                    {{-- FIX 2: Changed undefined .light class to .blue --}}
-                    <div class="notif-item blue">
-                        <div class="notif-icon">📅</div>
-                        <div class="notif-body">
-                            <div class="notif-title">Assessment Scheduled</div>
-                            <div class="notif-text">{{ $pendingAssessments }} assessment(s) coming up.</div>
-                        </div>
-                    </div>
-                @endif
-
-                @if($incomplete == 0 && count($latest_results) == 0 && $pendingAssessments == 0)
+                    @endif
+                @empty
                     <div class="empty">
                         <span>🎉</span>
                         <p>All caught up!</p>
                     </div>
-                @endif
-            </div>{{-- closes card-scroll notif-scroll --}}
+                @endforelse
+            </div>
         </div>
 
-    </div>
-
-    {{-- Help & Tips --}}
-    <div class="card" id="family-help" style="margin-top:1.5rem;">
-        <div class="card-title">❓ Help & Tips</div>
-        <p style="font-size:0.85rem; color:#374151; margin-bottom:0.4rem;">
-            - Tap <strong>Current Test</strong> in the top menu to go straight to your child&apos;s active assessment.
-        </p>
-        <p style="font-size:0.85rem; color:#374151; margin-bottom:0.4rem;">
-            - Use the <strong>Unfinished Test</strong> notification to quickly see if anything still needs your attention.
-        </p>
-        <p style="font-size:0.85rem; color:#374151; margin-bottom:0.4rem;">
-            - In <strong>Previous Results</strong>, you can review older assessments and track progress over time.
-        </p>
-        <p style="font-size:0.85rem; color:#374151;">
-            If something doesn&apos;t look right, you can return to the home screen anytime using the <strong>Home</strong> button in the header.
-        </p>
     </div>
 </div>
 

@@ -78,6 +78,8 @@ Route::prefix('family')->middleware('auth')->group(function () {
     Route::get('/children/{student}', [FamilyController::class, 'child'])->name('family.child');
     Route::get('/tests/start/{student}', [FamilyController::class, 'showStartTest'])->name('family.tests.start.show');
 	Route::get('/students/{student}', [FamilyController::class, 'showStudentProfile'])->name('family.student.profile');
+	Route::get('/profile', [FamilyController::class, 'familyProfile'])->name('family.profile');
+	Route::get('/tests', [FamilyController::class, 'testsIndex'])->name('family.tests.index');
     Route::post('/tests/start/{student}', [FamilyController::class, 'startTest'])->name('family.tests.start');
     Route::get('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'showQuestion'])->name('family.tests.question');
     Route::post('/tests/{test}/domain/{domain}/question/{index}', [FamilyController::class, 'submitQuestion'])->name('family.tests.question.submit');
@@ -102,7 +104,7 @@ Route::prefix('family')->middleware('auth')->group(function () {
     Route::post('/tests/{test}/cancel', [FamilyController::class, 'cancel'])->name('family.tests.cancel');
     Route::post('/tests/{test}/terminate', [FamilyController::class, 'terminate'])->name('family.tests.terminate');
     Route::post('/tests/{test}/pause', [FamilyController::class, 'pause'])->name('family.tests.pause');
-    Route::get('/tests/{test}/domain/{domain}/game/{index}', [FamilyController::class, 'showGame'])->name('family.tests.game');
+Route::post('/tests/{test}/domain/{domain}/question/{index}/game', [FamilyController::class, 'submitQuestion'])->name('family.tests.game.submit');
 });
 
 

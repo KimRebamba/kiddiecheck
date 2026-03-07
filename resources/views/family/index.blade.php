@@ -89,7 +89,6 @@
         padding: 1.2rem 1.5rem;
         box-shadow: 0 6px 20px rgba(0,0,0,0.07);
         border: 3px solid #ffe0ec;
-        height: 100%;
     }
 
     .card-title {
@@ -101,6 +100,24 @@
         border-bottom: 2px dashed #ffe0ec;
     }
 
+    /* ── Scrollable card body ── */
+    .card-scroll {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 4px;
+        scroll-behavior: smooth;
+    }
+
+    .card-scroll.children-scroll  { max-height: 112px; }
+    .card-scroll.assess-scroll    { max-height: 210px; }
+    .card-scroll.notif-scroll     { max-height: 265px; }
+
+    /* Custom scrollbar */
+    .card-scroll::-webkit-scrollbar { width: 6px; }
+    .card-scroll::-webkit-scrollbar-track { background: #ffe0ec; border-radius: 10px; }
+    .card-scroll::-webkit-scrollbar-thumb { background: #ff6b9d; border-radius: 10px; }
+    .card-scroll::-webkit-scrollbar-thumb:hover { background: #e0456a; }
+
     /* ── Child Items ── */
     .child-item {
         display: flex;
@@ -111,7 +128,6 @@
         padding: 0.8rem 1rem;
         margin-bottom: 0.7rem;
         color: white;
-        cursor: pointer;
         transition: transform 0.2s, box-shadow 0.2s;
         border: 3px solid rgba(255,255,255,0.3);
         position: relative;
@@ -123,6 +139,15 @@
         box-shadow: 0 8px 18px rgba(255,107,157,0.4);
     }
     .child-item:last-child { margin-bottom: 0; }
+
+    /* ── Completed Child Item (green) ── */
+    .child-item.completed {
+        background: linear-gradient(135deg, #6bcf7f, #a3e4a1);
+    }
+
+    .child-item.completed:hover {
+        box-shadow: 0 8px 18px rgba(107, 207, 127, 0.4);
+    }
 
     .child-avatar {
         width: 46px; height: 46px;
@@ -140,7 +165,6 @@
     .child-name { font-size: 0.95rem; font-weight: 900; }
     .child-age  { font-size: 0.73rem; opacity: 0.9; margin-top: 0.1rem; }
 
-    /* Thicker, more visible progress bar */
     .prog-bar {
         height: 10px;
         background: rgba(255,255,255,0.3);
@@ -159,11 +183,9 @@
         min-width: 4px;
     }
 
-    /* Percentage label instead of raw counts */
     .prog-text {
         font-size: 0.72rem;
         font-weight: 800;
-        opacity: 1;
         margin-top: 0.3rem;
         display: flex;
         align-items: center;
@@ -176,32 +198,6 @@
         padding: 0.1rem 0.5rem;
         font-weight: 900;
         font-size: 0.75rem;
-    }
-
-    /* "View" button on child card */
-    .child-view-btn {
-        margin-left: auto;
-        flex-shrink: 0;
-        background: rgba(255,255,255,0.9);
-        color: #ff6b9d;
-        border: none;
-        padding: 0.3rem 0.85rem;
-        border-radius: 20px;
-        font-size: 0.72rem;
-        font-weight: 900;
-        cursor: pointer;
-        transition: all 0.2s;
-        white-space: nowrap;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-    .child-view-btn:hover {
-        background: white;
-        color: #e0456a;
-        transform: scale(1.05);
     }
 
     /* ── Score Card ── */
@@ -254,7 +250,6 @@
         text-shadow: 0 3px 10px rgba(0,0,0,0.12);
     }
 
-    /* High-contrast interpretation badge */
     .score-interp {
         font-size: 0.9rem;
         font-weight: 900;
@@ -269,6 +264,7 @@
         letter-spacing: 0.02em;
         text-shadow: 0 1px 3px rgba(0,0,0,0.3);
         border: 1.5px solid rgba(255,255,255,0.35);
+        box-sizing: border-box;
     }
 
     .score-date { font-size: 0.73rem; opacity: 0.85; text-align: center; margin-top: 0.2rem; }
@@ -293,7 +289,6 @@
     .assess-name  { font-size: 0.9rem; font-weight: 900; margin-bottom: 0.25rem; }
     .assess-dates { font-size: 0.75rem; opacity: 0.95; margin-bottom: 0.2rem; font-weight: 700; }
 
-    /* Days remaining pill */
     .days-remaining {
         display: inline-block;
         background: rgba(0,0,0,0.18);
@@ -318,7 +313,6 @@
         border: 1px solid rgba(255,255,255,0.3);
     }
 
-    /* Full-width prominent Start Now button */
     .start-btn {
         display: flex;
         align-items: center;
@@ -336,6 +330,7 @@
         box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         width: 100%;
         letter-spacing: 0.02em;
+        box-sizing: border-box;
     }
 
     .start-btn:hover {
@@ -356,35 +351,56 @@
         transition: transform 0.2s, box-shadow 0.2s;
         border: 3px solid rgba(255,255,255,0.3);
         cursor: pointer;
+        text-decoration: none;
     }
 
     .notif-item:hover {
-        transform: translateX(5px);
-        box-shadow: 0 5px 14px rgba(0,0,0,0.1);
+        transform: translateX(4px);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.12);
     }
     .notif-item:last-child { margin-bottom: 0; }
+    .notif-item.pink   { background: linear-gradient(135deg, #ff6b9d, #ffb3d1); }
     .notif-item.green  { background: linear-gradient(135deg, #6bcf7f, #a3e4a1); }
     .notif-item.yellow { background: linear-gradient(135deg, #ff9f43, #ffdd57); }
-    .notif-item.light  { background: linear-gradient(135deg, #ff6b9d, #ffb3d1); }
 
-    /* Consistent icon box — same size, same padding across all notifs */
     .notif-icon {
-        font-size: 1.4rem;
-        width: 44px;
-        height: 44px;
-        min-width: 44px;
+        font-size: 1.5rem;
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
         background: rgba(255,255,255,0.28);
-        border-radius: 12px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
-        border: 1.5px solid rgba(255,255,255,0.35);
+        border: 2px solid rgba(255,255,255,0.4);
     }
 
     .notif-body { flex: 1; min-width: 0; }
-    .notif-title { font-size: 0.88rem; font-weight: 900; }
-    .notif-text  { font-size: 0.73rem; opacity: 0.95; margin-top: 0.1rem; font-weight: 600; }
+
+    .notif-title {
+        font-size: 0.92rem;
+        font-weight: 900;
+        line-height: 1.2;
+        margin-bottom: 0.15rem;
+    }
+
+    .notif-text {
+        font-size: 0.73rem;
+        opacity: 0.92;
+        font-weight: 600;
+        margin-bottom: 0.2rem;
+    }
+
+    .notif-cta {
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        opacity: 0.75;
+        margin-top: 0.15rem;
+    }
 
     /* ── Empty State ── */
     .empty {
@@ -431,42 +447,62 @@
         {{-- Your Children --}}
         <div class="card">
             <div class="card-title">🧒 Your Children</div>
+            <div class="card-scroll children-scroll">
+                @forelse($children as $child)
+    @php
+        $pct = $child['total_tests'] > 0
+            ? round(($child['completed'] / $child['total_tests']) * 100)
+            : 0;
+    @endphp
+    <div class="child-item {{ $child['period_completed'] ? 'completed' : '' }}">
+        <div class="child-avatar">
+            @if($child['profile_image'])
+                <img src="{{ asset('storage/' . $child['profile_image']) }}" alt="{{ $child['name'] }}">
+            @else
+                🐣
+            @endif
+        </div>
+        <div style="flex:1; min-width:0;">
+            <div class="child-name">{{ $child['first_name'] }}</div>
+            <div class="child-age">🎂 Age: {{ $child['age'] }}</div>
 
-            @forelse($children as $child)
-                @php
-                    $pct = $child['total_tests'] > 0
-                        ? round(($child['completed'] / $child['total_tests']) * 100)
-                        : 0;
-                @endphp
-                <div class="child-item">
-                    <div class="child-avatar">
-                        @if($child['profile_image'])
-                            <img src="{{ asset('storage/' . $child['profile_image']) }}" alt="{{ $child['name'] }}">
-                        @else
-                            🐣
-                        @endif
-                    </div>
-                    <div style="flex:1; min-width:0;">
-                        <div class="child-name">{{ $child['first_name'] }}</div>
-                        <div class="child-age">🎂 Age: {{ $child['age'] }}</div>
-                        @if($child['total_tests'] > 0)
-                            <div class="prog-bar">
-                                <div class="prog-fill" style="width: {{ $pct }}%"></div>
-                            </div>
-                            <div class="prog-text">
-                                <span class="prog-pct">{{ $pct }}% complete</span>
-                                <span style="opacity:0.8;">({{ $child['completed'] }}/{{ $child['total_tests'] }})</span>
-                            </div>
-                        @endif
-                    </div>
-                    <a href="{{ route('family.student.profile', $child['student_id']) }}" class="child-view-btn">View →</a>
+            @if($child['period_completed'])
+                {{-- Test is done — green card, 100% bar, completed badge --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: 100%"></div>
                 </div>
-            @empty
-                <div class="empty">
-                    <span>🐣</span>
-                    <p>No children registered yet.</p>
+                <div class="prog-text">
+                    <span class="prog-pct" style="background:rgba(255,255,255,0.5);">✅ Test Completed</span>
                 </div>
-            @endforelse
+
+            @elseif($child['active_period'])
+                {{-- Active period exists — show real progress bar --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: {{ $pct }}%"></div>
+                </div>
+                <div class="prog-text">
+                    <span class="prog-pct">{{ $pct }}% complete</span>
+                    <span style="opacity:0.8;">({{ $child['completed'] }}/{{ $child['total_tests'] }})</span>
+                </div>
+
+            @else
+                {{-- No active period, not completed — empty bar as placeholder --}}
+                <div class="prog-bar">
+                    <div class="prog-fill" style="width: 0%"></div>
+                </div>
+                <div class="prog-text">
+                    <span class="prog-pct" style="opacity:0.6;">No active assessment</span>
+                </div>
+            @endif
+        </div>
+    </div>
+@empty
+    <div class="empty">
+        <span>🐣</span>
+        <p>No children registered yet.</p>
+    </div>
+@endforelse
+            </div>
         </div>
 
     </div>
@@ -510,101 +546,118 @@
         <div class="card">
             <div class="card-title">📅 Upcoming Assessments</div>
 
-            @forelse($assessments as $a)
-                @php
-                    $now      = now();
-                    $start    = \Carbon\Carbon::parse($a->start_date);
-                    $end      = \Carbon\Carbon::parse($a->end_date);
-                    $daysLeft = (int) $now->diffInDays($end, false);
-
-                    if ($now->between($start, $end)) {
-                        $badgeText = '🟡 In Progress';
-                    } elseif ($now->gt($end)) {
-                        $badgeText = '🔴 Overdue';
-                    } else {
-                        $badgeText = '🟢 Upcoming';
-                    }
-                @endphp
-                <div class="assess-item">
-                    <div class="assess-name">
-                        {{ $a->first_name }} {{ $a->last_name }}
-                        <span class="badge-status">{{ $badgeText }}</span>
-                    </div>
-                    <div class="assess-dates">
-                        📆 {{ $start->format('M d') }} – {{ $end->format('M d, Y') }}
-                    </div>
-                    @if($daysLeft >= 0)
+            <div class="card-scroll assess-scroll">
+                @forelse($assessments as $a)
+                    @php
+                        $now      = now();
+                        $start    = \Carbon\Carbon::parse($a->start_date);
+                        $end      = \Carbon\Carbon::parse($a->end_date);
+                        $daysLeft = (int) $now->diffInDays($start, false);
+                    @endphp
+                    <div class="assess-item">
+                        <div class="assess-name">
+                            {{ $a->first_name }} {{ $a->last_name }}
+                            <span class="badge-status">🟢 Upcoming</span>
+                        </div>
+                        <div class="assess-dates">
+                            📆 {{ $start->format('M d') }} – {{ $end->format('M d, Y') }}
+                        </div>
                         <div class="days-remaining">
-                            ⏳ {{ $daysLeft }} day{{ $daysLeft !== 1 ? 's' : '' }} remaining
+                            ⏳ Starts in {{ $daysLeft }} day{{ $daysLeft !== 1 ? 's' : '' }}
                         </div>
-                    @else
-                        <div class="days-remaining" style="background:rgba(180,0,0,0.25);">
-                            ⚠️ {{ abs($daysLeft) }} day{{ abs($daysLeft) !== 1 ? 's' : '' }} overdue
-                        </div>
-                    @endif
-                    @if($now->between($start, $end))
-                        <a href="{{ route('family.tests.start.show', $a->student_id) }}" class="start-btn">
-                            ▶ Start Now
-                        </a>
-                    @endif
-                </div>
-            @empty
-                <div class="empty">
-                    <span>🗓️</span>
-                    <p>No upcoming assessments.</p>
-                </div>
-            @endforelse
+                    </div>
+                @empty
+                    <div class="empty">
+                        <span>🗓️</span>
+                        <p>No upcoming assessments.</p>
+                    </div>
+                @endforelse
+            </div>
         </div>
 
         {{-- Notifications --}}
         <div class="card">
             <div class="card-title">🔔 Notifications</div>
 
-            @php
-                $incomplete = 0;
-                foreach ($children as $c) {
-                    if ($c['completed'] < $c['total_tests']) $incomplete++;
-                }
-            @endphp
-
-            @if($incomplete > 0)
-                <div class="notif-item green">
-                    <div class="notif-icon">📝</div>
-                    <div class="notif-body">
-                        <div class="notif-title">Unfinished Test</div>
-                        <div class="notif-text">{{ $incomplete }} test(s) still need to be completed.</div>
+            <div class="card-scroll notif-scroll">
+                @forelse($notifications as $n)
+                    @if($n['link'])
+                        <a href="{{ $n['link'] }}" class="notif-item {{ $n['color'] }}">
+                            <div class="notif-icon">{{ $n['icon'] }}</div>
+                            <div class="notif-body">
+                                <div class="notif-title">{{ $n['title'] }}</div>
+                                <div class="notif-text">{{ $n['text'] }}</div>
+                                @if($n['cta'])
+                                    <div class="notif-cta">{{ $n['cta'] }}</div>
+                                @endif
+                            </div>
+                        </a>
+                    @else
+                        <div class="notif-item {{ $n['color'] }}">
+                            <div class="notif-icon">{{ $n['icon'] }}</div>
+                            <div class="notif-body">
+                                <div class="notif-title">{{ $n['title'] }}</div>
+                                <div class="notif-text">{{ $n['text'] }}</div>
+                                @if($n['cta'])
+                                    <div class="notif-cta">{{ $n['cta'] }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+                @empty
+                    <div class="empty">
+                        <span>🎉</span>
+                        <p>All caught up!</p>
                     </div>
-                </div>
-            @endif
-
-            @if(count($latest_results) > 0)
-                <div class="notif-item yellow">
-                    <div class="notif-icon">🏆</div>
-                    <div class="notif-body">
-                        <div class="notif-title">Results Available</div>
-                        <div class="notif-text">Check your child's latest score!</div>
-                    </div>
-                </div>
-            @endif
-
-            @if(count($assessments) > 0)
-                <div class="notif-item light">
-                    <div class="notif-icon">📅</div>
-                    <div class="notif-body">
-                        <div class="notif-title">Assessment Scheduled</div>
-                        <div class="notif-text">{{ count($assessments) }} assessment(s) coming up.</div>
-                    </div>
-                </div>
-            @endif
-
-            @if($incomplete == 0 && count($latest_results) == 0 && count($assessments) == 0)
-                <div class="empty">
-                    <span>🎉</span>
-                    <p>All caught up!</p>
-                </div>
-            @endif
+                @endforelse
+            </div>
         </div>
 
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Children: use tallest item so completed badge is never clipped
+    var childContainer = document.querySelector('.children-scroll');
+    if (childContainer) {
+        var childItems = childContainer.children;
+        if (childItems.length > 0) {
+            var maxH = 0;
+            for (var i = 0; i < childItems.length; i++) {
+                var h = childItems[i].getBoundingClientRect().height;
+                if (h > maxH) maxH = h;
+            }
+            childContainer.style.maxHeight = maxH + 'px';
+        }
+    }
+
+    // Assessments: show exactly 1 item height
+    var assessContainer = document.querySelector('.assess-scroll');
+    if (assessContainer) {
+        var firstAssess = assessContainer.firstElementChild;
+        if (firstAssess) {
+            assessContainer.style.maxHeight = firstAssess.getBoundingClientRect().height + 'px';
+        }
+    }
+
+    // Notifications: show exactly 2 items
+    var notifContainer = document.querySelector('.notif-scroll');
+    if (notifContainer) {
+        var items = notifContainer.children;
+        if (items.length >= 2) {
+            var total = 0;
+            for (var i = 0; i < 2; i++) {
+                total += items[i].getBoundingClientRect().height;
+                if (i < 1) {
+                    total += parseFloat(window.getComputedStyle(items[i]).marginBottom) || 0;
+                }
+            }
+            notifContainer.style.maxHeight = total + 'px';
+        } else if (items.length === 1) {
+            notifContainer.style.maxHeight = items[0].getBoundingClientRect().height + 'px';
+        }
+    }
+});
+</script>
 @endsection

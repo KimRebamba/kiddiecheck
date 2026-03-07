@@ -29,6 +29,32 @@
             padding: 20px;
         }
 
+        /* Dashboard button fixed to top right of the page */
+        .btn-dashboard {
+            position: fixed;
+            top: 16px;
+            right: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            color: #555;
+            font-weight: 700;
+            font-size: 0.85rem;
+            padding: 0.45rem 1rem;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+            z-index: 999;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn-dashboard:hover {
+            background: rgba(255,255,255,0.95);
+            color: #222;
+            text-decoration: none;
+        }
+
         .question-card {
             background: #fff;
             border-radius: 30px;
@@ -51,7 +77,6 @@
             margin-bottom: 4px;
         }
 
-        /* NEW: domain and overall counters */
         .progress-domain {
             font-size: 12px;
             color: #aaa;
@@ -126,7 +151,6 @@
             transform: translateY(2px) scale(1);
         }
 
-        /* Selected state - bigger with lighter color */
         .btn-yes.selected {
             background: #A5D6A7;
             color: #2E7D32;
@@ -159,6 +183,12 @@
 
         .comment-section.show {
             display: block;
+        }
+
+        .btn-next-disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
         @keyframes slideDown {
@@ -244,15 +274,15 @@
             .question-card {
                 padding: 40px 30px;
             }
-            
+
             .domain-title {
                 font-size: 26px;
             }
-            
+
             .question-text {
                 font-size: 18px;
             }
-            
+
             .btn-answer {
                 font-size: 24px;
                 padding: 24px;
@@ -276,16 +306,24 @@
                 width: 100%;
                 justify-content: center;
             }
+
+            .btn-dashboard {
+                font-size: 0.78rem;
+                padding: 0.38rem 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
 
+{{-- Dashboard link fixed to top right --}}
+<a href="{{ route('family.index') }}" class="btn-dashboard">
+    🏠 Dashboard
+</a>
+
 <div class="question-card">
     <div class="progress-info">
-        {{-- Overall answered counter --}}
         <div class="progress-answered">{{ $totalAnswered }} of {{ $totalQuestions }} answered</div>
-        {{-- Domain question counter (requires $questionIndex and $totalDomainQuestions from controller) --}}
         <div class="progress-domain">Question {{ $questionIndex }} of {{ $totalDomainQuestions }} in this domain</div>
     </div>
 
@@ -314,7 +352,6 @@
             <button type="button" onclick="selectAnswer('yes')" class="btn-answer btn-yes {{ $existingResponse === 'yes' ? 'selected' : '' }}" id="btnYes">
                 YES
             </button>
-
             <button type="button" onclick="selectAnswer('no')" class="btn-answer btn-no {{ $existingResponse === 'no' ? 'selected' : '' }}" id="btnNo">
                 NO
             </button>
@@ -339,7 +376,7 @@
             @endif
 
             <div class="nav-center">
-                <button type="submit" class="btn-nav" id="btnNext">
+                <button type="submit" class="btn-nav {{ !$existingResponse ? 'btn-next-disabled' : '' }}" id="btnNext">
                     Next →
                 </button>
 
@@ -363,12 +400,11 @@ function selectAnswer(value) {
     const btnNo = document.getElementById('btnNo');
     const commentSection = document.getElementById('commentSection');
     const responseInput = document.getElementById('responseInput');
+    const btnNext = document.getElementById('btnNext');
 
-    // Remove selected class from both buttons
     btnYes.classList.remove('selected');
     btnNo.classList.remove('selected');
 
-    // Add selected class to clicked button
     if (value === 'yes') {
         btnYes.classList.add('selected');
         commentSection.classList.remove('show');
@@ -377,14 +413,14 @@ function selectAnswer(value) {
         commentSection.classList.add('show');
     }
 
-    // Update hidden input value
     responseInput.value = value;
+
+    // Enable next button once answer is selected
+    btnNext.classList.remove('btn-next-disabled');
 }
 
-// Form validation - ensure answer is selected before submitting
 document.getElementById('answerForm').addEventListener('submit', function(e) {
     const responseValue = document.getElementById('responseInput').value;
-    
     if (!responseValue) {
         e.preventDefault();
         alert('Please select YES or NO before continuing.');

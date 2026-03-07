@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
     @if($period->student_feature_path)
-      <img src="{{ asset($period->student_feature_path) }}" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
+      <img src="{{ asset('storage/' . $period->student_feature_path) }}" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
     @else
       <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-size:1.25rem;">
         {{ strtoupper(substr($period->student_first_name, 0, 1)) }}

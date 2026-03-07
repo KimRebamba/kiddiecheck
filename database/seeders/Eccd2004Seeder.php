@@ -566,109 +566,11 @@ class Eccd2004Seeder extends Seeder
 
         
 
-        // Create families (3 families for 3 sections)
-
-        $families = [
-
-            ['user_id' => $teacherIds[0], 'family_name' => 'Family A', 'home_address' => 'Address A', 'emergency_contact' => 'Contact A', 'emergency_phone' => '111-222-3333', 'created_at' => now(), 'updated_at' => now()],
-
-            ['user_id' => $teacherIds[1], 'family_name' => 'Family B', 'home_address' => 'Address B', 'emergency_contact' => 'Contact B', 'emergency_phone' => '222-333-4444', 'created_at' => now(), 'updated_at' => now()],
-
-            ['user_id' => $teacherIds[2], 'family_name' => 'Family C', 'home_address' => 'Address C', 'emergency_contact' => 'Contact C', 'emergency_phone' => '333-444-5555', 'created_at' => now(), 'updated_at' => now()],
-
-        ];
-
-        
-
-        $familyIds = [];
-
-        foreach ($families as $family) {
-
-            $familyId = DB::table('families')->insertGetId($family);
-
-            $familyIds[] = $family['user_id']; // Use user_id for foreign key reference
-
-        }
-
-        
-
-        // Create students (50 students distributed across sections)
-
-        $students = [];
-
-        for ($i = 1; $i <= 50; $i++) {
-
-            $sectionId = $sectionIds[($i - 1) % 3];
-
-            $familyId = $familyIds[($i - 1) % 3];
-
-            
-
-            $students[] = [
-
-                'first_name' => "Student {$i}",
-
-                'last_name' => "Student {$i}",
-
-                'date_of_birth' => now()->subYears(rand(3, 5))->format('Y-m-d'),
-
-                'section_id' => $sectionId,
-
-                'family_id' => $familyId,
-
-                'created_at' => now(),
-
-                'updated_at' => now()
-
-            ];
-
-        }
-
-        
-
-        // Insert students
-
-        $studentIds = [];
-
-        foreach ($students as $student) {
-
-            $studentId = DB::table('students')->insertGetId($student);
-
-            $studentIds[] = $studentId;
-
-        }
-
-        
-
-        // Assign students to teachers (each teacher gets students from their section only)
-
-        foreach ($teacherIds as $teacherIndex => $teacherId) {
-
-            foreach ($studentIds as $studentIndex => $studentId) {
-
-                $studentSectionId = $students[$studentIndex]['section_id'];
-
-                $teacherSectionId = $sectionIds[$teacherIndex];
-
-                
-
-                // Only assign student to teacher if they're in the same section
-
-                if ($studentSectionId === $teacherSectionId) {
-
-                    DB::table('student_teacher')->insert([
-
-                        'student_id' => $studentId,
-
-                        'teacher_id' => $teacherId
-
-                    ]);
-
-                }
-
-            }
-
-        }
+        // NOTE: Demo students and family relationships are now seeded exclusively
+        // in DemoSeeder. We intentionally do NOT create additional generic
+        // students or family records here to avoid cluttering the teacher views
+        // with extra "Student N" entries. Sections and teachers above are
+        // retained only as structural examples.
 
 
 

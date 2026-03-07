@@ -21,7 +21,7 @@
           $dob = is_string($student->date_of_birth) ? \Carbon\Carbon::parse($student->date_of_birth) : $student->date_of_birth;
         @endphp
         <p class="mb-2"><strong>Date of Birth:</strong> {{ $dob ? $dob->format('M d, Y') : 'N/A' }}</p>
-        <p class="mb-2"><strong>Age:</strong> {{ $student->age ?? 'N/A' }} years</p>
+        <p class="mb-2"><strong>Age:</strong> {{ $student->age ?? 'N/A' }}</p>
         <p class="mb-2"><strong>Section:</strong> {{ optional($student->section)->name ?? 'N/A' }}</p>
         <p class="mb-2"><strong>Family:</strong> {{ optional($student->family)->family_name ?? 'N/A' }}</p>
       </div>
@@ -87,12 +87,24 @@
                     </td>
                     <td>{{ $tests->count() }}</td>
                     <td>
+                      @php
+                        $inProgressTest = $tests->firstWhere('status', 'in_progress');
+                        $completedTest = $tests->firstWhere('status', 'completed');
+                        $finalizedTest = $tests->firstWhere('status', 'finalized');
+                        $viewableTest = $finalizedTest ?: $completedTest;
+                      @endphp
                       @if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue')
-                        <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display: inline;">
-                          @csrf
-                          <input type="hidden" name="period_id" value="{{ $period->period_id }}">
-                          <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
-                        </form>
+                        @if($inProgressTest)
+                          <a href="{{ route('teacher.tests.form', $inProgressTest->test_id) }}" class="btn btn-sm btn-outline-primary">Continue Test</a>
+                        @elseif($viewableTest)
+                          <a href="{{ route('teacher.tests.result', $viewableTest->test_id) }}" class="btn btn-sm btn-outline-secondary">View Result</a>
+                        @else
+                          <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display: inline;">
+                            @csrf
+                            <input type="hidden" name="period_id" value="{{ $period->period_id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">Start Test</button>
+                          </form>
+                        @endif
                       @else
                         <span class="text-muted small">
                           @if($period->status === 'overdue')

@@ -5,7 +5,7 @@
   <h1 class="h3 mb-0">{{ $section->name }}</h1>
   <div class="ms-auto">
     <a href="{{ route('teacher.sections') }}" class="btn btn-outline-secondary">Back</a>
-    <a href="{{ route('teacher.sections.edit', $section->section_id) }}" class="btn btn-outline-primary">Edit Section</a>
+    
   </div>
 </div>
 
@@ -72,13 +72,26 @@
                                 ->where('status', '!=', 'overdue')
                                 ->where('status', '!=', 'completed')
                                 ->first();
+                            $inProgressTest = null;
+                            if ($availablePeriod) {
+                                $inProgressTest = DB::table('tests')
+                                    ->where('period_id', $availablePeriod->period_id)
+                                    ->where('student_id', $student->student_id)
+                                    ->where('examiner_id', auth()->id())
+                                    ->where('status', 'in_progress')
+                                    ->first();
+                            }
                           @endphp
                           @if($availablePeriod)
-                            <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display: inline;">
-                              @csrf
-                              <input type="hidden" name="period_id" value="{{ $availablePeriod->period_id }}">
-                              <button type="submit" class="btn btn-outline-primary">Start Test</button>
-                            </form>
+                            @if($inProgressTest)
+                              <a href="{{ route('teacher.tests.form', $inProgressTest->test_id) }}" class="btn btn-outline-primary">Continue Test</a>
+                            @else
+                              <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display: inline;">
+                                @csrf
+                                <input type="hidden" name="period_id" value="{{ $availablePeriod->period_id }}">
+                                <button type="submit" class="btn btn-outline-primary">Start Test</button>
+                              </form>
+                            @endif
                           @endif
                         @endif
                         

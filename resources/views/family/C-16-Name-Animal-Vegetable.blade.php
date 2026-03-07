@@ -516,7 +516,7 @@ const nextUrl = "{{ $nextDomain && $nextIndex ? route('family.tests.question', [
 
 function clickNext() {
     if (isLocked) { window.location.href = nextUrl; return; }
-    if (boardState.some(p => p === null)) return;
+    if (answers.some(a => a === null)) return;
     openModal('confirmModal');
 }
 

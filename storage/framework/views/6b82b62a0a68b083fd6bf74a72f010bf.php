@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
     <?php if($period->student_feature_path): ?>
-      <img src="<?php echo e(asset($period->student_feature_path)); ?>" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
+      <img src="<?php echo e(asset('storage/' . $period->student_feature_path)); ?>" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
     <?php else: ?>
       <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-size:1.25rem;">
         <?php echo e(strtoupper(substr($period->student_first_name, 0, 1))); ?>

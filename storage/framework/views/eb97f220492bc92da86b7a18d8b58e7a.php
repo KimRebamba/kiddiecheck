@@ -1,10 +1,18 @@
 
 
 <?php $__env->startSection('content'); ?>
+<style>
+  .admin-page-title { font-weight: 800; letter-spacing: -0.03em; }
+  .admin-page-intro { font-size: 0.9rem; }
+  .admin-filter-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: #6B7280; }
+  .admin-filter-toggle { font-size: 0.8rem; }
+  .admin-table-caption { font-size: 0.8rem; color: #6B7280; margin: 0.35rem 0 0.2rem; }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
-    <h1 class="h4 mb-1">Assessments</h1>
-    <p class="text-muted mb-0">Monitor assessment periods, progress, and scoring health.</p>
+    <h1 class="h4 admin-page-title mb-1">Assessments</h1>
+    <p class="text-muted admin-page-intro mb-0">Monitor assessment periods, progress, and scoring health across the school.</p>
   </div>
 </div>
 
@@ -64,6 +72,16 @@
   <div class="col-12 col-xl-9">
     
     <div class="card mb-3">
+      <div class="card-header bg-white border-0 pb-0 d-flex justify-content-between align-items-center">
+        <div>
+          <div class="admin-filter-label">Filters</div>
+          <p class="text-muted small mb-1">Filter periods by status, teacher, family, and discrepancies.</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm admin-filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#assessmentsFilter" aria-expanded="true" aria-controls="assessmentsFilter">
+          Show / Hide filters
+        </button>
+      </div>
+      <div id="assessmentsFilter" class="collapse show">
       <div class="card-body py-2">
         <form method="get" class="row g-2 align-items-end">
           <div class="col-6 col-md-3">
@@ -122,24 +140,23 @@
           </div>
         </form>
       </div>
+      </div>
     </div>
 
     
     <div class="card">
       <div class="card-body p-0">
         <div class="table-responsive">
+          <div class="admin-table-caption">Showing <?php echo e($periods->count()); ?> of <?php echo e($periods->total()); ?> assessment periods (paginated).</div>
           <table class="table table-sm mb-0 align-middle">
             <thead class="table-light">
               <tr>
                 <th>Student</th>
                 <th>Family</th>
-                <th>Teachers</th>
                 <th>Period</th>
                 <th>Start</th>
                 <th>End</th>
                 <th>Status</th>
-                <th>Teacher tests</th>
-                <th>Family test</th>
                 <th>Final score</th>
                 <th>Last activity</th>
                 <th class="text-end">Actions</th>
@@ -150,20 +167,6 @@
                 <tr>
                   <td><?php echo e($p->student_last_name); ?>, <?php echo e($p->student_first_name); ?></td>
                   <td><?php echo e($p->family_name ?? '—'); ?></td>
-                  <td>
-                    <?php $assigned = $p->assigned_teachers; ?>
-                    <?php if($assigned->isEmpty()): ?>
-                      <span class="text-muted">None</span>
-                    <?php else: ?>
-                      <span>
-                        <?php echo e($assigned->take(2)->map(fn($t) => trim(($t->first_name ?? '').' '.($t->last_name ?? '')) ?: $t->username)->implode(', ')); ?>
-
-                        <?php if($assigned->count() > 2): ?>
-                          <span class="text-muted">+<?php echo e($assigned->count() - 2); ?> more</span>
-                        <?php endif; ?>
-                      </span>
-                    <?php endif; ?>
-                  </td>
                   <td><?php echo e($p->description); ?></td>
                   <td><?php echo e($p->start_date); ?></td>
                   <td><?php echo e($p->end_date); ?></td>
@@ -181,8 +184,6 @@
                       <span class="badge bg-secondary">Other</span>
                     <?php endif; ?>
                   </td>
-                  <td><?php echo e($p->teacher_progress_label); ?></td>
-                  <td><?php echo e($p->family_status_label); ?></td>
                   <td>
                     <?php if($p->final_score_status === 'Computed'): ?>
                       <span class="badge bg-success">Computed</span>
@@ -197,7 +198,7 @@
                 </tr>
               <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
-                  <td colspan="12" class="text-center text-muted py-3">No assessment periods found.</td>
+                  <td colspan="9" class="text-center text-muted py-3">No assessment periods found.</td>
                 </tr>
               <?php endif; ?>
             </tbody>

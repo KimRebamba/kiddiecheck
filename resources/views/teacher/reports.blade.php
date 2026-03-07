@@ -13,7 +13,7 @@
       </div>
       <div class="card-body">
         @if($tests->isEmpty())
-          <p class="text-muted">No completed assessments to review.</p>
+          <p class="text-muted">No finalized assessments to review.</p>
         @else
           <div class="table-responsive">
             <table class="table table-hover">

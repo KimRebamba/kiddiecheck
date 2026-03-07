@@ -279,24 +279,35 @@
         @php
             $firstIncomplete = collect($domainStats)->first(fn($d) => !$d['is_complete']);
             $continueDomain = $firstIncomplete ? $firstIncomplete['domain_number'] : 1;
-            $continueIndex = $firstIncomplete ? $firstIncomplete['first_unanswered_index'] : 1;
+            $continueIndex  = $firstIncomplete ? $firstIncomplete['first_unanswered_index'] : 1;
+
+            $lockedStatuses = ['completed', 'finalized', 'canceled', 'terminated'];
+            $isLocked       = in_array($test->status, $lockedStatuses, true);
         @endphp
 
-        <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $continueDomain, 'index' => $continueIndex]) }}"
-           class="btn-continue">
-            Continue Answering
-        </a>
+        @if(!$isLocked && !$allAnswered)
+            <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $continueDomain, 'index' => $continueIndex]) }}"
+               class="btn-continue">
+                Continue Answering
+            </a>
+        @endif
 
-        <form method="POST" action="{{ route('family.tests.finalize', $testId) }}" style="display: inline;">
-            @csrf
-            <button type="submit" class="btn-submit" {{ $allAnswered ? '' : 'disabled' }}>
-                @if($allAnswered)
-                    ✓ Submit Test
-                @else
-                    ✓ Submit Test ({{ $totalQuestions - $totalAnswered }} remaining)
-                @endif
-            </button>
-        </form>
+        @if(!$isLocked)
+            <form method="POST" action="{{ route('family.tests.finalize', $testId) }}" style="display: inline;">
+                @csrf
+                <button type="submit" class="btn-submit" {{ $allAnswered ? '' : 'disabled' }}>
+                    @if($allAnswered)
+                        ✓ Submit Test
+                    @else
+                        ✓ Submit Test ({{ $totalQuestions - $totalAnswered }} remaining)
+                    @endif
+                </button>
+            </form>
+        @else
+            <div class="btn-submit" style="opacity:0.8;cursor:default;">
+                ✓ Test submitted (no further changes)
+            </div>
+        @endif
     </div>
 </div>
 @endsection

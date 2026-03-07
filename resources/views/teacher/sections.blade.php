@@ -35,36 +35,26 @@
       <div class="col-md-6 col-lg-4">
 
         <div class="card">
-
           <div class="card-body">
-
-            <h5 class="card-title">{{ $section->name }}</h5>
-
-            <p class="card-text text-muted">
-
-              <strong>Students:</strong> {{ $section->student_count }}
-
-            </p>
-
-            <!-- Description field removed - not present in database schema -->
-
-            <div class="mt-3">
+            <h5 class="card-title mb-1">{{ $section->name }}</h5>
+            <p class="card-text text-muted mb-3">Students: {{ $section->student_count }}</p>
 
             <div class="btn-group btn-group-sm" role="group">
               <a href="{{ route('teacher.sections.show', $section->section_id) }}" class="btn btn-outline-primary">View</a>
-
-              <a href="{{ route('teacher.sections.edit', $section->section_id) }}" class="btn btn-outline-secondary">Edit</a>
-
-              <form action="{{ route('teacher.sections.destroy', $section->section_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this section?');">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn btn-outline-danger">Delete</button>
-              </form>
+              {{-- <a href="{{ route('teacher.sections.edit', $section->section_id) }}" class="btn btn-outline-secondary">Edit</a> --}}
+              @if($section->student_count == 0)
+                <form action="{{ route('teacher.sections.destroy', $section->section_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this section?');">
+                  @csrf
+                  @method('DELETE')
+                  <button type="submit" class="btn btn-outline-danger">Delete</button>
+                </form>
+              @endif
             </div>
-          </div>
 
+            @if($section->student_count > 0)
+              <div class="text-muted small mt-2">Sections with students cannot be deleted from this view.</div>
+            @endif
           </div>
-
         </div>
 
       </div>

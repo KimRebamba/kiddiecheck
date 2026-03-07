@@ -15,10 +15,8 @@
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <span class="badge bg-primary text-capitalize">{{ $user->role }}</span>
         @php $status = $user->status ?? 'active'; @endphp
-        @if($status === 'disabled')
-          <span class="badge bg-secondary">Disabled</span>
-        @elseif($status === 'reset_required')
-          <span class="badge bg-warning text-dark">Reset Required</span>
+        @if($status === 'inactive')
+          <span class="badge bg-secondary">Inactive</span>
         @else
           <span class="badge bg-success">Active</span>
         @endif
@@ -29,8 +27,8 @@
     <a href="{{ route('admin.users.edit', $user->user_id) }}" class="btn btn-outline-secondary btn-sm">Edit</a>
     <form method="post" action="{{ route('admin.users.status', $user->user_id) }}" class="d-inline">
       @csrf
-      <input type="hidden" name="status" value="{{ ($status === 'disabled') ? 'active' : 'disabled' }}">
-      <button type="submit" class="btn btn-outline-secondary btn-sm">{{ $status === 'disabled' ? 'Enable' : 'Disable' }}</button>
+      <input type="hidden" name="status" value="{{ ($status === 'inactive') ? 'active' : 'inactive' }}">
+      <button type="submit" class="btn btn-outline-secondary btn-sm">{{ $status === 'inactive' ? 'Enable' : 'Disable' }}</button>
     </form>
     <form method="post" action="{{ route('admin.users.reset_password', $user->user_id) }}" class="d-inline">
       @csrf

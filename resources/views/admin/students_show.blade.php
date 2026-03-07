@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
     @if($student->feature_path)
-      <img src="{{ asset($student->feature_path) }}" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
+      <img src="{{ asset('storage/' . $student->feature_path) }}" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
     @else
       <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-size:1.25rem;">
         {{ strtoupper(substr($student->first_name, 0, 1)) }}
@@ -263,7 +263,6 @@
               <th>Date</th>
               <th>Status</th>
               <th>Notes</th>
-              <th>Pictures</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
@@ -275,7 +274,7 @@
                 <td>{{ $t->test_date }}</td>
                 <td>{{ ucfirst($t->status) }}</td>
                 <td>{{ $t->notes ? 'Yes' : 'No' }}</td>
-                <td>{{ $picturesCountByTest[$t->test_id] ?? 0 }}</td>
+              
                 <td class="text-end">
                   <form method="post" action="{{ route('admin.tests.cancel', $t->test_id) }}" class="d-inline" onsubmit="return confirm('Cancel this test? This is for invalid/erroneous tests only.');">
                     @csrf

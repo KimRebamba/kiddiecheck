@@ -24,8 +24,6 @@ use App\Models\Domain;
 
 use App\Models\Question;
 
-use App\Models\DomainScore;
-
 use App\Models\AssessmentPeriod;
 
 use App\Models\Section;
@@ -37,8 +35,8 @@ use App\Models\TestResponse;
 use App\Models\PeriodSummaryScore;
 
 use App\Services\EccdScoring;
-
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 
 
@@ -88,49 +86,8 @@ class TeacherController extends Controller
 
             $latestTest = $tests->first();
 
-
-
-            // Check if student is eligible for a new test
-
-            $latestCompleted = $tests->firstWhere('status', 'finalized');
-
-            $eligible = false;
-
-
-
-            if (!$latestCompleted) {
-
-                // Check if student has any non-overdue assessment periods
-
-                $eligible = $student->assessmentPeriods()
-
-                    ->where('status', '!=', 'overdue')
-
-                    ->where('status', '!=', 'completed')
-
-                    ->exists();
-
-            } else {
-
-                // Eligible 6 months after last completed test AND has non-overdue periods
-
-                $sixMonthsAgo = now()->subMonths(6);
-
-                $sixMonthsPassed = $latestCompleted->test_date <= $sixMonthsAgo;
-
-                $hasNonOverduePeriods = $student->assessmentPeriods()
-
-                    ->where('status', '!=', 'overdue')
-
-                    ->where('status', '!=', 'completed')
-
-                    ->exists();
-
-                $eligible = $sixMonthsPassed && $hasNonOverduePeriods;
-
-            }
-
-
+            $hasCompletedOrFinalized = $tests->firstWhere('status', 'finalized')
+                ?? $tests->firstWhere('status', 'completed');
 
             $status[$student->student_id] = [
 
@@ -138,7 +95,9 @@ class TeacherController extends Controller
 
                 'latest_teacher' => $latestTest,
 
-                'eligible' => $eligible,
+                'eligible' => $this->isStudentEligibleForTest($student, $teacher),
+
+                'completed' => (bool) $hasCompletedOrFinalized,
 
             ];
 
@@ -148,7 +107,7 @@ class TeacherController extends Controller
 
             $longitudinals[$student->student_id] = [];
 
-            foreach ($tests->where('status', 'completed') as $test) {
+            foreach ($tests->whereIn('status', ['completed', 'finalized']) as $test) {
 
                 $periods = $student->assessmentPeriods()->orderBy('start_date')->get();
 
@@ -408,9 +367,11 @@ class TeacherController extends Controller
 
 
 
-        // Add student count to section object
+        // Add total student count (all students in this section) to section object
 
-        $section->student_count = $students->count();
+        $section->student_count = DB::table('students')
+            ->where('section_id', $sectionId)
+            ->count();
 
 
 
@@ -524,21 +485,11 @@ class TeacherController extends Controller
 
     {
 
-        $teacher = Auth::user();
-
-        $teacherId = $teacher->user_id;
-
-        
-
-        // Check if section has students assigned to this teacher - consistent with display logic
+        // Check if section has any students at all before allowing delete
 
         $studentCount = DB::table('students')
 
-            ->join('student_teacher', 'students.student_id', '=', 'student_teacher.student_id')
-
             ->where('students.section_id', $sectionId)
-
-            ->where('student_teacher.teacher_id', $teacherId)
 
             ->count();
 
@@ -582,7 +533,7 @@ class TeacherController extends Controller
 
         ->where('status', 'finalized')
 
-        ->with(['student', 'assessmentPeriod'])
+        ->with(['student', 'assessmentPeriod', 'standardScore'])
 
         ->orderBy('updated_at', 'desc')
 
@@ -622,7 +573,7 @@ class TeacherController extends Controller
 
         $tests = Test::where('student_id', $studentId)
 
-            ->where('assessment_period_id', $periodId)
+            ->where('period_id', $periodId)
 
             ->where('status', 'finalized')
 
@@ -720,7 +671,7 @@ class TeacherController extends Controller
 
 
 
-        $student->age = $student->date_of_birth ? (int)$student->date_of_birth->diffInYears(now()) : null;
+        $student->age = $student->age;
 
         $student->eligible = $this->isStudentEligibleForTest($student, $teacher);
 
@@ -734,284 +685,212 @@ class TeacherController extends Controller
 
 
 
-    // Start Test
-
-    public function startTest(Request $request, $studentId)
-
+    // Finalize Test
+    public function finalize($testId)
     {
-
         $teacher = Auth::user();
+        $test = Test::with(['assessmentPeriod', 'student'])->findOrFail($testId);
 
-        $student = Student::findOrFail($studentId);
-
-        
-
-        // Verify teacher has access
-
-        if (!$student->teachers()->where('user_id', $teacher->user_id)->exists()) {
-
+        // Verify access
+        if ($test->examiner_id != $teacher->user_id) {
             abort(403);
-
         }
 
+        // Only completed tests can be finalized
+        if ($test->status !== 'completed') {
+            return back()->with('error', 'Only completed tests can be finalized.');
+        }
 
+        $test->status = 'finalized';
+        $test->save();
+
+        // Compute scores and update period summary for this test/period
+        app(EccdScoring::class)->scoreTestAndRecompute($test);
+
+        return redirect()->route('teacher.index')->with('success', 'Test finalized successfully.');
+    }
+
+    // Start Test
+    public function startTest(Request $request, $studentId)
+    {
+        $teacher = Auth::user();
+
+        // Ensure the current user is a teacher
+        if ($teacher->role !== 'teacher') {
+            abort(403, 'Only teachers can start tests.');
+        }
+
+        $student = Student::with('teachers')->findOrFail($studentId);
+
+        // Verify teacher has access to this student
+        if (!$student->teachers->contains('user_id', $teacher->user_id)) {
+            abort(403);
+        }
+
+        // Enforce shared eligibility rules
+        if (!$this->isStudentEligibleForTest($student, $teacher)) {
+            return back()->with('error', 'Student is not yet eligible for a new test.');
+        }
 
         $periodId = $request->input('period_id');
 
-        
-
-        // Debug: log what we received
-
-        Log::debug('StartTest received:', [
-
-            'periodId' => $periodId,
-
-            'all_inputs' => $request->all(),
-
-            'studentId' => $studentId
-
-        ]);
-
-        
-
+        // If no period_id was provided (e.g. from dashboard links), try to pick a valid period
         if (!$periodId) {
+            $autoPeriod = AssessmentPeriod::where('student_id', $studentId)
+                ->where('status', '!=', 'overdue')
+                ->where('status', '!=', 'completed')
+                ->orderBy('start_date')
+                ->first();
 
-            return back()->with('error', 'Period ID is required. Received: ' . json_encode($request->all()));
+            if (!$autoPeriod) {
+                return back()->with('error', 'No active assessment period available for this student.');
+            }
 
+            $periodId = $autoPeriod->period_id;
         }
 
-        
+        Log::debug('StartTest received:', [
+            'periodId' => $periodId,
+            'all_inputs' => $request->all(),
+            'studentId' => $studentId,
+        ]);
 
         $period = AssessmentPeriod::findOrFail($periodId);
 
-
-
-        // Prevent starting tests for overdue periods
-
+        // Prevent starting tests for overdue, completed or already-ended periods
         if ($period->status === 'overdue') {
-
             return back()->with('error', 'Cannot start test for an overdue assessment period.');
-
         }
-
-
-
-        // Prevent starting tests for completed periods
 
         if ($period->status === 'completed') {
-
             return back()->with('error', 'Cannot start test for a completed assessment period.');
-
         }
 
-
+        if (Carbon::parse($period->end_date)->lt(Carbon::now()->startOfDay())) {
+            return back()->with('error', 'Cannot start test for an assessment period that has already ended.');
+        }
 
         // Get first domain
-
         $firstDomain = Domain::orderBy('domain_id')->first();
-
         if (!$firstDomain) {
-
             return back()->with('error', 'No domains configured in the system.');
-
         }
-
-
 
         // Check if student already has a test for this period by this teacher
-
         $existingTest = Test::where('period_id', $periodId)
-
             ->where('student_id', $studentId)
-
             ->where('examiner_id', $teacher->user_id)
-
             ->whereIn('status', ['in_progress', 'completed'])
-
             ->first();
 
-
-
         if ($existingTest) {
-
-            return redirect()->route('teacher.tests.question', [
-
-                'test' => $existingTest->test_id, 
-
-                'domain' => $firstDomain->domain_id, 
-
-                'index' => 0
-
-            ]);
-
+            return redirect()->route('teacher.tests.form', $existingTest->test_id);
         }
-
-
 
         // Create new test
-
         $test = Test::create([
-
             'period_id' => $periodId,
-
             'student_id' => $studentId,
-
             'examiner_id' => $teacher->user_id,
-
             'test_date' => now()->toDateString(),
-
             'status' => 'in_progress',
-
         ]);
-
-
 
         if (!$test || !$test->test_id) {
-
             return back()->with('error', 'Failed to create test. Please try again.');
-
         }
 
-
-
-        return redirect()->route('teacher.tests.question', [
-
-            'test' => $test->test_id,
-
-            'domain' => $firstDomain->domain_id,
-
-            'index' => 0
-
-        ]);
-
+        return redirect()->route('teacher.tests.form', $test->test_id);
     }
 
 
 
-    // Show Question
-
-    public function showQuestion($test, $domain, $index)
-
+    // Show full test form (all domains/questions)
+    public function showForm($testId)
     {
-
         $teacher = Auth::user();
 
-        $test = Test::with(['student'])->findOrFail($test);
-
-        
-
-        // Verify access
+        $test = Test::with(['student', 'responses'])->findOrFail($testId);
 
         if ($test->examiner_id != $teacher->user_id) {
-
             abort(403);
-
         }
 
+        $domains = Domain::with(['questions' => function ($q) {
+            $q->orderBy('order');
+        }])->orderBy('domain_id')->get();
 
+        $existing = $test->responses->pluck('response', 'question_id');
 
-        $domain = Domain::findOrFail($domain);
+        $totalQuestions = $domains->sum(function ($d) {
+            return $d->questions->count();
+        });
+        $answeredCount = $existing->filter(function ($v) {
+            return $v !== null && $v !== '';
+        })->count();
+        $progressPct = $totalQuestions ? round(($answeredCount / max(1, $totalQuestions)) * 100) : null;
 
-        $questions = $domain->questions()->orderBy('order')->get();
-
-        
-
-        if ($index >= $questions->count()) {
-
-            return redirect()->route('teacher.tests.result', ['test' => $test->test_id]);
-
-        }
-
-
-
-        $question = $questions[$index];
-
-        $test->load('responses');
-
-
-
-        return view('teacher.test_question', compact('test', 'domain', 'question', 'index'));
-
+        return view('teacher.test_form', compact('test', 'domains', 'existing', 'totalQuestions', 'answeredCount', 'progressPct'));
     }
 
 
 
-    // Submit Question Answer
-
-    public function submitQuestion(Request $request, $testId, $domainId, $index)
-
+    // Submit full test form
+    public function submitForm(Request $request, $testId)
     {
-
         $teacher = Auth::user();
-
-        $test = Test::findOrFail($testId);
-
-        
-
-        // Verify access
+        $test = Test::with('student')->findOrFail($testId);
 
         if ($test->examiner_id != $teacher->user_id) {
-
             abort(403);
-
         }
 
+        $domains = Domain::with('questions')->orderBy('domain_id')->get();
 
+        $totalQuestions = 0;
+        $answeredCount = 0;
 
-        $answer = $request->input('answer');
+        foreach ($domains as $domain) {
+            foreach ($domain->questions as $question) {
+                $totalQuestions++;
+                $key = 'q_' . $question->question_id;
+                if (!$request->has($key)) {
+                    continue;
+                }
+                $answer = $request->input($key);
+                if ($answer === null || $answer === '') {
+                    continue;
+                }
 
-        $domain = Domain::findOrFail($domainId);
+                TestResponse::updateOrCreate(
+                    ['test_id' => $testId, 'question_id' => $question->question_id],
+                    ['response' => $answer, 'is_assumed' => false]
+                );
 
-        $questions = $domain->questions()->orderBy('order')->get();
-
-        $question = $questions[$index];
-
-
-
-        // Save response
-
-        TestResponse::updateOrCreate(
-
-            ['test_id' => $testId, 'question_id' => $question->question_id],
-
-            ['response' => $answer, 'is_assumed' => false]
-
-        );
-
-
-
-        // Check if more questions in this domain
-
-        if ($index + 1 < $questions->count()) {
-
-            return redirect()->route('teacher.tests.question', [$testId, $domainId, $index + 1]);
-
+                $answeredCount++;
+            }
         }
 
-
-
-        // Move to next domain
-
-        $allDomains = Domain::orderBy('domain_id')->pluck('domain_id')->toArray();
-
-        $currentDomainIndex = array_search($domainId, $allDomains);
-
-        
-
-        if ($currentDomainIndex + 1 < count($allDomains)) {
-
-            $nextDomainId = $allDomains[$currentDomainIndex + 1];
-
-            return redirect()->route('teacher.tests.question', [$testId, $nextDomainId, 0]);
-
+        // Require all questions to be answered before proceeding to result/completed state
+        if ($totalQuestions > 0 && $answeredCount < $totalQuestions) {
+            return redirect()
+                ->route('teacher.tests.form', $testId)
+                ->with('error', "Please answer all questions before viewing the result. You have answered $answeredCount of $totalQuestions.");
         }
 
+        // Mark test as completed and compute scores/period summary
+        $test->status = 'completed';
+        $test->save();
 
+        $freshTest = Test::with('assessmentPeriod', 'student')->find($testId);
+        if ($freshTest) {
+            app(\App\Services\EccdScoring::class)->scoreTestAndRecompute($freshTest);
+        }
 
-        // All domains complete
-
-        return redirect()->route('teacher.tests.result', $testId);
-
+        // After saving complete responses and scoring, send teacher to result page
+        return redirect()
+            ->route('teacher.tests.result', $testId)
+            ->with('success', 'Test completed and scored successfully.');
     }
 
 
@@ -1038,13 +917,17 @@ class TeacherController extends Controller
 
 
 
-        // Mark as completed if still in progress
+        // Mark as completed and ensure scoring if still in progress
 
         if ($test->status === 'in_progress') {
 
             $test->status = 'completed';
 
             $test->save();
+
+            app(EccdScoring::class)->scoreTestAndRecompute($test);
+
+            $test->load('standardScore', 'domainScores');
 
         }
 
@@ -1063,50 +946,6 @@ class TeacherController extends Controller
 
 
         return view('teacher.test_result', compact('test', 'domains', 'sumScaled', 'standardScore', 'interpretation'));
-
-    }
-
-
-
-    // Finalize Test
-
-    public function finalize($testId)
-
-    {
-
-        $teacher = Auth::user();
-
-        $test = Test::findOrFail($testId);
-
-        
-
-        // Verify access
-
-        if ($test->examiner_id != $teacher->user_id) {
-
-            abort(403);
-
-        }
-
-
-
-        // Only completed tests can be finalized
-
-        if ($test->status !== 'completed') {
-
-            return back()->with('error', 'Only completed tests can be finalized.');
-
-        }
-
-
-
-        $test->status = 'finalized';
-
-        $test->save();
-
-
-
-        return redirect()->route('teacher.index')->with('success', 'Test finalized successfully.');
 
     }
 
@@ -1148,9 +987,7 @@ class TeacherController extends Controller
 
 
 
-        $firstDomain = Domain::first();
-
-        return redirect()->route('teacher.tests.question', [$testId, $firstDomain->domain_id ?? 1, 0]);
+        return redirect()->route('teacher.tests.form', $testId);
 
     }
 
@@ -1198,27 +1035,25 @@ class TeacherController extends Controller
 
 
 
-    // Terminate Test (admin only, but including for completeness)
+    // Terminate Test (teacher or admin)
 
     public function terminate($testId)
 
     {
 
-        $teacher = Auth::user();
+        $user = Auth::user();
 
-        
+        $test = Test::findOrFail($testId);
 
-        // Only admins can terminate
+        // Teachers may terminate only their own tests; admins may terminate any test
 
-        if ($teacher->role !== 'admin') {
+        if ($user->role === 'teacher' && $test->examiner_id != $user->user_id) {
 
-            abort(403, 'Only administrators can terminate tests.');
+            abort(403);
 
         }
 
 
-
-        $test = Test::findOrFail($testId);
 
         $test->status = 'terminated';
 
@@ -1254,9 +1089,9 @@ class TeacherController extends Controller
 
 
 
-        // Paused tests maintain their current status to allow resuming
+        // Paused tests maintain their current status; clarify message for teachers
 
-        return redirect()->route('teacher.index')->with('success', 'Test paused. You can resume it later.');
+        return redirect()->route('teacher.index')->with('success', 'Test left in progress. You can resume it later from the dashboard.');
 
     }
 
@@ -1269,8 +1104,7 @@ class TeacherController extends Controller
     {
 
         // Handle both Eloquent models and stdClass objects
-
-        $studentId = $student->student_id ?? $student->section_id ?? null;
+        $studentId = $student->student_id ?? null;
 
         
 

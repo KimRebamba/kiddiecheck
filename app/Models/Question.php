@@ -24,8 +24,4 @@ class Question extends Model
         {
             return $this->hasMany(TestResponse::class, 'question_id', 'question_id');
         }
-
-        public function pictures()
-        {
-            return $this->hasMany(TestPicture::class, 'question_id', 'question_id');        }
-    }
+}

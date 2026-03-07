@@ -25,7 +25,6 @@ class Teacher extends Model
 
         public function students()
         {
-            return $this->belongsToMany(Student::class, 'student_teacher', 'teacher_id', 'student_id', 'user_id', 'student_id')
-                ->withPivot(['role', 'assigned_at', 'status']);
+            return $this->belongsToMany(Student::class, 'student_teacher', 'teacher_id', 'student_id', 'user_id', 'student_id');
         }
     }

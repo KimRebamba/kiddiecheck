@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div class="d-flex align-items-center gap-3">
     <?php if($student->feature_path): ?>
-      <img src="<?php echo e(asset($student->feature_path)); ?>" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
+      <img src="<?php echo e(asset('storage/' . $student->feature_path)); ?>" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;">
     <?php else: ?>
       <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width:64px;height:64px;font-size:1.25rem;">
         <?php echo e(strtoupper(substr($student->first_name, 0, 1))); ?>
@@ -264,7 +264,6 @@
               <th>Date</th>
               <th>Status</th>
               <th>Notes</th>
-              <th>Pictures</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
@@ -276,7 +275,7 @@
                 <td><?php echo e($t->test_date); ?></td>
                 <td><?php echo e(ucfirst($t->status)); ?></td>
                 <td><?php echo e($t->notes ? 'Yes' : 'No'); ?></td>
-                <td><?php echo e($picturesCountByTest[$t->test_id] ?? 0); ?></td>
+              
                 <td class="text-end">
                   <form method="post" action="<?php echo e(route('admin.tests.cancel', $t->test_id)); ?>" class="d-inline" onsubmit="return confirm('Cancel this test? This is for invalid/erroneous tests only.');">
                     <?php echo csrf_field(); ?>

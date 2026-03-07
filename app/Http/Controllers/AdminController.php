@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +19,6 @@ use App\Models\Test;
 use App\Models\TestResponse;
 use App\Models\DomainScore;
 use App\Models\StudentTag;
-use App\Models\TestPicture;
 use App\Services\EccdScoring;
 
 class AdminController extends Controller
@@ -684,11 +683,19 @@ class AdminController extends Controller
                 'name',
             ]);
 
+        // Simple counts for headline alert tiles
+        $noTeacherCount = $alerts['no_teachers']->count();
+        $missingFamilyCount = $alerts['missing_family_eval']->count();
+        $scheduledNoTestsCount = $alerts['scheduled_no_tests']->count();
+
         return view('admin.students', [
             'students' => $students,
             'teacherOptions' => $teacherOptions,
             'sectionOptions' => $sectionOptions,
             'alerts' => $alerts,
+            'noTeacherCount' => $noTeacherCount,
+            'missingFamilyCount' => $missingFamilyCount,
+            'scheduledNoTestsCount' => $scheduledNoTestsCount,
         ]);
     }
 
@@ -1947,10 +1954,19 @@ class AdminController extends Controller
 
     public function assessmentsRecompute($periodId)
     {
-        // Placeholder: hook up to scoring service when available.
-        return redirect()
-            ->route('admin.assessments.show', $periodId)
-            ->with('info', 'Recompute requested. Connect this action to the scoring engine.');
+        try {
+            app(\App\Services\EccdScoring::class)->recomputePeriodSummaryForPeriodId($periodId);
+
+            return redirect()
+                ->route('admin.assessments.show', $periodId)
+                ->with('success', 'Scores recomputed for this assessment period.');
+        } catch (\Throwable $e) {
+            \Log::error('Failed to recompute period summary for period ' . $periodId . ': ' . $e->getMessage());
+
+            return redirect()
+                ->route('admin.assessments.show', $periodId)
+                ->with('error', 'Unable to recompute scores for this period.');
+        }
     }
 
     public function assessmentsExport($periodId)
@@ -2271,7 +2287,9 @@ class AdminController extends Controller
     public function usersUpdateStatus(Request $request, $userId)
     {
         $status = $request->input('status');
-        if (!in_array($status, ['active', 'disabled'], true)) {
+        // Users.status is defined as ENUM('active', 'inactive') in the schema.
+        // Treat "inactive" as the disabled state in the UI.
+        if (!in_array($status, ['active', 'inactive'], true)) {
             return back()->with('error', 'Invalid status.');
         }
 
@@ -2285,13 +2303,14 @@ class AdminController extends Controller
 
     public function usersForcePasswordReset($userId)
     {
-        // Mark account as requiring password reset on next login via status flag
+        // For now, simply deactivate the account so an admin can
+        // coordinate a password reset using the standard reset flow.
         DB::table('users')->where('user_id', $userId)->update([
-            'status' => 'reset_required',
+            'status' => 'inactive',
             'updated_at' => Carbon::now(),
         ]);
 
-        return back()->with('success', 'User will be required to reset password on next login.');
+        return back()->with('success', 'Account marked as inactive. Use "Reset Password" and then re-activate when ready.');
     }
 
     public function usersResetPassword($userId)
@@ -2498,12 +2517,6 @@ class AdminController extends Controller
                 'u.role as examiner_role',
             ]);
 
-        $picturesCountByTest = DB::table('test_picture as tp')
-            ->join('documentation_pictures as dp', 'tp.picture_id', '=', 'dp.picture_id')
-            ->whereIn('tp.test_id', $tests->pluck('test_id'))
-            ->groupBy('tp.test_id')
-            ->pluck(DB::raw('COUNT(*)'), 'tp.test_id');
-
         $latestCompletedTestId = DB::table('tests as t')
             ->where('t.student_id', $studentId)
             ->whereIn('t.status', ['completed', 'finalized'])
@@ -2534,7 +2547,6 @@ class AdminController extends Controller
             'allTeacherOptions' => $allTeacherOptions,
             'periods' => $periods,
             'tests' => $tests,
-            'picturesCountByTest' => $picturesCountByTest,
             'domainScores' => $domainScores,
             'discrepancySummaries' => $discrepancySummaries,
         ]);
@@ -2680,7 +2692,7 @@ class AdminController extends Controller
 
         $output = "First Name,Last Name,Date of Birth,Family\n";
         foreach ($rows as $r) {
-            $output .= '"' . $r->first_name . '","' . $r->last_name . '","' . $r->date_of_birth . '","' . ($r->family_name ?? '') . "\n";
+    			$output .= '"' . $r->first_name . '","' . $r->last_name . '","' . $r->date_of_birth . '","' . ($r->family_name ?? '') . '"' . "\n";
         }
 
         return response($output, 200, [

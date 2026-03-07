@@ -14,9 +14,10 @@
     $st = $status[$s->student_id] ?? null;
     return $st && ($st['eligible'] ?? false);
   });
-  $recentCompleted = \App\Models\Test::with(['student'])
+  $recentCompleted = \App\Models\Test::with(['student','standardScore'])
     ->where('examiner_id', auth()->id())
-    ->where('status', 'completed')
+    ->whereIn('status', ['completed', 'finalized'])
+    ->where('test_date', '>=', now()->subDays(30))
     ->orderByDesc('test_date')
     ->limit(10)
     ->get();
@@ -158,9 +159,37 @@
               <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
               <td><span class="badge bg-info">{{ $assessment->status }}</span></td>
               <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-play me-1"></i>Start Test
-                </a>
+                @php
+                  $tests = \App\Models\Test::where('student_id', $assessment->student->student_id)
+                    ->where('period_id', $assessment->period_id)
+                    ->where('examiner_id', auth()->id())
+                    ->get();
+                  $inProgressTest = $tests->firstWhere('status', 'in_progress');
+                  $completedTest = $tests->firstWhere('status', 'completed');
+                  $finalizedTest = $tests->firstWhere('status', 'finalized');
+                  $viewableTest = $finalizedTest ?: $completedTest;
+                  $st = $status[$assessment->student->student_id] ?? null;
+                  $eligible = $st['eligible'] ?? false;
+                @endphp
+                @if($inProgressTest)
+                  <a href="{{ route('teacher.tests.form', $inProgressTest->test_id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-play me-1"></i>Continue Test
+                  </a>
+                @elseif($viewableTest)
+                  <a href="{{ route('teacher.tests.result', $viewableTest->test_id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-eye me-1"></i>View Result
+                  </a>
+                @elseif(!$eligible)
+                  <span class="text-muted small">Not eligible for new test yet.</span>
+                @else
+                  <form action="{{ route('teacher.tests.start', $assessment->student->student_id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    <input type="hidden" name="period_id" value="{{ $assessment->period_id }}">
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      <i class="fas fa-play me-1"></i>Start Test
+                    </button>
+                  </form>
+                @endif
               </td>
             </tr>
           @endforeach
@@ -209,9 +238,7 @@
               <td>{{ \Carbon\Carbon::parse($assessment->end_date)->format('M j, Y') }}</td>
               <td><span class="badge bg-danger">{{ \Carbon\Carbon::parse($assessment->end_date)->diffInDays(now()) }} days</span></td>
               <td>
-                <a href="{{ route('teacher.tests.start', $assessment->student->student_id) }}" class="btn btn-sm btn-danger">
-                  <i class="fas fa-exclamation me-1"></i>Start Now
-                </a>
+                <span class="text-muted small">Period overdue. New tests cannot be started.</span>
               </td>
             </tr>
           @endforeach
@@ -329,13 +356,22 @@
               </td>
               <td>{{ $item['test']->test_date->format('M j, Y') }}</td>
               <td>
+                @php
+                  $totalQuestions = \DB::table('questions')
+                    ->join('domains', 'questions.domain_id', '=', 'domains.domain_id')
+                    ->count();
+                  $answered = \DB::table('test_responses')
+                    ->where('test_id', $item['test']->test_id)
+                    ->count();
+                  $pct = $totalQuestions ? round(($answered / max(1,$totalQuestions)) * 100) : 0;
+                @endphp
                 <div class="progress" style="height: 6px;">
-                  <div class="progress-bar bg-warning" style="width: 60%"></div>
+                  <div class="progress-bar bg-warning" style="width: {{ $pct }}%"></div>
                 </div>
-                <div class="text-muted small mt-1">60% Complete</div>
+                <div class="text-muted small mt-1">{{ $answered }} / {{ $totalQuestions }} ({{ $pct }}%)</div>
               </td>
               <td>
-                <a href="{{ route('teacher.tests.question', ['test' => $item['test']->test_id, 'domain' => 1, 'index' => 0]) }}" class="btn btn-sm btn-primary">
+                <a href="{{ route('teacher.tests.form', $item['test']->test_id) }}" class="btn btn-sm btn-primary">
                   <i class="fas fa-play me-1"></i>Continue
                 </a>
               </td>
@@ -386,9 +422,31 @@
                 <span class="badge bg-info">{{ $student->section->name ?? 'N/A' }}</span>
               </td>
               <td>
-                <a href="{{ route('teacher.tests.start', $student->student_id) }}" class="btn btn-sm btn-primary">
-                  <i class="fas fa-plus me-1"></i>Start Test
-                </a>
+                @php
+                  $activeTest = \App\Models\Test::where('student_id', $student->student_id)
+                    ->where('examiner_id', auth()->id())
+                    ->whereHas('assessmentPeriod', function ($q) {
+                      $q->where('status', 'scheduled');
+                    })
+                    ->orderByDesc('test_date')
+                    ->first();
+                @endphp
+                @if($activeTest && $activeTest->status === 'in_progress')
+                  <a href="{{ route('teacher.tests.form', $activeTest->test_id) }}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-play me-1"></i>Continue Test
+                  </a>
+                @elseif($activeTest && in_array($activeTest->status, ['completed', 'finalized']))
+                  <a href="{{ route('teacher.tests.result', $activeTest->test_id) }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-eye me-1"></i>View Result
+                  </a>
+                @else
+                  <form action="{{ route('teacher.tests.start', $student->student_id) }}" method="POST" style="display:inline;">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-primary">
+                      <i class="fas fa-plus me-1"></i>Start Test
+                    </button>
+                  </form>
+                @endif
               </td>
             </tr>
           @endforeach
@@ -435,19 +493,26 @@
               </td>
               <td>{{ $test->test_date->format('M j, Y') }}</td>
               <td>
-                <div class="fw-bold text-success">85/100</div>
+                @php
+                  $score = optional($test->standardScore)->standard_score;
+                @endphp
+                <div class="fw-bold {{ $score !== null ? 'text-success' : 'text-muted' }}">
+                  {{ $score !== null ? $score : 'Not scored' }}
+                </div>
               </td>
               <td>
-                <span class="badge bg-success">Completed</span>
+                @php
+                  $statusLabel = ucfirst($test->status);
+                  $badgeClass = $test->status === 'finalized' ? 'bg-success' : 'bg-info';
+                @endphp
+                <span class="badge {{ $badgeClass }}">{{ $statusLabel }}</span>
               </td>
               <td>
                 <div class="btn-group" role="group">
                   <a href="{{ route('teacher.tests.result', $test->test_id) }}" class="btn btn-sm btn-outline-primary">
                     <i class="fas fa-eye me-1"></i>View
                   </a>
-                  <a href="{{ route('teacher.reports.show', ['student' => $test->student_id, 'period' => $test->assessment_period_id]) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="fas fa-file-alt me-1"></i>Report
-                  </a>
+                  
                 </div>
               </td>
             </tr>

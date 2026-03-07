@@ -81,8 +81,37 @@
 <body>
 
 @php
-    $navFamily  = DB::table('families')->where('user_id', Auth::id())->first();
-    $navStudent = $navFamily ? DB::table('students')->where('family_id', $navFamily->user_id)->first() : null;
+  $navFamily  = DB::table('families')->where('user_id', Auth::id())->first();
+  $navStudent = null;
+
+  if ($navFamily) {
+    $students = DB::table('students')
+      ->where('family_id', $navFamily->user_id)
+      ->orderBy('date_of_birth', 'desc')
+      ->get();
+
+    $now = \Carbon\Carbon::now();
+
+    // Prefer a child who currently has an active assessment window
+    foreach ($students as $s) {
+      $hasActivePeriod = DB::table('assessment_periods')
+        ->where('student_id', $s->student_id)
+        ->where('status', '!=', 'completed')
+        ->where('start_date', '<=', $now)
+        ->where('end_date', '>=', $now)
+        ->exists();
+
+      if ($hasActivePeriod) {
+        $navStudent = $s;
+        break;
+      }
+    }
+
+    // Fallback: first child if none currently has an active assessment
+    if (!$navStudent) {
+      $navStudent = $students->first();
+    }
+  }
 @endphp
 
   <header class="family-header">
@@ -94,15 +123,15 @@
 
       <div class="nav-links">
         <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</a>
-        <a class="nav-link {{ request()->routeIs('family.child*') ? 'active' : '' }}" href="{{ route('family.index') }}">Children</a>
+        <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}#family-children">Children</a>
         <a class="nav-link {{ request()->routeIs('family.tests.*') ? 'active' : '' }}"
-           href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Tests</a>
-        <a class="nav-link" href="{{ route('family.index') }}">Help</a>
+           href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Current Test</a>
+        <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}#family-help">Help</a>
       </div>
 
       <div class="profile-section">
         <div class="profile-menu">
-          <a href="#" class="profile-button" tabindex="0">
+          <a href="{{ $navStudent ? route('family.student.profile', $navStudent->student_id) : route('family.index') }}" class="profile-button" tabindex="0">
             <span>{{ optional(Auth::user())->username ?? 'Account' }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>

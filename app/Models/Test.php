@@ -50,11 +50,6 @@ class Test extends Model
         return $this->hasOne(\App\Models\TestStandardScore::class, 'test_id', 'test_id');
     }
 
-    public function pictures()
-    {
-        return $this->hasMany(TestPicture::class, 'test_id', 'test_id');
-    }
-
     public function scaledScores()
     {
         return $this->hasMany(TestDomainScaledScore::class, 'test_id', 'test_id');
@@ -95,9 +90,9 @@ class Test extends Model
                     if (!$student) {
                         $student = \App\Models\Student::find($test->student_id);
                     }
-                    if ($student && $student->dob) {
+                    if ($student && $student->date_of_birth) {
                         $testDate = \Illuminate\Support\Carbon::parse($test->test_date);
-                        $dob = \Illuminate\Support\Carbon::parse($student->dob);
+                        $dob = \Illuminate\Support\Carbon::parse($student->date_of_birth);
                         $days = $dob->diffInDays($testDate);
                         $months = $days / 30;
                         $test->age_months = round($months, 2);

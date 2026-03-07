@@ -522,7 +522,7 @@ function handleNext() {
         window.location.href = nextUrl;
         return;
     }
-    if (scores.some(s => s === null)) return;
+    if (answers.some(a => a === null)) return;
     document.getElementById('confirmModal').classList.add('show');
 }
 

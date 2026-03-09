@@ -41,7 +41,9 @@ class EccdScoring
         // Prefer age at test date when available; otherwise fall back to current age in months.
         $ageMonths = $test->age_months ?? ($student->age_in_months ?? $student->getAgeInMonthsAttribute());
 
-        $domains = Domain::orderBy('domain_id')->get();
+        $domains = DB::table('domains')
+            ->orderBy('domain_id')
+            ->get();
         if ($domains->isEmpty()) {
             return null;
         }
@@ -53,12 +55,15 @@ class EccdScoring
             TestDomainScaledScore::where('test_id', $test->test_id)->delete();
 
             foreach ($domains as $domain) {
-                $questionIds = $domain->questions()
-                    ->where('scale_version_id', $scaleVersionId)
+                // Get questions for this domain directly
+                $questionIds = DB::table('questions')
+                    ->where('domain_id', $domain->domain_id)
+                    ->orderBy('order')
                     ->pluck('question_id')
                     ->all();
 
                 if (empty($questionIds)) {
+                    Log::warning('No questions found for domain ' . $domain->domain_id . ' (test ' . $test->test_id . ')');
                     continue;
                 }
 
@@ -67,15 +72,39 @@ class EccdScoring
                     ->where('response', 'yes')
                     ->count();
 
+                Log::info('Domain ' . $domain->domain_id . ' (test ' . $test->test_id . '): ' . count($questionIds) . ' questions, ' . $yesCount . ' yes responses');
+
                 // Look up scaled score for this domain based on age and raw score.
+                // Use appropriate age range based on child's age
+                if ($ageMonths <= 3) {
+                    // Ages 0-3 months
+                    $ageMin = 0; $ageMax = 3;
+                } elseif ($ageMonths <= 6) {
+                    // Ages 4-6 months
+                    $ageMin = 4; $ageMax = 6;
+                } elseif ($ageMonths <= 9) {
+                    // Ages 7-9 months
+                    $ageMin = 7; $ageMax = 9;
+                } elseif ($ageMonths <= 12) {
+                    // Ages 10-12 months
+                    $ageMin = 10; $ageMax = 12;
+                } elseif ($ageMonths <= 48) {
+                    // Ages 3.1-4.0 years (37-48 months)
+                    $ageMin = 37; $ageMax = 48;
+                } elseif ($ageMonths <= 60) {
+                    // Ages 4.1-5.0 years (49-60 months)
+                    $ageMin = 49; $ageMax = 60;
+                } else {
+                    // Ages 5.1-5.11 years (61-71 months)
+                    $ageMin = 61; $ageMax = 71;
+                }
+                
                 $scaledRow = DB::table('domain_scaled_scores')
-                    ->where('scale_version_id', $scaleVersionId)
                     ->where('domain_id', $domain->domain_id)
-                    ->where('age_min_months', '<=', $ageMonths)
-                    ->where('age_max_months', '>=', $ageMonths)
+                    ->where('scale_version_id', $scaleVersionId)
+                    ->where('age_min_months', $ageMin)
                     ->where('raw_min', '<=', $yesCount)
                     ->where('raw_max', '>=', $yesCount)
-                    ->orderBy('age_min_months')
                     ->first();
 
                 if (!$scaledRow) {
@@ -85,26 +114,27 @@ class EccdScoring
                 $scaledScore = (int) $scaledRow->scaled_score;
                 $sumScaled += $scaledScore;
 
-                TestDomainScaledScore::updateOrCreate(
-                    [
-                        'test_id' => $test->test_id,
-                        'domain_id' => $domain->domain_id,
-                    ],
-                    [
-                        'scale_version_id' => $scaleVersionId,
-                        'raw_score' => $yesCount,
-                        'scaled_score' => $scaledScore,
-                    ]
-                );
+                TestDomainScaledScore::insert([
+                    'test_id' => $test->test_id,
+                    'domain_id' => $domain->domain_id,
+                    'scale_version_id' => $scaleVersionId,
+                    'raw_score' => $yesCount,
+                    'scaled_score' => $scaledScore,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                
+                Log::info("Domain {$domain->domain_id} (test {$test->test_id}): Raw={$yesCount}, Scaled={$scaledScore}");
             }
         });
 
         if ($sumScaled <= 0) {
+            Log::warning('Sum of scaled scores is 0 or less for test ' . $test->test_id);
             return null;
         }
 
         // Map sum_scaled_scores to a standard score using standard_score_scales table.
-        $standardRow = StandardScoreScale::where('scale_version_id', $scaleVersionId)
+        $standardRow = DB::table('standard_score_scales')
             ->where('sum_scaled_min', '<=', $sumScaled)
             ->where('sum_scaled_max', '>=', $sumScaled)
             ->orderBy('sum_scaled_min')

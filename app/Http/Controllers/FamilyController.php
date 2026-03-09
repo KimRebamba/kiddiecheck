@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\Student;
 use App\Models\Test;
@@ -1418,11 +1419,26 @@ class FamilyController extends Controller
         $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
         $totalAnswered  = DB::table('test_responses')->where('test_id', $testId)->count();
 
+        // Enhanced validation: Check if test has any responses at all
+        if ($totalAnswered === 0) {
+            return redirect()->route('family.tests.result', $testId)
+                ->with('error', 'No questions have been answered. Please answer at least one question before submitting.');
+        }
+
         if ($totalAnswered < $totalQuestions) {
             $remaining = $totalQuestions - $totalAnswered;
             return redirect()->route('family.tests.result', $testId)
                 ->with('error', $remaining . ' question(s) remaining. Please complete all before submitting.');
         }
+
+        // Log the completion attempt for debugging
+        Log::info('Test completion attempt', [
+            'test_id' => $testId,
+            'total_questions' => $totalQuestions,
+            'total_answered' => $totalAnswered,
+            'completion_rate' => ($totalAnswered / $totalQuestions) * 100,
+            'examiner_id' => Auth::id()
+        ]);
 
         DB::table('tests')
             ->where('test_id', $testId)

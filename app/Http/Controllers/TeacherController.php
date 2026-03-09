@@ -1897,6 +1897,471 @@ class TeacherController extends Controller
     }
 
     // Helper methods
+    public function showGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.matching-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showColorGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.color-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showPictureGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.picture-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showShapeGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.shape-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showSizeColorGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.size-color-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showSizeOrderGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.size-order-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showNameGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.name-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showColorNameGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.color-name-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showAnimalVeggieGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.animal-veggie-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showWhatsWrongGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.whats-wrong-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showPuzzleGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.puzzle-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showLetterMatchGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.letter-match-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showFeelingsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.feelings-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showPointObjectsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.point-objects-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showFollowInstructionsGame($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        $currentDomain = $domains[$domainNumber - 1];
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1];
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.follow-instructions-game', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
+    public function showQuestion($testId, $domainNumber, $questionIndex)
+    {
+        $test = $this->verifyTestOwnership($testId);
+        $scaleVersionId = $this->getScaleVersionId();
+        $domains = $this->getDomains($scaleVersionId);
+        
+        // Convert to array if it's a collection
+        if ($domains instanceof \Illuminate\Support\Collection) {
+            $domains = $domains->toArray();
+        }
+        
+        // Convert parameters to integers
+        $domainNumber = (int)$domainNumber;
+        $questionIndex = (int)$questionIndex;
+        
+        $currentDomain = $domains[$domainNumber - 1] ?? null;
+        if (!$currentDomain) {
+            abort(404, 'Domain not found');
+        }
+        
+        $questions = $this->getDomainQuestions($currentDomain->domain_id, $scaleVersionId);
+        $question = $questions[$questionIndex - 1] ?? null;
+        if (!$question) {
+            abort(404, 'Question not found');
+        }
+
+        $existingResponse = DB::table('test_responses as tr')
+            ->where('tr.test_id', $testId)
+            ->where('tr.question_id', $question->question_id)
+            ->value('tr.response');
+
+        $totalAnswered = DB::table('test_responses')->where('test_id', $testId)->count();
+        $totalQuestions = DB::table('questions')->where('scale_version_id', $scaleVersionId)->count();
+
+        [$prevDomain, $prevIndex] = $this->prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId);
+        [$nextDomain, $nextIndex] = $this->nextNav($domainNumber, $questionIndex, count($questions), count($domains));
+
+        return view('teacher.question', compact(
+            'test', 'testId', 'currentDomain', 'question',
+            'domainNumber', 'questionIndex', 'existingResponse',
+            'totalAnswered', 'totalQuestions',
+            'prevDomain', 'prevIndex', 'nextDomain', 'nextIndex'
+        ));
+    }
+
     private function isStudentEligibleForTest($student, $teacher)
     {
         // Handle both Eloquent models and stdClass objects
@@ -1906,29 +2371,96 @@ class TeacherController extends Controller
             return false;
         }
 
-        $teacherId = $teacher->user_id;
-        $latestTest = Test::where('student_id', $studentId)
+        // Get the examiner ID from the test record
+        $test = Test::where('student_id', $studentId)
             ->where('status', 'finalized')
-            ->where('examiner_id', $teacherId)
             ->orderBy('updated_at', 'desc')
             ->first();
-
-        if (!$latestTest) {
-            // Check if student has any non-overdue assessment periods using query builder
-            return DB::table('assessment_periods')
-                ->where('student_id', $studentId)
-                ->where('status', '!=', 'overdue')
-                ->where('status', '!=', 'completed')
-                ->exists();
+        
+        if (!$test) {
+            return false;
         }
 
-        // Check if 6 months have passed and student has non-overdue periods
-        $sixMonthsPassed = $latestTest->test_date->addMonths(6) <= now();
+        // Check if the authenticated user is the examiner OR is an admin
+        if (Auth::user()->role !== 'admin' && Auth::user()->user_id !== $test->examiner_id) {
+            abort(403, 'Unauthorized access to this test');
+        }
+
+        // Check if the authenticated user is the teacher (using the examiner ID from test record)
+        if (Auth::user()->role === 'teacher' && Auth::user()->user_id === $test->examiner_id) {
+            return true;
+        }
+        
+        // Check if there are any non-overdue assessment periods
         $hasNonOverduePeriods = DB::table('assessment_periods')
             ->where('student_id', $studentId)
             ->where('status', '!=', 'overdue')
             ->where('status', '!=', 'completed')
             ->exists();
+        
+        // Check if 6 months have passed since last test
+        $sixMonthsPassed = $test ? $test->test_date->addMonths(6) <= now() : false;
+        
+        // Initialize variables to null to avoid undefined variable errors
+        $hasNonOverduePeriods = null;
+        
+        return $sixMonthsPassed && $hasNonOverduePeriods;
+    }
+
+    private function getDomains($scaleVersionId)
+    {
+        // Get all domains (the domains table doesn't have scale_version_id column)
+        return DB::table('domains')
+            ->orderBy('domain_id')
+            ->get();
+    }
+
+    private function getScaleVersionId()
+    {
+        // Get the scale version ID for ECCD 2004
+        $scaleVersion = DB::table('scale_versions')
+            ->where('name', 'ECCD 2004')
+            ->first();
+        
+        return $scaleVersion ? $scaleVersion->scale_version_id : 1;
+    }
+
+    private function prevNav($domainNumber, $questionIndex, $domains, $scaleVersionId)
+    {
+        // Find previous question
+        if ($domainNumber > 1) {
+            $prevDomain = $domainNumber - 1;
+            $prevQuestions = $this->getDomainQuestions($domains[$prevDomain - 1]->domain_id, $scaleVersionId);
+            $prevIndex = count($prevQuestions) - 1;
+            return [$prevDomain, $prevIndex];
+        }
+        
+        // If in first domain, find previous domain's last question
+        $prevQuestions = $this->getDomainQuestions($domains[$domainNumber - 2]->domain_id, $scaleVersionId);
+        $prevIndex = count($prevQuestions) - 1;
+        return [$domainNumber - 1, $prevIndex];
+    }
+
+    private function nextNav($domainNumber, $questionIndex, $questionCount, $domainCount)
+    {
+        // Find next question
+        if ($questionIndex < $questionCount - 1) {
+            return [$domainNumber, $questionIndex + 1];
+        }
+        
+        // If last question in domain, go to next domain
+        if ($domainNumber < $domainCount) {
+            return [$domainNumber + 1, 0];
+        }
+        
+        // If last domain, return to same domain
+        return [$domainNumber, 0];
+    }
+
+    private function isStudentEligibleForTest($student, $teacher)
+    {
+        // Handle both Eloquent models and stdClass objects
+        $studentId = $student->student_id ?? $student->section_id ?? null;
 
         return $sixMonthsPassed && $hasNonOverduePeriods;
     }

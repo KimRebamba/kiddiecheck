@@ -295,36 +295,37 @@
 <body>
   <header class="admin-header">
     <div class="admin-header-inner">
-      <a href="{{ route('admin.index') }}" class="admin-brand">
-        <span>@foreach(str_split('KiddieCheck') as $l)<span>{{ $l }}</span>@endforeach</span>
+      <a href="<?php echo e(route('admin.index')); ?>" class="admin-brand">
+        <span><?php $__currentLoopData = str_split('KiddieCheck'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $l): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><span><?php echo e($l); ?></span><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></span>
         <span class="admin-brand-badge">Admin</span>
       </a>
 
       <nav class="admin-nav-links">
-        <a href="{{ route('admin.index') }}" class="admin-nav-link {{ request()->routeIs('admin.index') ? 'active' : '' }}">Dashboard</a>
-        <a href="{{ route('admin.users') }}" class="admin-nav-link {{ request()->routeIs('admin.users*') ? 'active' : '' }}">Users</a>
-        <a href="{{ route('admin.students') }}" class="admin-nav-link {{ request()->routeIs('admin.students*') ? 'active' : '' }}">Students</a>
-        <a href="{{ route('admin.assessments') }}" class="admin-nav-link {{ request()->routeIs('admin.assessments*') ? 'active' : '' }}">Assessments</a>
-        <a href="{{ route('admin.reports') }}" class="admin-nav-link {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">Reports</a>
-        <a href="{{ route('admin.scales') }}" class="admin-nav-link {{ request()->routeIs('admin.scales') || request()->routeIs('admin.eccd') ? 'active' : '' }}">Scales</a>
+        <a href="<?php echo e(route('admin.index')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.index') ? 'active' : ''); ?>">Dashboard</a>
+        <a href="<?php echo e(route('admin.users')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.users*') ? 'active' : ''); ?>">Users</a>
+        <a href="<?php echo e(route('admin.students')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.students*') ? 'active' : ''); ?>">Students</a>
+        <a href="<?php echo e(route('admin.assessments')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.assessments*') ? 'active' : ''); ?>">Assessments</a>
+        <a href="<?php echo e(route('admin.reports')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.reports*') ? 'active' : ''); ?>">Reports</a>
+        <a href="<?php echo e(route('admin.scales')); ?>" class="admin-nav-link <?php echo e(request()->routeIs('admin.scales') || request()->routeIs('admin.eccd') ? 'active' : ''); ?>">Scales</a>
       </nav>
 
       <div class="admin-profile">
-        @php $user = Auth::user(); @endphp
+        <?php $user = Auth::user(); ?>
         <div class="admin-avatar">
-          {{ $user ? strtoupper(substr($user->username ?? 'A', 0, 1)) : 'A' }}
+          <?php echo e($user ? strtoupper(substr($user->username ?? 'A', 0, 1)) : 'A'); ?>
+
         </div>
 
         <div class="admin-profile-menu">
-          <a href="{{ route('admin.profile') }}" class="admin-profile-button" tabindex="0">
-            <span>{{ $user->username ?? 'Admin' }}</span>
+          <a href="<?php echo e(route('admin.profile')); ?>" class="admin-profile-button" tabindex="0">
+            <span><?php echo e($user->username ?? 'Admin'); ?></span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </a>
           <div class="admin-dropdown-menu">
-            <a href="{{ route('admin.profile') }}" class="admin-dropdown-item">Profile</a>
-            <a href="{{ route('logout') }}" class="admin-dropdown-item" style="color:#B91C1C;">Logout</a>
+            <a href="<?php echo e(route('admin.profile')); ?>" class="admin-dropdown-item">Profile</a>
+            <a href="<?php echo e(route('logout')); ?>" class="admin-dropdown-item" style="color:#B91C1C;">Logout</a>
           </div>
         </div>
       </div>
@@ -332,20 +333,23 @@
   </header>
 
   <main class="admin-main">
-    @if(session('success'))
+    <?php if(session('success')): ?>
       <div class="admin-alert admin-alert-success mb-3">
-        {{ session('success') }}
-      </div>
-    @endif
-    @if(session('error'))
-      <div class="admin-alert admin-alert-error mb-3">
-        {{ session('error') }}
-      </div>
-    @endif
+        <?php echo e(session('success')); ?>
 
-    @yield('content')
+      </div>
+    <?php endif; ?>
+    <?php if(session('error')): ?>
+      <div class="admin-alert admin-alert-error mb-3">
+        <?php echo e(session('error')); ?>
+
+      </div>
+    <?php endif; ?>
+
+    <?php echo $__env->yieldContent('content'); ?>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+<?php /**PATH C:\Users\Sedriel Navasca\Desktop\SAAD\Kiddiecheck\kiddiecheck\resources\views/admin/layout.blade.php ENDPATH**/ ?>

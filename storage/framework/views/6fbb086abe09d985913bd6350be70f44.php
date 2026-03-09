@@ -145,6 +145,8 @@
 
                                 ->where('status', '!=', 'completed')
 
+                                ->where('end_date', '>=', now()->startOfDay())
+
                                 ->first();
 
                             $inProgressTest = null;

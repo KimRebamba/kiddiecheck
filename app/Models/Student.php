@@ -107,12 +107,23 @@ class Student extends Model
 
         static::created(function (Student $student) {
             try {
-                // Auto-generate three assessment periods spaced six months apart
-                $start = \Illuminate\Support\Carbon::parse($student->created_at)->startOfDay();
-
+                // Auto-generate three assessment periods with consistent timing
+                $now = \Illuminate\Support\Carbon::now();
+                
                 for ($i = 1; $i <= 3; $i++) {
-                    $pStart = (clone $start)->addMonths(6 * ($i - 1));
-                    $pEnd = (clone $pStart)->addMonths(6);
+                    if ($i == 1) {
+                        // Period 1: Current - immediately available
+                        $pStart = $now->copy()->startOfDay();
+                        $pEnd = $pStart->copy()->addMonths(6);
+                    } elseif ($i == 2) {
+                        // Period 2: Available after 6 months
+                        $pStart = $now->copy()->addMonths(6)->startOfDay();
+                        $pEnd = $pStart->copy()->addMonths(6);
+                    } else {
+                        // Period 3: Available after 12 months
+                        $pStart = $now->copy()->addMonths(12)->startOfDay();
+                        $pEnd = $pStart->copy()->addMonths(6);
+                    }
 
                     $student->assessmentPeriods()->create([
                         'description' => "Assessment Period $i",

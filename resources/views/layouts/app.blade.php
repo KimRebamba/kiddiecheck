@@ -21,10 +21,7 @@
         </ul>
         <div class="d-flex">
           @auth
-            <form method="post" action="{{ route('logout') }}">
-              @csrf
-              <button class="btn btn-outline-light btn-sm" type="submit">Logout</button>
-            </form>
+            <a href="{{ route('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
           @else
             <a class="btn btn-outline-light btn-sm" href="{{ route('login') }}">Login</a>
           @endauth

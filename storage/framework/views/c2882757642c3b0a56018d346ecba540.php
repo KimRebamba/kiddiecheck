@@ -190,7 +190,7 @@
 
                       ?>
 
-                      <?php if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue'): ?>
+                      <?php if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue' && $period->end_date >= now()->startOfDay()): ?>
 
                         <?php if($inProgressTest): ?>
 
@@ -225,6 +225,10 @@
                           <?php elseif($period->status === 'completed'): ?>
 
                             Period completed
+
+                          <?php elseif($period->end_date < now()->startOfDay()): ?>
+
+                            Period ended
 
                           <?php else: ?>
 

@@ -690,23 +690,23 @@
 
   <nav class="navbar">
 
-    <img src="{{ asset('teacher-logo.svg') }}" alt="KiddieCheck" class="teacher-logo">
+    <img src="<?php echo e(asset('teacher-logo.svg')); ?>" alt="KiddieCheck" class="teacher-logo">
 
     <div class="spacer"></div>
 
-    <a href="{{ route('teacher.index') }}" class="pill {{ request()->routeIs('teacher.index') ? 'active' : '' }}">
+    <a href="<?php echo e(route('teacher.index')); ?>" class="pill <?php echo e(request()->routeIs('teacher.index') ? 'active' : ''); ?>">
 
       <i class="fas fa-tachometer-alt me-2"></i>Dashboard
 
     </a>
 
-    <a href="{{ route('teacher.sections') }}" class="pill {{ request()->routeIs('teacher.sections') ? 'active' : '' }}">
+    <a href="<?php echo e(route('teacher.sections')); ?>" class="pill <?php echo e(request()->routeIs('teacher.sections') ? 'active' : ''); ?>">
 
       <i class="fas fa-users me-2"></i>Sections
 
     </a>
 
-    <a href="{{ route('teacher.reports') }}" class="pill {{ request()->routeIs('teacher.reports') ? 'active' : '' }}">
+    <a href="<?php echo e(route('teacher.reports')); ?>" class="pill <?php echo e(request()->routeIs('teacher.reports') ? 'active' : ''); ?>">
 
       <i class="fas fa-clipboard-list me-2"></i>Reports
 
@@ -716,19 +716,20 @@
 
       <a href="#" class="avatar" onclick="toggleMenu()">
 
-        {{ strtoupper(substr(auth()->user()->username, 0, 1)) }}
+        <?php echo e(strtoupper(substr(auth()->user()->username, 0, 1))); ?>
+
 
       </a>
 
       <div class="menu" id="profileMenu">
 
-        <a href="{{ route('teacher.profile') }}" class="menu-item">
+        <a href="<?php echo e(route('teacher.profile')); ?>" class="menu-item">
 
           <i class="fas fa-user me-2"></i>Profile
 
         </a>
 
-        <a href="{{ route('teacher.help') }}" class="menu-item">
+        <a href="<?php echo e(route('teacher.help')); ?>" class="menu-item">
 
           <i class="fas fa-question-circle me-2"></i>Help
 
@@ -736,9 +737,9 @@
 
         <div class="border-top my-2"></div>
 
-        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+        <form action="<?php echo e(route('logout')); ?>" method="POST" style="display: inline;">
 
-          @csrf
+          <?php echo csrf_field(); ?>
 
           <button type="submit" class="menu-item" style="background: none; border: none; width: 100%; text-align: left; padding: 8px 12px; cursor: pointer;">
 
@@ -761,35 +762,37 @@
 
   <main class="main">
 
-    @if(session('success'))
+    <?php if(session('success')): ?>
 
       <div class="alert alert-success alert-dismissible fade show" role="alert">
 
-        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <i class="fas fa-check-circle me-2"></i><?php echo e(session('success')); ?>
+
 
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 
       </div>
 
-    @endif
+    <?php endif; ?>
 
 
 
-    @if(session('error'))
+    <?php if(session('error')): ?>
 
       <div class="alert alert-danger alert-dismissible fade show" role="alert">
 
-        <i class="fas fa-exclamation-triangle me-2"></i>{{ session('error') }}
+        <i class="fas fa-exclamation-triangle me-2"></i><?php echo e(session('error')); ?>
+
 
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 
       </div>
 
-    @endif
+    <?php endif; ?>
 
 
 
-    @if($errors->any())
+    <?php if($errors->any()): ?>
 
       <div class="alert alert-danger alert-dismissible fade show" role="alert">
 
@@ -797,11 +800,11 @@
 
         <ul class="mb-0">
 
-          @foreach($errors->all() as $error)
+          <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
 
-            <li>{{ $error }}</li>
+            <li><?php echo e($error); ?></li>
 
-          @endforeach
+          <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
 
         </ul>
 
@@ -809,11 +812,11 @@
 
       </div>
 
-    @endif
+    <?php endif; ?>
 
 
 
-    @yield('content')
+    <?php echo $__env->yieldContent('content'); ?>
 
   </main>
 
@@ -853,4 +856,4 @@
 
 </body>
 
-</html>
+</html><?php /**PATH C:\Users\Sedriel Navasca\Desktop\SAAD\Kiddiecheck\kiddiecheck\resources\views/teacher/layout.blade.php ENDPATH**/ ?>

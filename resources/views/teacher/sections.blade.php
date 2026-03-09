@@ -4,11 +4,13 @@
 
 <div class="d-flex align-items-center mb-4">
   <h1 class="h3 mb-0 fw-bold">Sections</h1>
-  <div class="ms-auto">
-    <a href="{{ route('teacher.sections.create') }}" class="btn btn-primary">
-      <i class="fas fa-plus me-1"></i> Add Section
-    </a>
-  </div>
+  @if($sections->isEmpty())
+    <div class="ms-auto">
+      <a href="{{ route('teacher.sections.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Add Section
+      </a>
+    </div>
+  @endif
 </div>
 
 @if($sections->isEmpty())
@@ -29,14 +31,37 @@
 
             <div class="section-card-top">
               <div class="section-avatar">
-                {{ strtoupper(substr($section->name, 0, 1)) }}
+                {{ strtoupper(substr($section->section_name, 0, 1)) }}
               </div>
               <div class="section-meta">
-                <h5 class="card-title mb-0">{{ $section->name }}</h5>
+                <h5 class="card-title mb-0">{{ $section->section_name }}</h5>
                 <span class="student-count">
                   <i class="fas fa-user-friends me-1"></i>
                   {{ $section->student_count }} {{ Str::plural('student', $section->student_count) }}
                 </span>
+                @if($section->student_count > 0)
+                  <div class="families-info">
+                    <small class="text-muted">Families:</small>
+                    <div class="families-list">
+                      @php
+                        // Get unique families for students in this section
+                        $sectionStudents = DB::table('student_teacher as st')
+                          ->join('students as s', 's.student_id', 'st.student_id')
+                          ->join('sections as sec', 'sec.section_id', 's.section_id')
+                          ->where('st.teacher_id', auth()->user()->user_id)
+                          ->where('sec.section_id', $section->section_id)
+                          ->join('families as f', 'f.user_id', 's.family_id')
+                          ->select('f.family_name')
+                          ->distinct()
+                          ->pluck('family_name')
+                          ->toArray();
+                      @endphp
+                      @foreach($sectionStudents as $family)
+                        <span class="family-badge">{{ $family }}</span>
+                      @endforeach
+                    </div>
+                  </div>
+                @endif
               </div>
             </div>
 
@@ -234,6 +259,24 @@ body { font-family: 'Nunito', sans-serif !important; background: var(--violet-bg
 }
 .no-delete-note .fa-lock { color: var(--lemon); }
 
+/* ── FAMILIES INFO ── */
+.families-info {
+  margin-top: 8px;
+}
+.families-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.family-badge {
+  background: var(--violet-soft);
+  color: var(--violet);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin-right: 4px;
+}
 /* ── EMPTY STATE ── */
 .empty-state {
   text-align: center;

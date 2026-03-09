@@ -243,13 +243,13 @@
         <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}">Home</a>
         <a class="nav-link {{ request()->routeIs('family.index') ? 'active' : '' }}" href="{{ route('family.index') }}#family-children">Children</a>
         <a class="nav-link {{ request()->routeIs('family.tests.*') ? 'active' : '' }}"
-           href="{{ $navStudent ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Current Test</a>
+           href="{{ $navStudent && $navStudent->student_id ? route('family.tests.start.show', $navStudent->student_id) : route('family.index') }}">Current Test</a>
         <a class="nav-link {{ request()->routeIs('family.help') ? 'active' : '' }}" href="{{ route('family.help') }}">Help</a>
 
       {{-- Profile Dropdown --}}
       <div class="profile-section">
         <div class="profile-menu">
-          <a href="{{ $navStudent ? route('family.student.profile', $navStudent->student_id) : route('family.index') }}" class="profile-button" tabindex="0">
+          <a href="{{ $navStudent && $navStudent->student_id ? route('family.student.profile', $navStudent->student_id) : route('family.index') }}" class="profile-button" tabindex="0" id="profileBtn">
             <span>{{ optional(Auth::user())->username ?? 'Account' }}</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"/>
@@ -269,17 +269,14 @@
             </a>
 
             <hr class="pd-divider">
-            <form method="POST" action="{{ route('logout') }}" style="margin:0">
-              @csrf
-              <button type="submit" class="pd-item danger">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                  <polyline points="16 17 21 12 16 7"/>
-                  <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-                Logout
-              </button>
-            </form>
+            <a href="{{ route('logout') }}" class="pd-item danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Logout
+            </a>
 
           </div>
         </div>

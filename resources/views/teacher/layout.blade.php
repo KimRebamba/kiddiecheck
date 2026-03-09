@@ -700,6 +700,12 @@
 
     </a>
 
+    <a href="{{ route('teacher.family') }}" class="pill {{ request()->routeIs('teacher.family') ? 'active' : '' }}">
+
+      <i class="fas fa-home me-2"></i>Family
+
+    </a>
+
     <a href="{{ route('teacher.sections') }}" class="pill {{ request()->routeIs('teacher.sections') ? 'active' : '' }}">
 
       <i class="fas fa-users me-2"></i>Sections
@@ -736,23 +742,11 @@
 
         <div class="border-top my-2"></div>
 
-        <form action="{{ route('logout') }}" method="POST" style="display: inline;">
+        <a href="{{ route('logout') }}" class="menu-item">
+          <i class="fas fa-sign-out-alt me-2"></i>Logout
+        </a>
 
-          @csrf
-
-          <button type="submit" class="menu-item" style="background: none; border: none; width: 100%; text-align: left; padding: 8px 12px; cursor: pointer;">
-
-            <i class="fas fa-sign-out-alt me-2"></i>Logout
-
-          </button>
-
-        </form>
-
-          </div>
-        </div>
       </div>
-
-
     </div>
 
   </nav>

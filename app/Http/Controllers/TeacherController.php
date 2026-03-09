@@ -609,7 +609,7 @@ class TeacherController extends Controller
 
 
 
-            ->select('sections.section_id', 'sections.name', 'sections.created_at', 'sections.updated_at')
+            ->select('sections.section_id', 'sections.name as section_name', 'sections.created_at', 'sections.updated_at')
 
 
 

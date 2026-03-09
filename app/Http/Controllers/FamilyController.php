@@ -349,12 +349,41 @@ class FamilyController extends Controller
             }
         }
 
+        // Generate some sample notifications for the family
+        $notifications = [
+            [
+                'icon' => '🎉',
+                'title' => 'Welcome to KiddieCheck!',
+                'text' => 'Your family dashboard is ready to use.',
+                'color' => 'green',
+                'link' => null,
+                'cta' => null
+            ],
+            [
+                'icon' => '📅',
+                'title' => 'Assessment Reminder',
+                'text' => 'Juan has an assessment starting in 3 days.',
+                'color' => 'yellow',
+                'link' => route('family.tests.start.show', ['student' => 1]),
+                'cta' => 'View Details'
+            ],
+            [
+                'icon' => '🏆',
+                'title' => 'Great Progress!',
+                'text' => 'Maria completed her latest assessment with excellent results.',
+                'color' => 'pink',
+                'link' => route('family.tests.result', ['test' => 45]),
+                'cta' => 'View Report'
+            ]
+        ];
+
         return view('family.index', [
             'family_name'    => $family->family_name ?? 'Family',
             'children'       => $children,
             'assessments'    => $assessments,
             'latest_results' => $latestResults,
             'monitoring'     => $monitoring,
+            'notifications'  => $notifications,
         ]);
     }
 

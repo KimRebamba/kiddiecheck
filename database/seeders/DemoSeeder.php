@@ -204,7 +204,8 @@ class DemoSeeder extends Seeder
     {
         $now = now();
 
-        DB::table('families')->insert([
+        // Use updateOrInsert to avoid duplicates if families already exist
+        DB::table('families')->updateOrInsert([
             [
                 'user_id' => 5,
                 'family_name' => 'Family A',
@@ -241,14 +242,19 @@ class DemoSeeder extends Seeder
     protected function students_add(): void
     {
         $now = now();
+        
+        // Check if students already exist, skip seeding if they do
+        $existingStudents = DB::table('students')->pluck('student_id')->toArray();
+        
         $students = [
+            // Original 3 students (skip if already exist)
             [
                 'student_id' => 1,
                 'first_name' => 'Juan',
                 'last_name' => 'Cruz',
                 'date_of_birth' => '2021-01-15',
                 'family_id' => 5,
-                'section_id' => 1, // Section A
+                'section_id' => 3, // Section C (moved for family diversity)
                 'feature_path' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -277,7 +283,116 @@ class DemoSeeder extends Seeder
             ],
         ];
 
-        foreach ($students as $student) {
+        // Add additional students only if they don't exist
+        $additionalStudents = [
+            [
+                'student_id' => 4,
+                'first_name' => 'Ana',
+                'last_name' => 'Garcia',
+                'date_of_birth' => '2020-08-15',
+                'family_id' => 5, // Family A
+                'section_id' => 2, // Section B (moved for family diversity)
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 5,
+                'first_name' => 'Carlos',
+                'last_name' => 'Mendoza',
+                'date_of_birth' => '2019-11-22',
+                'family_id' => 5, // Family A
+                'section_id' => 1, // Section A
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 6,
+                'first_name' => 'Sofia',
+                'last_name' => 'Lopez',
+                'date_of_birth' => '2021-03-10',
+                'family_id' => 5, // Family A
+                'section_id' => 2, // Section B (moved for family diversity)
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 7,
+                'first_name' => 'Diego',
+                'last_name' => 'Rivera',
+                'date_of_birth' => '2018-07-05',
+                'family_id' => 6, // Family B
+                'section_id' => 2, // Section B
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 8,
+                'first_name' => 'Lucia',
+                'last_name' => 'Castro',
+                'date_of_birth' => '2020-02-14',
+                'family_id' => 6, // Family B
+                'section_id' => 2, // Section B
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 9,
+                'first_name' => 'Mateo',
+                'last_name' => 'Vargas',
+                'date_of_birth' => '2019-09-18',
+                'family_id' => 6, // Family B
+                'section_id' => 2, // Section B
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 10,
+                'first_name' => 'Isabella',
+                'last_name' => 'Torres',
+                'date_of_birth' => '2018-12-03',
+                'family_id' => 7, // Family C
+                'section_id' => 3, // Section C
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 11,
+                'first_name' => 'Gabriel',
+                'last_name' => 'Silva',
+                'date_of_birth' => '2019-06-25',
+                'family_id' => 7, // Family C
+                'section_id' => 3, // Section C
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'student_id' => 12,
+                'first_name' => 'Valentina',
+                'last_name' => 'Mendoza',
+                'date_of_birth' => '2020-05-30',
+                'family_id' => 7, // Family C
+                'section_id' => 3, // Section C
+                'feature_path' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ];
+
+        // Combine and filter out existing students
+        $allStudents = array_merge($students, $additionalStudents);
+        $newStudents = array_filter($allStudents, function($student) use ($existingStudents) {
+            return !in_array($student['student_id'], $existingStudents);
+        });
+
+        foreach ($newStudents as $student) {
             $id = $student['student_id'];
             $data = $student;
             unset($data['student_id']);
@@ -291,17 +406,28 @@ class DemoSeeder extends Seeder
 
     protected function studentTeacher_add(): void
     {
+        // Fixed distribution: Each teacher gets students from ONE section but MULTIPLE families
+        // New distribution after student section updates:
+        // Section 1: Maria (B), Carlos (A) - 2 families
+        // Section 2: Ana (A), Sofia (A), Diego (B), Lucia (B), Mateo (B) - 2 families  
+        // Section 3: Juan (A), Pedro (C), Isabella (C), Gabriel (C), Valentina (C) - 2 families
+        
         $rows = [
-            // Teacher A (ID 2) gets all students in Section 1
-            ['student_id' => 1, 'teacher_id' => 2],
-            ['student_id' => 2, 'teacher_id' => 2],
-            ['student_id' => 3, 'teacher_id' => 2],
+            // Teacher A (ID 2) gets students from Section 1 only, but from MULTIPLE families
+            ['student_id' => 2, 'teacher_id' => 2], // Maria Santos (Family B, Section 1)
+            ['student_id' => 5, 'teacher_id' => 2], // Carlos Mendoza (Family A, Section 1)
 
-            // Teacher B (ID 3) gets all students in Section 2
-            ['student_id' => 2, 'teacher_id' => 3],
+            // Teacher B (ID 3) gets students from Section 2 only, but from MULTIPLE families
+            ['student_id' => 4, 'teacher_id' => 3], // Ana Garcia (Family A, Section 2)
+            ['student_id' => 6, 'teacher_id' => 3], // Sofia Lopez (Family A, Section 2)
+            ['student_id' => 7, 'teacher_id' => 3], // Diego Rivera (Family B, Section 2)
+            ['student_id' => 8, 'teacher_id' => 3], // Lucia Castro (Family B, Section 2)
 
-            // Teacher C (ID 4) gets all students in Section 3
-            ['student_id' => 3, 'teacher_id' => 4],
+            // Teacher C (ID 4) gets students from Section 3 only, but from MULTIPLE families
+            ['student_id' => 1, 'teacher_id' => 4], // Juan Cruz (Family A, Section 3)
+            ['student_id' => 3, 'teacher_id' => 4], // Pedro Reyes (Family C, Section 3)
+            ['student_id' => 10, 'teacher_id' => 4], // Isabella Torres (Family C, Section 3)
+            ['student_id' => 11, 'teacher_id' => 4], // Gabriel Silva (Family C, Section 3)
         ];
 
         foreach ($rows as $row) {

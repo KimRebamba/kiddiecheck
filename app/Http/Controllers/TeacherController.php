@@ -2457,14 +2457,6 @@ class TeacherController extends Controller
         return [$domainNumber, 0];
     }
 
-    private function isStudentEligibleForTest($student, $teacher)
-    {
-        // Handle both Eloquent models and stdClass objects
-        $studentId = $student->student_id ?? $student->section_id ?? null;
-
-        return $sixMonthsPassed && $hasNonOverduePeriods;
-    }
-
     private function getLastStandardScore($student)
     {
         return DB::table('tests')

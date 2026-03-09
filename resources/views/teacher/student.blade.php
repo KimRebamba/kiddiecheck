@@ -188,7 +188,7 @@
 
                       @endphp
 
-                      @if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue')
+                      @if($student->eligible && $period->status !== 'completed' && $period->status !== 'overdue' && $period->end_date >= now()->startOfDay())
 
                         @if($inProgressTest)
 
@@ -223,6 +223,10 @@
                           @elseif($period->status === 'completed')
 
                             Period completed
+
+                          @elseif($period->end_date < now()->startOfDay())
+
+                            Period ended
 
                           @else
 

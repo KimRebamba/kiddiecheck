@@ -446,12 +446,24 @@
                     <i class="fas fa-eye me-1"></i>View Result
                   </a>
                 <?php else: ?>
-                  <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display:inline;">
-                    <?php echo csrf_field(); ?>
-                    <button type="submit" class="btn btn-sm btn-primary">
-                      <i class="fas fa-plus me-1"></i>Start Test
-                    </button>
-                  </form>
+                  <?php
+                    $availablePeriod = \App\Models\AssessmentPeriod::where('student_id', $student->student_id)
+                        ->where('status', '!=', 'overdue')
+                        ->where('status', '!=', 'completed')
+                        ->where('end_date', '>=', now()->startOfDay())
+                        ->first();
+                  ?>
+                  <?php if($availablePeriod): ?>
+                    <form action="<?php echo e(route('teacher.tests.start', $student->student_id)); ?>" method="POST" style="display:inline;">
+                      <?php echo csrf_field(); ?>
+                      <input type="hidden" name="period_id" value="<?php echo e($availablePeriod->period_id); ?>">
+                      <button type="submit" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i>Start Test
+                      </button>
+                    </form>
+                  <?php else: ?>
+                    <span class="text-muted small">No available assessment period.</span>
+                  <?php endif; ?>
                 <?php endif; ?>
               </td>
             </tr>

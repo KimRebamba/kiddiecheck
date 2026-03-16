@@ -3,6 +3,8 @@
 @section('title', 'Results History')
 
 @section('content')
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body { background: #fffbf0; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; }
 
@@ -310,7 +312,220 @@ body { background: #fffbf0; font-family: ui-sans-serif, system-ui, -apple-system
         @endforeach
     @endif
 
+    {{-- Charts Section --}}
+    @if($totalResultsCount > 0)
+        <div class="charts-section">
+            <div class="chart-container">
+                <h3>📈 Progress Over Time</h3>
+                <canvas id="progressChart" width="400" height="200"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <h3>🎯 Domain Performance</h3>
+                <canvas id="domainChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    @endif
+
 </div>
+
+{{-- Chart Styles --}}
+<style>
+.charts-section {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    border: 2px solid #fdf0f6;
+}
+
+.chart-container h3 {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #2d2d2d;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .charts-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+// Chart data preparation
+@php
+    $chartData = [];
+    $domainData = [];
+    
+    foreach ($allChildData as $cd) {
+        if (!empty($cd['results'])) {
+            foreach ($cd['results'] as $r) {
+                $chartData[] = [
+                    'child' => $cd['s']->first_name,
+                    'date' => $r['date'],
+                    'score' => $r['score'],
+                    'interp' => $r['interp']
+                ];
+                
+                if (!empty($r['domains'])) {
+                    foreach ($r['domains'] as $d) {
+                        $domainData[] = [
+                            'child' => $cd['s']->first_name,
+                            'domain' => $d->name,
+                            'score' => $d->scaled_score
+                        ];
+                    }
+                }
+            }
+        }
+    }
+    
+    // Group domain data by domain name
+    $domainAverages = [];
+    foreach ($domainData as $d) {
+        if (!isset($domainAverages[$d['domain']])) {
+            $domainAverages[$d['domain']] = [];
+        }
+        $domainAverages[$d['domain']][] = $d['score'];
+    }
+    
+    $finalDomainData = [];
+    foreach ($domainAverages as $domain => $scores) {
+        $finalDomainData[] = [
+            'domain' => $domain,
+            'average' => array_sum($scores) / count($scores)
+        ];
+    }
+@endphp
+
+// Progress Chart
+const progressData = @json($chartData);
+const domainData = @json($finalDomainData);
+
+// Progress Chart Setup
+if (progressData.length > 0) {
+    const progressCtx = document.getElementById('progressChart').getContext('2d');
+    
+    // Group data by child
+    const children = [...new Set(progressData.map(d => d.child))];
+    const colors = ['#ff8fab', '#ffca3a', '#8ac926', '#3b82f6', '#8b5cf6', '#f97316'];
+    
+    const datasets = children.map((child, index) => {
+        const childData = progressData.filter(d => d.child === child);
+        return {
+            label: child,
+            data: childData.map(d => d.score),
+            borderColor: colors[index % colors.length],
+            backgroundColor: colors[index % colors.length] + '33',
+            tension: 0.4,
+            fill: false,
+            pointRadius: 6,
+            pointHoverRadius: 8
+        };
+    });
+    
+    new Chart(progressCtx, {
+        type: 'line',
+        data: {
+            labels: [...new Set(progressData.map(d => d.date))],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const dataPoint = progressData.find(d => 
+                                d.date === context.label && d.score === context.parsed.y
+                            );
+                            return dataPoint ? 'Interpretation: ' + dataPoint.interp : '';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    min: 40,
+                    max: 160,
+                    title: {
+                        display: true,
+                        text: 'Standard Score'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Test Date'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Domain Chart Setup
+if (domainData.length > 0) {
+    const domainCtx = document.getElementById('domainChart').getContext('2d');
+    
+    new Chart(domainCtx, {
+        type: 'bar',
+        data: {
+            labels: domainData.map(d => d.domain),
+            datasets: [{
+                label: 'Average Domain Score',
+                data: domainData.map(d => d.average),
+                backgroundColor: [
+                    '#ff8fab33', '#ffca3a33', '#8ac92633', '#3b82f633', 
+                    '#8b5cf633', '#f9731633', '#52c27b33', '#4ea8de33'
+                ],
+                borderColor: [
+                    '#ff8fab', '#ffca3a', '#8ac926', '#3b82f6', 
+                    '#8b5cf6', '#f97316', '#52c27b', '#4ea8de'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 20,
+                    title: {
+                        display: true,
+                        text: 'Average Scaled Score'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Development Domains'
+                    }
+                }
+            }
+        }
+    });
+}
 
 <script>
 // Stagger-animate cards on load

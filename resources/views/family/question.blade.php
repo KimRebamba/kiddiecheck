@@ -192,82 +192,45 @@
     }
     .nav-center { display: flex; gap: 12px; }
 
-        .btn-nav {
-            padding: 12px 24px;
-            border-radius: 10px;
-            font-size: 15px;
-            font-weight: 700;
-            text-decoration: none;
-            transition: all 0.2s;
-            border: 2px solid #ccc;
-            cursor: pointer;
-            background: #fff;
-            color: #333;
-        }
+    .btn-nav {
+      padding: 12px 24px; border-radius: 10px;
+      font-size: 15px; font-weight: 700; text-decoration: none;
+      transition: all 0.2s; border: 2px solid #ccc;
+      cursor: pointer; background: #fff; color: #333;
+    }
+    .btn-nav:hover { background: #f5f5f5; transform: translateY(-1px); }
+    .btn-nav.hidden { visibility: hidden; }
 
-        .btn-nav:hover {
-            background: #f5f5f5;
-            transform: translateY(-1px);
-        }
+    .btn-prev { background: #f5f5f5; border-color: #999; color: #666; }
+    .btn-prev:hover { background: #e0e0e0; color: #333; }
 
-        .btn-nav.hidden {
-            visibility: hidden;
-        }
+    /* Skipped questions warning */
+    .skip-warning {
+      background: #fff7ed;
+      border: 2px solid #fed7aa;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #9a3412;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .btn-prev {
-            background: #f5f5f5;
-            border-color: #999;
-            color: #666;
-        }
-
-        .btn-prev:hover {
-            background: #e0e0e0;
-            color: #333;
-        }
-
-        @media (max-width: 768px) {
-            .question-card {
-                padding: 40px 30px;
-            }
-
-            .domain-title {
-                font-size: 26px;
-            }
-
-            .question-text {
-                font-size: 18px;
-            }
-
-            .btn-answer {
-                font-size: 24px;
-                padding: 24px;
-            }
-
-            .btn-yes.selected,
-            .btn-no.selected {
-                transform: scale(1.03);
-            }
-
-            .nav-footer {
-                flex-wrap: wrap;
-            }
-
-            .btn-prev {
-                width: 100%;
-                order: -1;
-            }
-
-            .nav-center {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .btn-dashboard {
-                font-size: 0.78rem;
-                padding: 0.38rem 0.8rem;
-            }
-        }
-    </style>
+    @media (max-width: 768px) {
+      .question-card { padding: 40px 30px; }
+      .domain-title  { font-size: 26px; }
+      .question-text { font-size: 18px; }
+      .btn-answer    { font-size: 24px; padding: 24px; }
+      .btn-yes.selected, .btn-no.selected { transform: scale(1.03); }
+      .nav-footer    { flex-wrap: wrap; }
+      .btn-prev      { width: 100%; order: -1; }
+      .nav-center    { width: 100%; justify-content: center; }
+      .btn-dashboard { font-size: 0.78rem; padding: 0.38rem 0.8rem; }
+    }
+  </style>
 </head>
 <body>
 
@@ -317,9 +280,9 @@
     $icon = $domainIcons[$currentDomain->domain_name] ?? '📋';
   @endphp
 
-    <div class="domain-icon">{{ $icon }}</div>
-    <div class="domain-title">{{ $currentDomain->domain_name }}</div>
-    <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
+  <div class="domain-icon">{{ $icon }}</div>
+  <div class="domain-title">{{ $currentDomain->domain_name }}</div>
+  <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
 
   <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
     @csrf
@@ -347,53 +310,47 @@
           Next →
         </button>
 
-                @if($nextDomain && $nextIndex)
-                    <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}" class="btn-nav">
-                        Skip →
-                    </a>
-                @else
-                    <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">
-                        Review →
-                    </a>
-                @endif
-            </div>
-        </div>
-    </form>
+        {{-- Skip only within same domain; if last question show Review --}}
+        @if($nextDomain && $nextIndex)
+          <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}" class="btn-nav">Skip →</a>
+        @else
+          <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">Review →</a>
+        @endif
+      </div>
+    </div>
+  </form>
 </div>
 
 <script>
 function selectAnswer(value) {
-    const btnYes = document.getElementById('btnYes');
-    const btnNo = document.getElementById('btnNo');
-    const commentSection = document.getElementById('commentSection');
-    const responseInput = document.getElementById('responseInput');
-    const btnNext = document.getElementById('btnNext');
+  const btnYes        = document.getElementById('btnYes');
+  const btnNo         = document.getElementById('btnNo');
+  const commentSection= document.getElementById('commentSection');
+  const responseInput = document.getElementById('responseInput');
+  const btnNext       = document.getElementById('btnNext');
 
-    btnYes.classList.remove('selected');
-    btnNo.classList.remove('selected');
+  btnYes.classList.remove('selected');
+  btnNo.classList.remove('selected');
 
-    if (value === 'yes') {
-        btnYes.classList.add('selected');
-        commentSection.classList.remove('show');
-    } else {
-        btnNo.classList.add('selected');
-        commentSection.classList.add('show');
-    }
+  if (value === 'yes') {
+    btnYes.classList.add('selected');
+    commentSection.classList.remove('show');
+  } else {
+    btnNo.classList.add('selected');
+    commentSection.classList.add('show');
+  }
 
-    responseInput.value = value;
-
-    // Enable next button once answer is selected
-    btnNext.classList.remove('btn-next-disabled');
+  responseInput.value = value;
+  btnNext.classList.remove('btn-next-disabled');
 }
 
 document.getElementById('answerForm').addEventListener('submit', function(e) {
-    const responseValue = document.getElementById('responseInput').value;
-    if (!responseValue) {
-        e.preventDefault();
-        alert('Please select YES or NO before continuing.');
-    }
+  if (!document.getElementById('responseInput').value) {
+    e.preventDefault();
+    alert('Please select YES or NO before continuing.');
+  }
 });
 </script>
 
-    </body>
-    </html>
+</body>
+</html>

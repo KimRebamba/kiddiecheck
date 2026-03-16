@@ -270,6 +270,14 @@
             color: #333;
         }
 
+        .question-with-tts {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
         @media (max-width: 768px) {
             .question-card {
                 padding: 40px 30px;
@@ -279,8 +287,14 @@
                 font-size: 26px;
             }
 
+            .question-with-tts {
+                flex-direction: column;
+                gap: 10px;
+            }
+
             .question-text {
                 font-size: 18px;
+                margin-bottom: 0;
             }
 
             .btn-answer {
@@ -342,7 +356,14 @@
 
     <div class="domain-icon">{{ $icon }}</div>
     <div class="domain-title">{{ $currentDomain->domain_name }}</div>
-    <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
+    
+    <div class="question-with-tts">
+        <div class="question-text {{ $existingResponse ? 'question-answered' : '' }}">{{ $questionText }}</div>
+        <button id="speechBtn" class="btn-speech" onclick="toggleSpeech(event)" title="Read question aloud">
+            🔊
+        </button>
+        <div id="speechStatus" class="speech-status"></div>
+    </div>
 
     <form method="POST" action="{{ route('family.tests.question.submit', ['test' => $testId, 'domain' => $domainNumber, 'index' => $questionIndex]) }}" id="answerForm">
         @csrf
@@ -389,44 +410,203 @@
                         Review →
                     </a>
                 @endif
+
+                <div class="nav-center">
+                    <button type="submit" class="btn-nav {{ !$existingResponse ? 'btn-next-disabled' : '' }}" id="btnNext">
+                        Next →
+                    </button>
+
+                    @if($nextDomain && $nextIndex)
+                        <a href="{{ route('family.tests.question', ['test' => $testId, 'domain' => $nextDomain, 'index' => $nextIndex]) }}" class="btn-nav">
+                            Skip →
+                        </a>
+                    @else
+                        <a href="{{ route('family.tests.result', $testId) }}" class="btn-nav">
+                            Review →
+                        </a>
+                    @endif
+                </div>
             </div>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
 
-<script>
-function selectAnswer(value) {
-    const btnYes = document.getElementById('btnYes');
-    const btnNo = document.getElementById('btnNo');
-    const commentSection = document.getElementById('commentSection');
-    const responseInput = document.getElementById('responseInput');
-    const btnNext = document.getElementById('btnNext');
-
-    btnYes.classList.remove('selected');
-    btnNo.classList.remove('selected');
-
-    if (value === 'yes') {
-        btnYes.classList.add('selected');
-        commentSection.classList.remove('show');
-    } else {
-        btnNo.classList.add('selected');
-        commentSection.classList.add('show');
+    <script>
+            }
+            stopSpeech();
+        } else {
+            // Start speaking
+            speakQuestion(questionText);
+        }
     }
 
-    responseInput.value = value;
-
-    // Enable next button once answer is selected
-    btnNext.classList.remove('btn-next-disabled');
-}
-
-document.getElementById('answerForm').addEventListener('submit', function(e) {
-    const responseValue = document.getElementById('responseInput').value;
-    if (!responseValue) {
-        e.preventDefault();
-        alert('Please select YES or NO before continuing.');
+    function speakQuestion(text) {
+        const speechBtn = document.getElementById('speechBtn');
+        const speechStatus = document.getElementById('speechStatus');
+        
+        // Check if speech synthesis is supported
+        if (!('speechSynthesis' in window)) {
+            showStatus('Speech not supported in this browser', 'error');
+            return;
+        }
+        
+        // Check if any voices are available
+        if (speechSynthesis.getVoices().length === 0) {
+            showStatus('No voices available', 'error');
+            return;
+        }
+        
+        // Cancel any ongoing speech
+        speechSynthesis.cancel();
+        
+        // Create new utterance
+        currentUtterance = new SpeechSynthesisUtterance(text);
+        
+        // Configure voice settings
+        currentUtterance.rate = 0.9;      // Slightly slower for clarity
+        currentUtterance.pitch = 1.0;     // Normal pitch
+        currentUtterance.volume = 1.0;    // Full volume
+        
+        // Try to use a female voice (more friendly for children's assessments)
+        const voices = speechSynthesis.getVoices();
+        const femaleVoice = voices.find(voice => 
+            voice.name.includes('Female') || 
+            voice.name.includes('female') ||
+            voice.name.includes('Samantha') ||
+            voice.name.includes('Karen') ||
+            voice.name.includes('Moira') ||
+            voice.lang.includes('en') && voice.name.includes('Google')
+        );
+        
+        if (femaleVoice) {
+            currentUtterance.voice = femaleVoice;
+        } else {
+            // Fallback to any English voice
+            const englishVoice = voices.find(voice => voice.lang.includes('en'));
+            if (englishVoice) {
+                currentUtterance.voice = englishVoice;
+            }
+        }
+        
+        // Event handlers
+        currentUtterance.onstart = function() {
+            isSpeaking = true;
+            speechBtn.classList.add('speaking');
+            speechBtn.innerHTML = '🔇';
+            speechBtn.title = 'Stop speaking';
+            showStatus('Speaking...', 'speaking');
+        };
+        
+        currentUtterance.onend = function() {
+            stopSpeech();
+        };
+        
+        currentUtterance.onerror = function(event) {
+            console.error('Speech error:', event);
+            showStatus('Speech error occurred', 'error');
+            stopSpeech();
+        };
+        
+        // Start speaking
+        speechSynthesis.speak(currentUtterance);
     }
-});
-</script>
 
-</body>
-</html>
+    function stopSpeech() {
+        const speechBtn = document.getElementById('speechBtn');
+        const speechStatus = document.getElementById('speechStatus');
+        
+        isSpeaking = false;
+        currentUtterance = null;
+        
+        speechBtn.classList.remove('speaking');
+        speechBtn.innerHTML = '🔊';
+        speechBtn.title = 'Read question aloud';
+        
+        // Hide status after a short delay
+        setTimeout(() => {
+            speechStatus.classList.remove('visible');
+        }, 1000);
+    }
+
+    function showStatus(message, type = 'info') {
+        const speechStatus = document.getElementById('speechStatus');
+        
+        speechStatus.textContent = message;
+        speechStatus.className = 'speech-status visible';
+        
+        // Set color based on type
+        if (type === 'error') {
+            speechStatus.style.background = 'rgba(244, 67, 54, 0.9)';
+        } else if (type === 'speaking') {
+            speechStatus.style.background = 'rgba(255, 152, 0, 0.9)';
+        } else {
+            speechStatus.style.background = 'rgba(76, 175, 80, 0.9)';
+        }
+        
+        // Auto-hide after 3 seconds for info messages
+        if (type === 'info') {
+            setTimeout(() => {
+                speechStatus.classList.remove('visible');
+            }, 3000);
+        }
+    }
+
+    // Initialize voices when page loads
+    window.addEventListener('load', function() {
+        // Some browsers need to load voices asynchronously
+        if (speechSynthesis.getVoices().length === 0) {
+            speechSynthesis.addEventListener('voiceschanged', function() {
+                console.log('Voices loaded:', speechSynthesis.getVoices().length);
+            });
+        } else {
+            console.log('Voices available:', speechSynthesis.getVoices().length);
+        }
+        
+        // Auto-speak the question when page loads (optional - uncomment if desired)
+        // setTimeout(() => {
+        //     const questionText = document.querySelector('.question-text').innerText.trim();
+        //     if (questionText) {
+        //         speakQuestion(questionText);
+        //     }
+        // }, 1000);
+    });
+
+    function selectAnswer(value) {
+        const btnYes = document.getElementById('btnYes');
+        const btnNo = document.getElementById('btnNo');
+        const commentSection = document.getElementById('commentSection');
+        const responseInput = document.getElementById('responseInput');
+        const btnNext = document.getElementById('btnNext');
+
+        btnYes.classList.remove('selected');
+        btnNo.classList.remove('selected');
+
+        if (value === 'yes') {
+            btnYes.classList.add('selected');
+            commentSection.classList.remove('show');
+        } else {
+            btnNo.classList.add('selected');
+            commentSection.classList.add('show');
+        }
+
+        responseInput.value = value;
+
+        // Enable next button once answer is selected
+        btnNext.classList.remove('btn-next-disabled');
+        
+        // Stop speaking when answer is selected
+        if (isSpeaking) {
+            toggleSpeech();
+        }
+    }
+
+    document.getElementById('answerForm').addEventListener('submit', function(e) {
+        const responseValue = document.getElementById('responseInput').value;
+        if (!responseValue) {
+            e.preventDefault();
+            alert('Please select YES or NO before continuing.');
+        }
+    });
+    </script>
+
+    </body>
+    </html>

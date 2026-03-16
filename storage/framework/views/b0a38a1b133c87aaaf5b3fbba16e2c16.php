@@ -1,6 +1,8 @@
 
 
 <?php $__env->startSection('content'); ?>
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <div class="d-flex align-items-center mb-4">
   <h1 class="h3 mb-0">Assessment Results - <?php echo e($test->student->first_name); ?> <?php echo e($test->student->last_name); ?></h1>
   <div class="ms-auto">
@@ -84,6 +86,24 @@
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
               </tbody>
             </table>
+          </div>
+        <?php endif; ?>
+      </div>
+    </div>
+  </div>
+
+  <!-- Domain Scores Chart -->
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">📊 Domain Performance Chart</h5>
+      </div>
+      <div class="card-body">
+        <?php if($test->domainScores->isEmpty()): ?>
+          <p class="text-muted">No domain scores to display.</p>
+        <?php else: ?>
+          <div style="position: relative; height: 400px;">
+            <canvas id="domainChart"></canvas>
           </div>
         <?php endif; ?>
       </div>
@@ -292,6 +312,95 @@ tbody tr:nth-child(5n+5) .table-avatar { background: linear-gradient(135deg, var
 .empty-state h5 { font-family: 'Baloo 2', cursive; font-size: 1.1rem; font-weight: 800; color: var(--text); margin-bottom: 5px; }
 .empty-state p  { color: var(--text-muted); font-size: 0.88rem; font-weight: 600; }
 </style>
+
+<script>
+// Domain Chart for Teacher View
+<?php if(!$test->domainScores->isEmpty()): ?>
+    document.addEventListener('DOMContentLoaded', function() {
+        const domainCtx = document.getElementById('domainChart').getContext('2d');
+        
+        const domainData = <?php echo json_encode($test->domainScores->map(function($score) {
+            return [
+                'domain' => $score->domain->name ?? 'Unknown', 'raw_score' => $score->raw_score ?? 0, 'scaled_score' => $score->scaled_score ?? 0
+            ];
+        })) ?>;
+        
+        const colors = [
+            '#845EC2', '#FF6B8A', '#2EC4B6', '#52C27B', 
+            '#F9C74F', '#4EA8DE', '#FF9A76', '#B39CD0'
+        ];
+        
+        new Chart(domainCtx, {
+            type: 'radar',
+            data: {
+                labels: domainData.map(d => d.domain),
+                datasets: [{
+                    label: 'Scaled Scores',
+                    data: domainData.map(d => d.scaled_score),
+                    borderColor: '#845EC2',
+                    backgroundColor: 'rgba(132, 94, 194, 0.2)',
+                    pointBackgroundColor: '#845EC2',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#845EC2',
+                    borderWidth: 2
+                }, {
+                    label: 'Raw Scores',
+                    data: domainData.map(d => d.raw_score),
+                    borderColor: '#FF6B8A',
+                    backgroundColor: 'rgba(255, 107, 138, 0.2)',
+                    pointBackgroundColor: '#FF6B8A',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#FF6B8A',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const dataset = context.dataset;
+                                const index = context.dataIndex;
+                                const label = context.label;
+                                const value = dataset.data[index];
+                                const rawValue = domainData[index].raw_score;
+                                
+                                if (dataset.label === 'Scaled Scores') {
+                                    return `${dataset.label}: ${value}`;
+                                } else {
+                                    return `${dataset.label}: ${value}`;
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 20,
+                        ticks: {
+                            stepSize: 4
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+<?php endif; ?>
+</script>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('teacher.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Sedriel Navasca\Desktop\SAAD\Kiddiecheck\kiddiecheck\resources\views/teacher/test_result.blade.php ENDPATH**/ ?>
